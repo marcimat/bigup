@@ -1,0 +1,24 @@
+<paquet
+	prefix="bigup"
+	categorie="multimedia"
+	version="1.0.0-dev"
+	etat="dev"
+	compatibilite="[3.1.0-rc;3.1.*]"
+	logo="prive/themes/spip/images/bigup-64.png"
+	documentation=""
+>
+
+	<nom>Big Upload</nom>
+	<!-- Téléverser des gros fichiers -->
+
+	<auteur>Matthieu Marcillaud</auteur>
+	<credit lien='https://www.iconfinder.com/icons/48761/add_file_upload_icon'>Neurovit (logo)</credit>
+	<credit lien='http://resumablejs.com'>23 Company (resumable.js)</credit>
+	<credit lien='https://github.com/flowjs/flow.js'>Flow.js</credit>
+
+	<licence>GNU/GPL</licence>
+
+	<pipeline nom="autoriser" inclure="bigup_autorisations.php" /> 
+	<pipeline nom="formulaire_charger" inclure="bigup_pipelines.php" />
+
+</paquet>
