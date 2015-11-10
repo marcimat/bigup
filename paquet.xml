@@ -2,6 +2,7 @@
 	prefix="bigup"
 	categorie="multimedia"
 	version="1.0.0-dev"
+	schema="1.0.0"
 	etat="dev"
 	compatibilite="[3.1.0-rc;3.1.*]"
 	logo="prive/themes/spip/images/bigup-64.png"
