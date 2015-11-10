@@ -9,6 +9,14 @@
 	<div>
 		#ACTION_FORMULAIRE{#ENV{action}}
 
+		[(#SAISIE{case, charger_public,
+			label=<:bigup:cfg_charger_public:>,
+			label_case=<:bigup:cfg_charger_public_case:>})]
+
+		[(#SAISIE{input, max_file_size,
+			label=<:bigup:cfg_max_file_size:>,
+			explication=<:bigup:cfg_max_file_size_explication:>})]
+
 		<input type="hidden" name="_meta_casier" value="bigup" />
 		<p class="boutons"><span class="image_loading">&nbsp;</span><input type="submit" class="submit" value="<:bouton_enregistrer:>" /></p>
 	</div>

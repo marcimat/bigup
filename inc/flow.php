@@ -91,7 +91,7 @@ class Flow {
 	 * Le script quittera tout seul si l'un ou l'autre des cas se présente,
 	 * sauf si on vient de poster le dernier morceau d'un fichier.
 	 * 
-	 * @return false|null|array
+	 * @return false|null|string
 	**/
 	public function run() {
 		if (!$this->trouverPrefixe()) {
