@@ -65,6 +65,21 @@ function bigup_formulaire_charger($flux) {
 		$flux['data']['_fichiers'] = $fichiers;
 	}
 
+	// Si le formulaire est considéré posté (en get ou post)
+	// Tester voir si c'est pas un morceaux de fichier qui est envoyé
+	if (!empty($flux['args']['je_suis_poste'])) {
+
+		spip_log('je_suis_poste', 'test_upl');
+
+		include_spip('inc/flow');
+		$Flow = new \SPIP\Bigup\Flow();
+		$key = $Flow->run();
+		if ($key) {
+			spip_log("Fichier reçu dans $key", 'test_upl');
+			spip_log($_FILES[$key], 'test_upl');
+		}
+	}
+
 	return $flux;
 }
 

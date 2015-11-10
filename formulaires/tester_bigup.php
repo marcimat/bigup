@@ -40,8 +40,6 @@ function formulaires_tester_bigup_charger_dist($id = 0) {
 		'texte' => '',
 	];
 
-	spip_log('charger', "test_upl");
-
 	return $valeurs;
 }
 
