@@ -11,6 +11,46 @@
 
 if (!defined('_ECRIRE_INC_VERSION')) return;
 
+/**
+ * Charger des scripts jquery
+ *
+ * @pipeline jquery_plugins
+ * @param array $scripts Liste à charger
+ * @return array Liste complétée
+**/
+function bigup_jquery_plugins($scripts) {
+	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
+		$scripts[] = 'lib/flow/flow.js';
+		$scripts[] = 'javascript/bigup.js';
+	}
+	return $scripts;
+}
+
+/**
+ * Charger des styles CSS
+ *
+ * @pipeline insert_head_css
+ * @param string $flux Code html des styles CSS à charger
+ * @return string Code html complété
+**/
+function bigup_insert_head_css($flux) {
+	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
+		 $flux .= '<link rel="stylesheet" href="'.find_in_path('css/bigup.css').'" type="text/css" media="screen" />';
+	}
+	return $flux;
+}
+
+/**
+ * Charger des styles CSS dans l'espace privé
+ *
+ * @pipeline insert_head_css
+ * @param string $flux Code html des styles CSS à charger
+ * @return string Code html complété
+**/
+function bigup_header_prive($flux) {
+	$flux .= '<link rel="stylesheet" href="'.find_in_path('css/bigup.css').'" type="text/css" media="screen" />';
+	return $flux;
+}
 
 /**
  * Si des fichiers d'upload sont déclarés, gérer la mécanique de déclaration et stockage

@@ -1,0 +1,45 @@
+
+.dropfile {
+	border: 2px dashed #f1f1f1;
+	border-radius: 5px;
+	line-height: 34px;
+	padding: 15px;
+	background:rgba(255,255,255,.95);
+}
+.dropfileor {
+	font-weight:bold;
+}
+
+.dropfile .btn {
+	-moz-user-select: none;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 1.42857;
+	margin-bottom: 0;
+	padding: 6px 12px;
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.dropfile .btn:hover,
+.dropfile .btn:focus {
+	color: #333;
+	text-decoration: none;
+}
+
+.dropfile .btn-default {
+	background-color: #fff;
+	border-color: #ccc;
+	color: #333;
+}
+.dropfile .btn-default:hover,
+.dropfile .btn-default:focus,
+.dropfile .btn-default:active {
+	background-color: #ebebeb;
+	border-color: #adadad;
+	color: #333;
+}
