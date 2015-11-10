@@ -1,10 +1,12 @@
 #HTTP_HEADER{Content-Type: text/javascript}
 [(#REM)<script>]
+
 (function($){
 $(document).ready(function(){
 	// trouver les input qui envoient des fichiers
 	$(".formulaire_spip form input[type=file].bigup").bigup();
 });
+
 
 /**
  * Pour un input de type file sélectionné,
@@ -15,6 +17,8 @@ $.fn.bigup = function() {
 		// trouver les paramètres ciblant le formulaire
 		var name = $(this).attr('name');
 		var token = $(this).data('token');
+		var multiple = $(this).prop('multiple');
+
 		var $form = $(this).parents('form');
 		var target = $form.attr('action');
 		var formulaire_action = $form.find('input[name=formulaire_action]').val();
@@ -22,7 +26,10 @@ $.fn.bigup = function() {
 
 		// La librairie d'upload
 		var flow = new Flow({
-			target: target, 
+			target: target,
+			fileParameterName: name,
+			testChunks: true,
+			maxFiles: (multiple ? 0 : 1), // TODO: gérer un nombre de fichiers maxi
 			query: {
 				token: token,
 				formulaire_action: formulaire_action,
@@ -41,7 +48,7 @@ $.fn.bigup = function() {
 
 		// S'il n'y en a pas, créer le template par défaut et l'ajouter
 		if (!$zone.length) {
-			var template = $.bigup_template(name, $(this).prop('multiple'));
+			var template = $.bigup_template(name, multiple);
 			$(this).after(template);
 			$zone = $form.find(".dropfile_" + name);
 		}
@@ -54,14 +61,26 @@ $.fn.bigup = function() {
 		flow.assignBrowse($zone.find('.dropfilebutton'));
 		flow.assignDrop($zone);
 
-		flow.on('fileAdded', function(file, event){
-			console.log(file, event);
+		// Téléverser aussitôt les fichiers déposés
+		flow.on('filesSubmitted', function (file) {
+			console.log('filesSubmitted', file);
+			flow.upload();
 		});
-		flow.on('fileSuccess', function(file, message){
-			console.log(file, message);
+
+		flow.on('fileAdded',  function(file,  event){
+			console.log("added", file);
 		});
-		flow.on('fileError', function(file, message){
-			console.log(file, message);
+
+		flow.on('fileProgress', function(file, chunk){
+			console.log("progress", file, chunk);
+		});
+
+		flow.on('fileSuccess',  function(file, message, chunk){
+			console.info("success", file, message, chunk);
+		});
+
+		flow.on('fileError',    function(file, message, chunk){
+			console.warn("error", file, message, chunk);
 		});
 
 		return true;
