@@ -21,7 +21,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
 function bigup_jquery_plugins($scripts) {
 	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
 		$scripts[] = 'lib/flow/flow.js';
-		$scripts[] = 'javascript/bigup.js';
+		$scripts[] = produire_fond_statique('javascript/bigup.js');
 	}
 	return $scripts;
 }

@@ -1,0 +1,88 @@
+#HTTP_HEADER{Content-Type: text/javascript}
+[(#REM)<script>]
+(function($){
+$(document).ready(function(){
+	// trouver les input qui envoient des fichiers
+	$(".formulaire_spip form input[type=file].bigup").bigup();
+});
+
+/**
+ * Pour un input de type file sélectionné,
+ * gère l'upload de ou des fichiers, via html5 et flow.js
+ */
+$.fn.bigup = function() {
+	$(this).each(function() {
+		// trouver les paramètres ciblant le formulaire
+		var name = $(this).attr('name');
+		var token = $(this).data('token');
+		var $form = $(this).parents('form');
+		var target = $form.attr('action');
+		var formulaire_action = $form.find('input[name=formulaire_action]').val();
+		var formulaire_action_args = $form.find('input[name=formulaire_action_args]').val();
+
+		// La librairie d'upload
+		var flow = new Flow({
+			target: target, 
+			query: {
+				token: token,
+				formulaire_action: formulaire_action,
+				formulaire_action_args: formulaire_action_args
+			}
+		});
+
+		// Si l'upload html5 n'est pas supporté,
+		// on laisse la gestion au formulaire… comme au bon vieux temps
+		if (!flow.support) {
+			return false;
+		}
+
+		// Trouver une zone où déposer les fichiers dans le HTML existant
+		var $zone = $form.find(".dropfile_" + name);
+
+		// S'il n'y en a pas, créer le template par défaut et l'ajouter
+		if (!$zone.length) {
+			var template = $.bigup_template(name, $(this).prop('multiple'));
+			$(this).after(template);
+			$zone = $form.find(".dropfile_" + name);
+		}
+
+		// Voir la zone, cacher l'input original
+		$(this).hide();
+		$zone.show();
+
+		// Assigner la zone et son bouton à flow.
+		flow.assignBrowse($zone.find('.dropfilebutton'));
+		flow.assignDrop($zone);
+
+		flow.on('fileAdded', function(file, event){
+			console.log(file, event);
+		});
+		flow.on('fileSuccess', function(file, message){
+			console.log(file, message);
+		});
+		flow.on('fileError', function(file, message){
+			console.log(file, message);
+		});
+
+		return true;
+	});
+}
+
+/**
+ * Crée un template HTML de la zone de dépot de fichier pour un nom de champ donné.
+ */
+$.bigup_template = function(name, multiple) {
+
+	var template =  
+		'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
+		+ '\n\t<span class="dropfilebutton btn btn-default"><:bigup:televerser|texte_script:></span>'
+		+ '\n\t<span class="dropfileor"><:bigup:ou|texte_script:></span>'
+		+ '\n\t<span class="dropfiletext">'
+		+ '\n\t\t' + (multiple ? '<:bigup:deposer_vos_fichiers_ici|texte_script:>' : '<:bigup:deposer_votre_fichier_ici|texte_script:>' )
+		+ '\n\t</:span:>'
+		+ '\n</div>\n';
+
+	return template;
+};
+
+})(jQuery);
