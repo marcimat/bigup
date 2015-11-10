@@ -5,26 +5,3 @@
 	class="file bigup[ (#ENV{class})]"
 	[(#GET{multiple}|oui)multiple ]
 	data-token="" />
-
-[(#REM)
-	Si le formulaire contient une classe .dropfile_{nom},
-	où {nom} correspond à la valeur du name utilisé pour ce champ,
-	alors cette zone est utilisée par le JS comme zone de dépot des fichiers.
-
-	Dedans, un .dropfilebutton indique un bouton à cliquer pour ouvrir
-	la fenêtre de choix de fichier (équivalent au bouton "parcourir").
-
-	Si la zone est absonte, un template générique est utilisé est mis
-	à la place de l'input standard.
-
-	Ce template correspond au code HTML suivant par défaut :
-
-<div class="dropfile dropfile_[(#ENV{nom})]" style="display:none;">
-	<span class="dropfilebutton btn btn-default"><:bigup:televerser:></span>
-	<span class="dropfileor"><:bigup:ou:></span>
-	<span class="dropfiletext">
-		[(#GET{multiple}|?{<:bigup:deposer_vos_fichiers_ici:>,<:bigup:deposer_votre_fichier_ici:>})]
-	</span>
-</div>
-
-]
