@@ -1,0 +1,15 @@
+
+#SET{multiple,#ENV{multiple}|=={oui}}
+
+<input type="file" name="#ENV{nom}" 
+	class="file bigup[ (#ENV{class})]"
+	[(#GET{multiple}|oui)multiple ]
+	data-token="" />
+
+<div class="dropfile dropfile_[(#ENV{nom})]" style="display:none;">
+	<span class="btn btn-default televerser"><:bigup:televerser:></span>
+	<span class="dropfileor"><:bigup:ou:></span>
+	<span class="dropfiletext">
+		[(#GET{multiple}|?{<:bigup:deposer_vos_fichiers_ici:>,<:bigup:deposer_votre_fichier_ici:>})]
+	</span>
+</div>

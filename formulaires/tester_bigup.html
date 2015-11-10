@@ -1,0 +1,46 @@
+<div class="formulaire_spip formulaire_#FORM">
+
+	<h3 class="titrem">Test de CVT avec upload de fichiers</h3>
+
+	[<p class="reponse_formulaire reponse_formulaire_ok">(#ENV*{message_ok})</p>]
+	[<p class="reponse_formulaire reponse_formulaire_erreur">(#ENV*{message_erreur})</p>]
+
+	<div class="explication">
+		Ce formulaire vise à montrer le fonctionnement d'un CVT traditionnel,
+		auquel on ajoute des champs de type fichier.
+
+		L'upload se fait indépendamment de la soumission du formulaire.
+	</div>
+
+	<form method="post" action="#ENV{action}">
+	<div>
+		#ACTION_FORMULAIRE
+
+		<div class='editer-groupe'>
+			[(#SAISIE{input, titre,
+				label=Titre,
+				obligatoire=oui})]
+
+			[(#SAISIE{textarea, texte,
+				label=Texte,
+				obligatoire=oui,
+				rows=3})]
+
+			[(#SAISIE{bigup, file,
+				label=Un seul fichier possible})]
+
+			[(#SAISIE{bigup, files, 
+				label=Plusieurs fichiers possibles,
+				multiple=oui})]
+
+			[(#SAISIE{bigup, autre,
+				label=Un autre fichier})]
+
+		</div>
+
+		<div class="boutons">
+			<input type="submit" class="submit" value="<:bouton_enregistrer:>" />
+		</div>
+	</div>
+	</form>
+</div>
