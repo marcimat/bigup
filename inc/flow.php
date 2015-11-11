@@ -191,8 +191,11 @@ class Flow {
 		}
 
 		// Renseigner le formulaire et champ utilisé.
+		$identifiant = substr($form_args, 0, 6);
+		$this->debug("Token OK : formulaire $form, champ $champ, identifiant $identifiant");
+
 		$this->formulaire = $form;
-		$this->formulaire_identifiant = substr($form_args, 0, 6);
+		$this->formulaire_identifiant = $identifiant;
 		$this->champ = $champ;
 
 		return true;
@@ -272,6 +275,14 @@ class Flow {
 					@unlink($f);
 				}
 
+				// on demande à nettoyer le répertoire des fichiers dans la foulée
+				job_queue_add(
+					'bigup_nettoyer_repertoire_upload',
+					'Nettoyer répertoires et fichiers de Big Upload',
+					array(0),
+					'genie/'
+				);
+
 				// on réécrit $_FILES avec les valeurs du fichier complet
 				$_FILES[$key]['name'] = $filename;
 				$_FILES[$key]['tmp_name'] = $fullFile;
@@ -284,6 +295,7 @@ class Flow {
 				// on laisse le processus suivant se faire,
 				// comme si le fichier complet avait été posté dans $_FILES
 				// sur ce hit.
+				
 
 				// fichier complété
 				return $key;
@@ -322,11 +334,22 @@ class Flow {
 	 * @return string chemin du répertoire
 	**/
 	public function determine_upload($identifier = null, $subdir) {
+		if (!function_exists('bigup_sous_repertoires')) {
+			include_spip('bigup_fonctions');
+		}
 		if (empty($this->dir[$subdir])) {
 			include_spip('inc/session');
-			$repertoire = sous_repertoire(_DIR_TMP, $this->cache_dir);
-			$repertoire = sous_repertoire($repertoire, $subdir);
-			$this->dir[$subdir] = sous_repertoire($repertoire, ($login = session_get('login')) ? $login : session_get('id_auteur'));
+			// un nom de répertoire humain si possible
+			if (!$login = session_get('login')) {
+				$login = session_get('id_auteur');
+			}
+			$chemin = [
+				_DIR_TMP . $this->cache_dir,
+				$subdir, $login,
+				$this->formulaire, $this->formulaire_identifiant, $this->champ
+			];
+			$chemin = implode('/', $chemin);
+			$this->dir[$subdir] = bigup_sous_repertoires($chemin);
 		}
 
 		if ($identifier) {

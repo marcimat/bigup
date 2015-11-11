@@ -6,7 +6,6 @@ Fournit une API (proche du plugin cvt_upload).
 
 ## Todo
 
-- Générer un token pour chaque champ et le valider côté PHP
 - Gérer un affichage d'erreur
 - Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
 -- côté PHP

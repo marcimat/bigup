@@ -26,4 +26,8 @@
 	<pipeline nom="formulaire_charger" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_declarer_fichiers" action="" />
 
+	<necessite nom="saisies"  compatibilite="[2.5.0;]" />
+
+	<genie nom="nettoyer_repertoire_upload" periode="86400" />
+
 </paquet>
