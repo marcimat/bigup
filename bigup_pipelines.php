@@ -59,18 +59,21 @@ function bigup_header_prive($flux) {
  * @return array
 **/
 function bigup_formulaire_charger($flux) {
-
+/*
 	// S'il y a des champs fichiers de déclarés
 	if ($fichiers = bigup_lister_fichiers_formulaire($flux['args']['form'], $flux['args']['args'])) {
 		$flux['data']['_fichiers'] = $fichiers;
-	}
-
+	}*/
+/*
+	$form = $flux['args']['form'];
+	$args = $flux['args']['args'];
+	array_unshift($args, $GLOBALS['spip_lang']);
+	$formulaire_args = encoder_contexte_ajax($args, $form);
+*/
 	// Si le formulaire est considéré posté (en get ou post)
 	// Tester voir si c'est pas un morceaux de fichier qui est envoyé
 	if (!empty($flux['args']['je_suis_poste'])) {
-
-		spip_log('je_suis_poste', 'test_upl');
-
+		/*
 		include_spip('inc/flow');
 		$Flow = new \SPIP\Bigup\Flow();
 		$key = $Flow->run();
@@ -78,6 +81,7 @@ function bigup_formulaire_charger($flux) {
 			spip_log("Fichier reçu dans $key", 'test_upl');
 			spip_log($_FILES[$key], 'test_upl');
 		}
+		*/
 	}
 
 	return $flux;

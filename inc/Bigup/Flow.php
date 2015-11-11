@@ -12,17 +12,21 @@ namespace Spip\Bigup;
  * @link https://github.com/dilab/resumable.php Inspiration
  * @link https://github.com/flowjs/flow-php-server Autre implémentation pour Flow.
  *
- * @plugin     Dropzone
+ * @plugin     Bigup
  * @copyright  2015
  * @author     marcimat
  * @licence    GNU/GPL
  * @package    SPIP\Bigup\Fonctions
  */
+ 
+include_spip('inc/Bigup/LogTrait');
 
 /**
  * Réceptionne des morceaux de fichiers envoyés par flow.js
 **/
 class Flow {
+
+	use LogTrait;
 
 	/**
 	 * Chemins des répertoires de travail (dans _DIR_TMP)
@@ -68,6 +72,17 @@ class Flow {
 	**/
 	public function __construct() {}
 
+
+	/**
+	 * Définir les répertoires de travail
+	 *
+	 * @param string $type
+	 * @param string $dir
+	**/
+	public function definir_repertoire($type, $chemin) {
+		$this->dir[$type] = $chemin;
+	}
+
 	/**
 	 * Trouve le prefixe utilisé pour envoyer les données
 	 *
@@ -91,27 +106,6 @@ class Flow {
 	}
 
 
-	/**
-	 * Des logs
-	 *
-	 * @param mixed $quoi
-	 * @param gravite $quoi
-	**/
-	public function log($quoi, $gravite = _LOG_INFO_IMPORTANTE) {
-		spip_log($quoi, "bigup." . $gravite);
-	}
-
-	public function debug($quoi) {
-		return $this->log($quoi, _LOG_DEBUG);
-	}
-
-	public function error($quoi) {
-		return $this->log($quoi, _LOG_ERREUR);
-	}
-
-	public function info($quoi) {
-		return $this->log($quoi, _LOG_INFO);
-	}
 
 	/**
 	 * Tester l'arrivée du javascript et agir en conséquence
@@ -130,9 +124,6 @@ class Flow {
 		if (!$this->trouverPrefixe()) {
 			return false;
 		}
-		if (!$this->verifier_token()) {
-			return $this->send(415);
-		}
 		if (!empty($_POST) and !empty($_FILES) ) {
 			return $this->handleChunk();
 		}
@@ -142,64 +133,6 @@ class Flow {
 		return false;
 	}
 
-	/**
-	 * Vérifier le token utilisé
-	 *
-	 * Le token doit arriver, de la forme `champ:time:clé`
-	 * De même que formulaire_action et formulaire_action_args
-	 * 
-	 * @return bool
-	**/
-	public function verifier_token() {
-		if (!$token = _request('token')) {
-			$this->debug("Aucun token");
-			return false;
-		}
-
-		$_token = explode(':', $token);
-
-		if (count($_token) != 3) {
-			$this->debug("Token mal formé");
-			return false;
-		}
-		list($champ, $time, $cle) = $_token;
-		$time = intval($time);
-		$now = time();
-
-		// 24h de validité
-		// TODO: à définir en configuration
-		if (($now - $time) > (60 * 60 * 24)) {
-			$this->log("Token expiré");
-			return false;
-		}
-
-		$form = _request('formulaire_action');
-		if (!$form) {
-			$this->log("Vérifier token : nom du formulaire absent");
-			return false;
-		}
-
-		$form_args = _request('formulaire_action_args');
-		if (!$form_args) {
-			$this->log("Vérifier token : hash du formulaire absent");
-			return false;
-		}
-
-		if (!verifier_action_auteur("bigup/$form/$form_args/$champ/$time", $cle)) {
-			$this->error("Token invalide");
-			return false;
-		}
-
-		// Renseigner le formulaire et champ utilisé.
-		$identifiant = substr($form_args, 0, 6);
-		$this->debug("Token OK : formulaire $form, champ $champ, identifiant $identifiant");
-
-		$this->formulaire = $form;
-		$this->formulaire_identifiant = $identifiant;
-		$this->champ = $champ;
-
-		return true;
-	}
 
 	/**
 	 * Envoie le code header indiqué… et arrête tout.
@@ -237,7 +170,7 @@ class Flow {
 	 *
 	 * @return void|false|string
 	 *     - exit : Si morceau de fichier reçu (et que ce n'est pas le dernier), la fonction retourne un statut http et quitte.
-	 *     - string : Si fichier terminé d'uploader (réception du dernier morceau), retourne la clé utilisée dans `$_FILES` pour le décrire
+	 *     - string : Si fichier terminé d'uploader (réception du dernier morceau), retourne le chemin du fichier
 	 *     - false  : si aucun morceau de fichier reçu.
 	**/
 	public function handleChunk() {
@@ -268,43 +201,14 @@ class Flow {
 			// liste des morceaux
 			$chunkFiles = $this->getChunkFiles($identifier);
 
-			if ($fullFile = $this->createFileFromChunks($chunkFiles, $this->tmpPathFile($identifier, $filename))) {
-				$this->info("Fichier complet recréé : " . $this->tmpPathFile($identifier, $filename));
-				$this->info("Suppression des morceaux.");
-				foreach ($chunkFiles as $f) {
-					@unlink($f);
-				}
-
-				// on demande à nettoyer le répertoire des fichiers dans la foulée
-				job_queue_add(
-					'bigup_nettoyer_repertoire_upload',
-					'Nettoyer répertoires et fichiers de Big Upload',
-					array(0),
-					'genie/'
-				);
-
-				// on réécrit $_FILES avec les valeurs du fichier complet
-				$_FILES[$key]['name'] = $filename;
-				$_FILES[$key]['tmp_name'] = $fullFile;
-				$_FILES[$key]['size'] = filesize($fullFile);
-				$finfo = finfo_open(FILEINFO_MIME_TYPE);
-				$_FILES[$key]['type'] = finfo_file($finfo, $fullFile);
-				$this->debug($_FILES);
-
-				// On n'envoie rien (pas de $this->send()) : ici le fichier étant bien arrivé
-				// on laisse le processus suivant se faire,
-				// comme si le fichier complet avait été posté dans $_FILES
-				// sur ce hit.
-				
-
-				// fichier complété
-				return $key;
-
-			} else {
+			$fullFile = $this->createFileFromChunks($chunkFiles, $this->tmpPathFile($identifier, $filename));
+			if (!$fullFile) {
 				// on ne devrait jamais arriver là ! 
 				$this->error("! Création du fichier complet en échec (" . $this->tmpPathFile($identifier, $filename) . ").");
 				return $this->send(415);
 			}
+
+			return $fullFile;
 		} else {
 			// morceau bien reçu, mais pas encore le dernier… 
 			return $this->send(200);
@@ -327,36 +231,30 @@ class Flow {
 	/**
 	 * Trouver le chemin d'un répertoire temporaire 
 	 *
-	 * Dépend de l'auteur connecté.
-	 *
 	 * @param string $identifier
-	 * @param string $subdir Type de répertoire 
-	 * @return string chemin du répertoire
+	 * @param string $subdir Type de répertoire
+	 * @param bool $nocreate true pour ne pas créer le répertoire s'il manque.
+	 * @return string|false
+	 *     - string : chemin du répertoire
+	 *     - false : échec.
 	**/
-	public function determine_upload($identifier = null, $subdir) {
-		if (!function_exists('bigup_sous_repertoires')) {
-			include_spip('bigup_fonctions');
-		}
+	public function determine_upload($identifier, $subdir, $nocreate = false) {
 		if (empty($this->dir[$subdir])) {
-			include_spip('inc/session');
-			// un nom de répertoire humain si possible
-			if (!$login = session_get('login')) {
-				$login = session_get('id_auteur');
-			}
-			$chemin = [
-				_DIR_TMP . $this->cache_dir,
-				$subdir, $login,
-				$this->formulaire, $this->formulaire_identifiant, $this->champ
-			];
-			$chemin = implode('/', $chemin);
-			$this->dir[$subdir] = bigup_sous_repertoires($chemin);
+			return false;
 		}
 
-		if ($identifier) {
-			return sous_repertoire($this->dir[$subdir], $identifier);
-		} else {
-			return $this->dir[$subdir];
+		$dir = $this->dir[$subdir] . DIRECTORY_SEPARATOR . $identifier;
+
+		if ($nocreate) {
+			return $dir;
 		}
+
+		include_spip('bigup_fonctions');
+		if (!bigup_sous_repertoires($dir)) {
+			return false;
+		}
+
+		return $dir;
 	}
 
 	/**
@@ -364,10 +262,11 @@ class Flow {
 	 *
 	 * @uses determine_upload()
 	 * @param string $identifier
+	 * @param bool $nocreate
 	 * @return string chemin du répertoire
 	**/
-	public function determine_upload_parts($identifier = null) {
-		return $this->determine_upload($identifier, 'parts');
+	public function determine_upload_parts($identifier = null, $nocreate = false) {
+		return $this->determine_upload($identifier, 'parts', $nocreate);
 	}
 
 
@@ -427,12 +326,15 @@ class Flow {
 	/**
 	 * Retourne le nom du fichier qui enregistre un des morceaux
 	 *
+	 * @param string $identifier
 	 * @param string $filename
 	 * @param int $chunkNumber
+	 * @param bool $nocreate
+	 *     - true pour ne pas créer le répertoire s'il manque.
 	 * @return string Nom de fichier
 	**/
-	public function tmpChunkPathFile($identifier, $filename, $chunkNumber) {
-		return $this->determine_upload_parts($identifier) . $filename . '.part' . $chunkNumber;
+	public function tmpChunkPathFile($identifier, $filename, $chunkNumber, $nocreate = false) {
+		return $this->determine_upload_parts($identifier, $nocreate) . DIRECTORY_SEPARATOR . $filename . '.part' . $chunkNumber;
 	}
 
 	/**
@@ -446,7 +348,7 @@ class Flow {
 	 * @return string Nom de fichier
 	**/
 	public function tmpPathFile($identifier, $filename) {
-		return $this->determine_upload_final($identifier) . $filename;
+		return $this->determine_upload_final($identifier) . DIRECTORY_SEPARATOR . $filename;
 	}
 
 	/**
@@ -458,7 +360,7 @@ class Flow {
 	 * @return bool True si présent
 	**/
 	public function isChunkUploaded($identifier, $filename, $chunkNumber) {
-		return file_exists($this->tmpChunkPathFile($identifier, $filename, $chunkNumber));
+		return file_exists($this->tmpChunkPathFile($identifier, $filename, $chunkNumber, true));
 	}
 
 	/**
@@ -491,13 +393,13 @@ class Flow {
 	**/
 	public function getChunkFiles($identifier) {
 		// Trouver tous les fichiers du répertoire
-		$chunkFiles = array_diff(scandir($this->determine_upload_parts($identifier)), array('..', '.', '.ok'));
+		$chunkFiles = array_diff(scandir($this->determine_upload_parts($identifier, true)), ['..', '.', '.ok']);
 
 		// Utiliser un chemin complet, et aucun fichier caché.
 		$chunkFiles = array_map(
 			function ($f) use ($identifier) {
 				if ($f and $f[0] != '.') {
-					return $this->determine_upload_parts($identifier) . $f;
+					return $this->determine_upload_parts($identifier, true) . DIRECTORY_SEPARATOR . $f;
 				}
 				return '';
 			},
@@ -513,6 +415,8 @@ class Flow {
 	/**
 	 * Recrée le fichier complet à partir des morceaux de fichiers
 	 *
+	 * Supprime les morceaux si l'opération réussie.
+	 * 
 	 * @param array $crunkFiles Chemin des morceaux de fichiers à concaténer (dans l'ordre)
 	 * @param string $destFile Chemin du fichier à créer avec les morceaux
 	 * @return false|string
@@ -525,6 +429,17 @@ class Flow {
 			fwrite($fp, file_get_contents($chunkFile));
 		}
 		fclose($fp);
-		return file_exists($destFile) ? $destFile : false;
+
+		if (!file_exists($destFile)) {
+			return false;
+		}
+
+		$this->info("Fichier complet recréé : " . $destFile);
+		$this->debug("Suppression des morceaux.");
+		foreach ($chunkFiles as $f) {
+			@unlink($f);
+		}
+
+		return $destFile;
 	}
 }

@@ -119,7 +119,6 @@ function bigup_sous_repertoires($dest){
 			return false;
 		}
 		$base = sous_repertoire($base, array_pop($create));
-		spip_log("+ " . $base);
 		if (!$base) {
 			return false;
 		}
