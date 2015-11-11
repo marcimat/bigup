@@ -24,11 +24,44 @@ namespace Spip\Bigup;
 **/
 class Flow {
 
+	/**
+	 * Chemins des répertoires de travail (dans _DIR_TMP)
+	 * Peut contenir la clé :
+	 * - 'parts' pour les morceaux de fichiers
+	 * - 'final' pour les fichiers complétés
+	 * 
+	 * @var array */
 	private $dir = [];
+
+	/**
+	 * ?
+	 * @var array */
 	private $params = [];
+
+	/**
+	 * Préfixe utilisé par la librairie JS lors d'une requête
+	 * @var string */
 	private $prefixe = 'flow';
 
+	/**
+	 * Nom du répertoire, dans _DIR_TMP, qui va stocker les fichiers et morceaux de fichiers
+	 * @var string */
 	private $cache_dir = 'bigupload';
+
+	/**
+	 * Nom du formulaire qui utilise flow
+	 * @var string */
+	private $formulaire = '';
+
+	/**
+	 * Identifie un formulaire par rapport à un autre identique sur la même page ayant un appel différent.
+	 * @var string */
+	private $formulaire_identifiant = '';
+
+	/**
+	 * Nom du champ dans le formulaire qui utilise flow
+	 * @var string */
+	private $champ = '';
 
 	/**
 	 * Constructeur
@@ -97,6 +130,9 @@ class Flow {
 		if (!$this->trouverPrefixe()) {
 			return false;
 		}
+		if (!$this->verifier_token()) {
+			return $this->send(415);
+		}
 		if (!empty($_POST) and !empty($_FILES) ) {
 			return $this->handleChunk();
 		}
@@ -104,6 +140,62 @@ class Flow {
 			return $this->handleTestChunk();
 		}
 		return false;
+	}
+
+	/**
+	 * Vérifier le token utilisé
+	 *
+	 * Le token doit arriver, de la forme `champ:time:clé`
+	 * De même que formulaire_action et formulaire_action_args
+	 * 
+	 * @return bool
+	**/
+	public function verifier_token() {
+		if (!$token = _request('token')) {
+			$this->debug("Aucun token");
+			return false;
+		}
+
+		$_token = explode(':', $token);
+
+		if (count($_token) != 3) {
+			$this->debug("Token mal formé");
+			return false;
+		}
+		list($champ, $time, $cle) = $_token;
+		$time = intval($time);
+		$now = time();
+
+		// 24h de validité
+		// TODO: à définir en configuration
+		if (($now - $time) > (60 * 60 * 24)) {
+			$this->log("Token expiré");
+			return false;
+		}
+
+		$form = _request('formulaire_action');
+		if (!$form) {
+			$this->log("Vérifier token : nom du formulaire absent");
+			return false;
+		}
+
+		$form_args = _request('formulaire_action_args');
+		if (!$form_args) {
+			$this->log("Vérifier token : hash du formulaire absent");
+			return false;
+		}
+
+		if (!verifier_action_auteur("bigup/$form/$form_args/$champ/$time", $cle)) {
+			$this->error("Token invalide");
+			return false;
+		}
+
+		// Renseigner le formulaire et champ utilisé.
+		$this->formulaire = $form;
+		$this->formulaire_identifiant = substr($form_args, 0, 6);
+		$this->champ = $champ;
+
+		return true;
 	}
 
 	/**

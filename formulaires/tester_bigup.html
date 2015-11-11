@@ -27,14 +27,17 @@
 				rows=3})]
 
 			[(#SAISIE{bigup, file,
-				label=Un seul fichier possible})]
+				label=Un seul fichier possible,
+				token=#BIGUP_TOKEN{file}})]
 
 			[(#SAISIE{bigup, files, 
 				label=Plusieurs fichiers possibles,
+				token=#BIGUP_TOKEN{files},
 				multiple=oui})]
 
 			[(#SAISIE{bigup, autre,
-				label=Un autre fichier})]
+				label=Un autre fichier,
+				token=#BIGUP_TOKEN{autre}})]
 
 		</div>
 

@@ -67,7 +67,7 @@ $.fn.bigup = function() {
 			flow.upload();
 		});
 
-		flow.on('fileAdded',  function(file,  event){
+		flow.on('fileAdded', function(file,  event){
 			console.log("added", file);
 		});
 
@@ -75,11 +75,11 @@ $.fn.bigup = function() {
 			console.log("progress", file, chunk);
 		});
 
-		flow.on('fileSuccess',  function(file, message, chunk){
+		flow.on('fileSuccess', function(file, message, chunk){
 			console.info("success", file, message, chunk);
 		});
 
-		flow.on('fileError',    function(file, message, chunk){
+		flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
 		});
 
