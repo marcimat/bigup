@@ -195,13 +195,11 @@ class Flow {
 		if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
 			$this->info("Chunks complets de $identifier");
 
-			// au cas où le fichier complet serait déjà là…
-			@unlink($this->tmpPathFile($identifier, $filename));
-
-			// liste des morceaux
-			$chunkFiles = $this->getChunkFiles($identifier);
-
-			$fullFile = $this->createFileFromChunks($chunkFiles, $this->tmpPathFile($identifier, $filename));
+			// recomposer le fichier
+			$fullFile = $this->createFileFromChunks(
+				$this->getChunkFiles($identifier),
+				$this->tmpPathFile($identifier, $filename)
+			);
 			if (!$fullFile) {
 				// on ne devrait jamais arriver là ! 
 				$this->error("! Création du fichier complet en échec (" . $this->tmpPathFile($identifier, $filename) . ").");
@@ -424,6 +422,20 @@ class Flow {
 	 *     - string : chemin du fichier complet sinon.
 	**/
 	public function createFileFromChunks($chunkFiles, $destFile) {
+		// au cas où le fichier complet serait déjà là…
+		if (file_exists($destFile)) {
+			@unlink($destFile);
+		}
+
+		// Si un seul morceau c'est qu'il est complet.
+		// on le déplace simplement au bon endroit
+		if (count($chunkFiles) == 1) {
+			if (@rename($chunkFiles[0], $destFile)) {
+				$this->info("Fichier complet déplacé : " . $destFile);
+				return $destFile;
+			}
+		}
+
 		$fp = fopen($destFile, 'w');
 		foreach ($chunkFiles as $chunkFile) {
 			fwrite($fp, file_get_contents($chunkFile));
