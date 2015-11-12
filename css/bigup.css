@@ -1,34 +1,34 @@
-.bigup.fichiers {
+.bigup_fichiers {
 	margin-bottom:1em;
 }
-.bigup.fichiers .fichier {
+.bigup_fichiers .fichier {
 	background:rgba(255,255,255,.95);
 	border: 1px solid #ddd;
 	padding:10px;
 }
-.bigup.fichiers .fichier:first-child {
+.bigup_fichiers .fichier:first-child {
 	border-top-left-radius:5px;
 	border-top-right-radius:5px;
 }
-.bigup.fichiers .fichier:last-child {
+.bigup_fichiers .fichier:last-child {
 	border-bottom-left-radius:5px;
 	border-bottom-right-radius:5px;
 }
-.bigup.fichiers .fichier + .fichier {
+.bigup_fichiers .fichier + .fichier {
 	border-top:none;
 }
-.bigup.fichiers .actions {
+.bigup_fichiers .actions {
 	float:right;
 	margin-top:1em;
 }
-.bigup.fichiers img {
+.bigup_fichiers img {
 	float:left;
 	margin-right: 0.5em;
 }
-.bigup.fichiers .infos {
+.bigup_fichiers .infos {
 	margin-left:1em;
 }
-.bigup.fichiers .infos span {
+.bigup_fichiers .infos span {
 	display:block;
 }
 

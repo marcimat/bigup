@@ -32,6 +32,7 @@ $.fn.bigup = function() {
 
 		// La librairie d'upload
 		var flow = new Flow({
+			input: $(this),
 			target: target,
 			fileParameterName: name,
 			testChunks: true,
@@ -68,14 +69,44 @@ $.fn.bigup = function() {
 		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
 		flow.assignDrop($zone);
 
-		// Téléverser aussitôt les fichiers déposés
-		flow.on('filesSubmitted', function (file) {
-			console.log('filesSubmitted', file);
-			flow.upload();
+		// Valider chaque fichier déposé en fonction du 'accept' de l'input.
+		flow.on('fileAdded', function(file,  event){
+			if (typeof file.flowObj.opts.query.accept !== undefined) {
+				var accept = file.flowObj.opts.query.accept;
+				if (accept && !$.bigup_isValidFile(file.file, accept)) {
+					// TODO: afficher une vraie erreur
+					console.log("Fichier non accepté !");
+					return false;
+				}
+			}
 		});
 
-		flow.on('fileAdded', function(file,  event){
-			console.log("added", file);
+		// Téléverser aussitôt les fichiers valides déposés
+		flow.on('filesSubmitted', function (files) {
+			console.log('filesSubmitted', files);
+			if (files.length) {
+				for (var i = 0; i < files.length; i++) {
+					var file = files[i];
+
+					var $input = file.flowObj.opts.input;
+					var name = file.flowObj.opts.fileParameterName;
+
+					// Trouver une zone où afficher les fichiers dans le HTML existant
+					var $zone = $input.parents('form').find(".fichiers_" + name);
+
+					// S'il n'y en a pas, créer le template par défaut et l'ajouter
+					if (!$zone.length) {
+						var template = "<div class='bigup_fichiers fichiers_" + name + "'></div>";
+						$input.before(template);
+						$zone = $form.find(".fichiers_" + name);
+					}
+
+					// Ajouter le fichier à la zone
+					var template = $.bigup_template_fichier(file.file);
+					$zone.append(template);
+				}
+				flow.upload();
+			}
 		});
 
 		flow.on('fileProgress', function(file, chunk){
@@ -95,6 +126,39 @@ $.fn.bigup = function() {
 }
 
 /**
+ * Vérifier un fichier par rapport à un attribut 'accept'
+ * Code issu de Dropzone.
+ */
+$.bigup_isValidFile = function(file, acceptedFiles) {
+	var baseMimeType, mimeType, validType, _i, _len;
+	if (!acceptedFiles) {
+		return true;
+	}
+	acceptedFiles = acceptedFiles.split(",");
+	mimeType = file.type;
+	baseMimeType = mimeType.replace(/\/.*$/, "");
+	for (_i = 0, _len = acceptedFiles.length; _i < _len; _i++) {
+		validType = acceptedFiles[_i];
+		validType = validType.trim();
+		if (validType.charAt(0) === ".") {
+			if (file.name.toLowerCase().indexOf(validType.toLowerCase(), file.name.length - validType.length) !== -1) {
+				return true;
+			}
+		} else if (/\/\*$/.test(validType)) {
+			if (baseMimeType === validType.replace(/\/.*$/, "")) {
+				return true;
+			}
+		} else {
+			if (mimeType === validType) {
+				return true;
+			}
+		}
+	}
+	return false;
+};
+
+
+/**
  * Crée un template HTML de la zone de dépot de fichier pour un nom de champ donné.
  */
 $.bigup_template = function(name, multiple) {
@@ -106,6 +170,26 @@ $.bigup_template = function(name, multiple) {
 		+ '\n\t<span class="dropfiletext">'
 		+ '\n\t\t' + (multiple ? '<:bigup:deposer_vos_fichiers_ici|texte_script:>' : '<:bigup:deposer_votre_fichier_ici|texte_script:>' )
 		+ '\n\t</:span:>'
+		+ '\n</div>\n';
+
+	return template;
+};
+
+/**
+ * Crée un template HTML de la vue d'un fichier
+ */
+$.bigup_template_fichier = function(file) {
+
+	var template =
+		'\n<div class="fichier">'
+		+ '\n\t<div class="actions">'
+		+ '\n\t</div>'
+		+ '\n\t<img width="52" height="52" alt="" src="../plugins-dist/medias/prive/vignettes/jpg.png">'
+		+ '\n\t<div class="infos">'
+		+ '\n\t\t<span class="name"><strong>' + file.name + '</strong></span>'
+		+ '\n\t\t<span class="size">' + file.size + '</span>'
+		+ '\n\t\t<span class="mime">' + file.type + '</span>'
+		+ '\n\t</div>'
 		+ '\n</div>\n';
 
 	return template;
