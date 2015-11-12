@@ -23,6 +23,7 @@ $.fn.bigup = function() {
 		var name = $(this).attr('name');
 		var token = $(this).data('token');
 		var multiple = $(this).prop('multiple');
+		var accept = $(this).prop('accept');
 
 		var $form = $(this).parents('form');
 		var target = $form.attr('action');
@@ -38,7 +39,8 @@ $.fn.bigup = function() {
 			query: {
 				bigup_token: token,
 				formulaire_action: formulaire_action,
-				formulaire_action_args: formulaire_action_args
+				formulaire_action_args: formulaire_action_args,
+				accept: accept, // pourra servir au serveur pour éviter un stockage inutile
 			}
 		});
 
@@ -63,7 +65,7 @@ $.fn.bigup = function() {
 		$zone.show();
 
 		// Assigner la zone et son bouton à flow.
-		flow.assignBrowse($zone.find('.dropfilebutton'));
+		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
 		flow.assignDrop($zone);
 
 		// Téléverser aussitôt les fichiers déposés

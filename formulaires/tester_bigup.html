@@ -27,21 +27,21 @@
 				obligatoire=oui,
 				rows=3})]
 
-			[(#SAISIE{bigup, file,
-				label=Un seul fichier possible,
-				token=#BIGUP_TOKEN{file},
-				_fichiers})]
+			[(#SAISIE_FICHIER{bigup, file,
+				label=Un seul fichier possible})]
 
-			[(#SAISIE{bigup, files, 
-				label=Plusieurs fichiers possibles,
-				token=#BIGUP_TOKEN{files},
+			[(#SAISIE_FICHIER{bigup, images, 
+				label=Plusieurs fichiers images (par mime/type),
+				accept=image/*,
+				multiple=oui})]
+
+			[(#SAISIE_FICHIER{bigup, extension, 
+				label=Plusieurs fichiers pdf (par extension),
 				multiple=oui,
-				_fichiers})]
+				accept=.pdf})]
 
-			[(#SAISIE{bigup, autre,
-				label=Un autre fichier,
-				token=#BIGUP_TOKEN{autre},
-				_fichiers})]
+			[(#SAISIE_FICHIER{bigup, autre,
+				label=Un autre fichier})]
 
 		</div>
 
