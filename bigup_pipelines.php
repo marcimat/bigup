@@ -52,6 +52,32 @@ function bigup_header_prive($flux) {
 	return $flux;
 }
 
+
+/**
+ * Obtenir une instance de la classe bigup pour ce formulaire
+ *
+ * @param array $flux
+ *     Flux, tel que présent dans les pipelines des formulaires CVT
+ * @return \SPIP\Bigup\Bigup()
+**/
+function bigup_get_bigup($flux) {
+
+	// il nous faut le nom du formulaire et son hash
+	// et pas de bol, le hash est pas envoyé dans le pipeline.
+	// (il est calculé après charger). Alors on se recrée un hash pour nous.
+	$form = $flux['args']['form'];
+	$args = $flux['args']['args'];
+	#$post = $flux['args']['je_suis_poste'];
+
+	array_unshift($args, $GLOBALS['spip_lang']);
+	$formulaire_args = encoder_contexte_ajax($args, $form);
+
+	include_spip('inc/Bigup');
+	$bigup = new \Spip\Bigup\Bigup($form, $formulaire_args);
+
+	return $bigup;
+}
+
 /**
  * Recherche de fichiers uploadés pour ce formulaire
  *
@@ -68,16 +94,7 @@ function bigup_formulaire_charger($flux) {
 		return $flux;
 	}
 
-	// il nous faut le nom du formulaire et son hash
-	// et pas de bol, le hash est pas envoyé dans le pipeline chargé.
-	// (il est calculé après). Alors on se recrée un hash pour nous.
-	$form = $flux['args']['form'];
-	$args = $flux['args']['args'];
-	array_unshift($args, $GLOBALS['spip_lang']);
-	$formulaire_args = encoder_contexte_ajax($args, $form);
-
-	include_spip('inc/Bigup');
-	$bigup = new \Spip\Bigup\Bigup($form, $formulaire_args);
+	$bigup = bigup_get_bigup($flux);
 	if ($fichiers = $bigup->reinserer_fichiers()) {
 		$flux['data']['_fichiers'] = $fichiers;
 	}
@@ -87,36 +104,26 @@ function bigup_formulaire_charger($flux) {
 
 
 /**
- * Retrouve la déclaration de fichiers d'un formulaire CVT dont on a le nom et les arguments
+ * Branchement sur verifier
+ * 
+ * Si on a demandé la suppression d'un fichier, le faire
  *
- * La liste des fichiers du formulaire peut être déclarée directement avec
- * la fonction `formulaires_xx_declarer_fichiers_dist()` dans le formulaire CVT
- * ou avec le pipeline `formulaire_declarer_fichiers`
- * 
- * @pipeline_appel formulaire_declarer_fichiers
- * 
- * @param string $form
- *     Nom du formulaire
- * @param array $args
- *     Arguments d'appel du formulaire
- * @return Bigup\Fichier[]
+ * @param array $flux
+ * @return array
 **/
-function bigup_lister_fichiers_formulaire($form, $args) {
+function bigup_formulaire_verifier($flux) {
 
-	// liste des fichiers déclarés
-	$fichiers = array();
-
-	if ($declarer_fichiers = charger_fonction('declarer_fichiers', 'formulaires/' . $form, true)) {
-		$fichiers = call_user_func_array($declarer_fichiers, $args);
+	// enlever un fichier dont on demande sa suppression
+	if ($identifiant = _request('_enlever_fichier')) {
+		$bigup = bigup_get_bigup($flux);
+		if ($bigup->enlever_fichier($identifiant)) {
+			// on n'affiche pas les autres erreurs
+			$flux['data'] = [];
+			$flux['data']['message_erreur'] = '';
+			$flux['data']['message_ok'] = 'Fichier effacé';
+			$flux['data']['_erreur'] = true;
+		}
 	}
 
-	$fichiers = pipeline('formulaire_declarer_fichiers', array(
-		'args' => array(
-			'form' => $form,
-			'args' => $args
-		),
-		'data' => $fichiers
-	));
-
-	return $fichiers;
+	return $flux;
 }

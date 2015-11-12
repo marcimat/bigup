@@ -5,7 +5,6 @@
 	[<p class="reponse_formulaire reponse_formulaire_ok">(#ENV*{message_ok})</p>]
 	[<p class="reponse_formulaire reponse_formulaire_erreur">(#ENV*{message_erreur})</p>]
 
-[<pre>(#ENV{_fichiers}|print_r{1})</pre>]
 
 	<div class="explication">
 		Ce formulaire vise à montrer le fonctionnement d'un CVT traditionnel,
@@ -30,16 +29,19 @@
 
 			[(#SAISIE{bigup, file,
 				label=Un seul fichier possible,
-				token=#BIGUP_TOKEN{file}})]
+				token=#BIGUP_TOKEN{file},
+				_fichiers})]
 
 			[(#SAISIE{bigup, files, 
 				label=Plusieurs fichiers possibles,
 				token=#BIGUP_TOKEN{files},
-				multiple=oui})]
+				multiple=oui,
+				_fichiers})]
 
 			[(#SAISIE{bigup, autre,
 				label=Un autre fichier,
-				token=#BIGUP_TOKEN{autre}})]
+				token=#BIGUP_TOKEN{autre},
+				_fichiers})]
 
 		</div>
 

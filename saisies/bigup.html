@@ -1,5 +1,24 @@
 
 #SET{multiple,#ENV{multiple}|=={oui}}
+<B_fichiers>
+<div class='bigup fichiers'>
+<BOUCLE_fichiers(DATA){source tableau,#ENV{_fichiers/#ENV{nom}}}>
+	<div class='fichier'>
+		<div class='actions'>
+			<button class='submit' type='submit' name='_enlever_fichier' value="#IDENTIFIANT">Enlever</button>
+		</div>
+		[(#EXTENSION|vignette)]
+		<div class='infos'>
+			<span class='name'><strong>#NAME</strong></span>
+			<span class='size'>[(#SIZE|taille_en_octets)]</span>
+			<span class='mime'>#TYPE</span>
+		</div>
+	</div>
+</BOUCLE_fichiers>
+</div>
+</B_fichiers>
+
+
 
 <input type="file" name="#ENV{nom}" 
 	class="file bigup[ (#ENV{class})]"

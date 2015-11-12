@@ -166,6 +166,31 @@ class Bigup {
 		return $liste;
 	}
 
+
+	/**
+	 * Enlève un fichier complet dont le hash est indiqué
+	 *
+	 * @param string $identifiant
+	 *     Un identifiant du fichier
+	 * @return bool True si le fichier est trouvé (et donc enlevé)
+	**/
+	public function enlever_fichier($identifiant) {
+		$this->calculer_chemin_repertoires();
+		$liste = $this->trouver_fichiers_complets();
+		$this->debug("Demande de suppression du fichier $identifiant");
+
+		foreach ($liste as $champ => $fichiers) {
+			foreach ($fichiers as $k => $description) {
+				if ($description['identifiant'] == $identifiant) {
+					@unlink($description['pathname']);
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Retourne la liste des fichiers complets, classés par champ
 	 *
@@ -335,10 +360,14 @@ class Bigup {
 	**/
 	public function decrire_fichier($chemin) {
 		$filename = basename($chemin);
+		$extension = pathinfo($chemin, PATHINFO_EXTENSION);
+		include_spip('action/ajouter_documents');
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$desc = [
 			'name' => $filename,
 			'pathname' => $chemin, // celui là n'y est pas normalement dans $_FILES
+			'identifiant' => md5($chemin), // celui là n'y est pas normalement dans $_FILES
+			'extension' => corriger_extension(strtolower($extension)), // celui là n'y est pas normalement dans $_FILES
 			'tmp_name' => $chemin,
 			'size' => filesize($chemin),
 			'type' => finfo_file($finfo, $chemin),

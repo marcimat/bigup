@@ -1,6 +1,40 @@
+.bigup.fichiers {
+	margin-bottom:1em;
+}
+.bigup.fichiers .fichier {
+	background:rgba(255,255,255,.95);
+	border: 1px solid #ddd;
+	padding:10px;
+}
+.bigup.fichiers .fichier:first-child {
+	border-top-left-radius:5px;
+	border-top-right-radius:5px;
+}
+.bigup.fichiers .fichier:last-child {
+	border-bottom-left-radius:5px;
+	border-bottom-right-radius:5px;
+}
+.bigup.fichiers .fichier + .fichier {
+	border-top:none;
+}
+.bigup.fichiers .actions {
+	float:right;
+	margin-top:1em;
+}
+.bigup.fichiers img {
+	float:left;
+	margin-right: 0.5em;
+}
+.bigup.fichiers .infos {
+	margin-left:1em;
+}
+.bigup.fichiers .infos span {
+	display:block;
+}
+
 
 .dropfile {
-	border: 2px dashed #f1f1f1;
+	border: 2px dashed #eee;
 	border-radius: 5px;
 	line-height: 34px;
 	padding: 15px;

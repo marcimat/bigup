@@ -29,6 +29,8 @@ function formulaires_tester_bigup_charger_dist($id = 0) {
 	// demander la gestion de fichiers d'upload
 	$valeurs['_rechercher_uploads'] = true;
 
+	spip_log("> charger tester_bigup", "bigup");
+
 	return $valeurs;
 }
 
@@ -37,7 +39,7 @@ function formulaires_tester_bigup_charger_dist($id = 0) {
 function formulaires_tester_bigup_verifier_dist($id = 0) {
 	$erreurs = [];
 
-	spip_log('verifier', "test_upl");
+	spip_log('> verifier tester_bigup', "bigup");
 
 	// ceux là sont obligatoires
 	foreach (['titre', 'texte'] as $obli) {
@@ -46,15 +48,14 @@ function formulaires_tester_bigup_verifier_dist($id = 0) {
 		}
 	}
 
-	spip_log('files', "test_upl");
-	spip_log($_FILES, "test_upl");
-
 	return $erreurs;
 }
 
 
 
 function formulaires_tester_bigup_traiter_dist($id = 0) {
+	spip_log('> traiter tester_bigup', "bigup");
+
 	$retours = array(
 		'message_ok' => "Formulaire pris en compte",
 		'editable' => true,
