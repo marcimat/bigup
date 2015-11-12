@@ -21,6 +21,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
 if (_request('bigup_token')) {
 	include_spip('inc/Bigup');
 	$Bigup = new \SPIP\Bigup\Bigup();
+	$Bigup->recuperer_parametres();
 	$Bigup->repondre();
 	exit;
 }

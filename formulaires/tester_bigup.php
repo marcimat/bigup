@@ -18,20 +18,6 @@
  * @package SPIP\Bigup\Formulaires
 **/
 
-function formulaires_tester_bigup_declarer_fichiers_dist($id = 0) {
-	$fichiers = [
-		'file' => [],
-		'files' => [
-			'multiple' => true,
-			'max' => 3,
-		],
-		'autre' => [],
-	];
-
-	spip_log('declarer_fichiers', "test_upl");
-
-	return $fichiers;
-}
 
 
 function formulaires_tester_bigup_charger_dist($id = 0) {
@@ -39,6 +25,9 @@ function formulaires_tester_bigup_charger_dist($id = 0) {
 		'titre' => '',
 		'texte' => '',
 	];
+
+	// demander la gestion de fichiers d'upload
+	$valeurs['_rechercher_uploads'] = true;
 
 	return $valeurs;
 }

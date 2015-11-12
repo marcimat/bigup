@@ -53,35 +53,33 @@ function bigup_header_prive($flux) {
 }
 
 /**
- * Si des fichiers d'upload sont déclarés, gérer la mécanique de déclaration et stockage
+ * Recherche de fichiers uploadés pour ce formulaire
  *
+ * La recherche est conditionné par la présence dans le contexte
+ * de la clé `_rechercher_uploads`. Ceci permet d'éviter de chercher
+ * des fichiers pour les formulaires qui n'en ont pas besoin.
+ * 
  * @param array $flux
  * @return array
 **/
 function bigup_formulaire_charger($flux) {
-/*
-	// S'il y a des champs fichiers de déclarés
-	if ($fichiers = bigup_lister_fichiers_formulaire($flux['args']['form'], $flux['args']['args'])) {
-		$flux['data']['_fichiers'] = $fichiers;
-	}*/
-/*
+
+	if (empty($flux['data']['_rechercher_uploads'])) {
+		return $flux;
+	}
+
+	// il nous faut le nom du formulaire et son hash
+	// et pas de bol, le hash est pas envoyé dans le pipeline chargé.
+	// (il est calculé après). Alors on se recrée un hash pour nous.
 	$form = $flux['args']['form'];
 	$args = $flux['args']['args'];
 	array_unshift($args, $GLOBALS['spip_lang']);
 	$formulaire_args = encoder_contexte_ajax($args, $form);
-*/
-	// Si le formulaire est considéré posté (en get ou post)
-	// Tester voir si c'est pas un morceaux de fichier qui est envoyé
-	if (!empty($flux['args']['je_suis_poste'])) {
-		/*
-		include_spip('inc/flow');
-		$Flow = new \SPIP\Bigup\Flow();
-		$key = $Flow->run();
-		if ($key) {
-			spip_log("Fichier reçu dans $key", 'test_upl');
-			spip_log($_FILES[$key], 'test_upl');
-		}
-		*/
+
+	include_spip('inc/Bigup');
+	$bigup = new \Spip\Bigup\Bigup($form, $formulaire_args);
+	if ($fichiers = $bigup->reinserer_fichiers()) {
+		$flux['data']['_fichiers'] = $fichiers;
 	}
 
 	return $flux;

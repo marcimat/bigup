@@ -5,6 +5,8 @@
 	[<p class="reponse_formulaire reponse_formulaire_ok">(#ENV*{message_ok})</p>]
 	[<p class="reponse_formulaire reponse_formulaire_erreur">(#ENV*{message_erreur})</p>]
 
+[<pre>(#ENV{_fichiers}|print_r{1})</pre>]
+
 	<div class="explication">
 		Ce formulaire vise à montrer le fonctionnement d'un CVT traditionnel,
 		auquel on ajoute des champs de type fichier.

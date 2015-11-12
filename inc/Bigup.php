@@ -79,19 +79,27 @@ class Bigup {
 
 	/**
 	 * Constructeur
+	 *
+	 * @param string $formulaire Nom du formulaire
+	 * @param string $formulaire_args Hash du formulaire
+	 * @param string $token Jeton d'autorisation
 	**/
-	public function __construct() {
-		$this->trouver_parametres();
+	public function __construct($formulaire = '', $formulaire_args = '', $token = '') {
+		$this->token = $token;
+		$this->formulaire = $formulaire;
+		$this->formulaire_args = $formulaire_args;
 		$this->identifier_auteur();
+		$this->identifier_formulaire();
 	}
 
 	/**
 	 * Retrouve les paramètres pertinents pour gérer le test ou la réception de fichiers.
 	**/
-	public function trouver_parametres() {
+	public function recuperer_parametres() {
 		$this->token           = _request('bigup_token');
 		$this->formulaire      = _request('formulaire_action');
 		$this->formulaire_args = _request('formulaire_action_args');
+		$this->identifier_formulaire();
 	}
 
 	/**
@@ -134,6 +142,63 @@ class Bigup {
 		}
 
 		$this->send(415);
+	}
+
+
+	/**
+	 * Retrouve les fichiers qui ont été téléchargés et sont en attente pour ce formulaire
+	 * et les réaffecte à $_FILES au passage.
+	 *
+	 * @return array
+	**/
+	public function reinserer_fichiers() {
+		$this->calculer_chemin_repertoires();
+		$liste = $this->trouver_fichiers_complets();
+
+		foreach ($liste as $champ => $fichiers) {
+			foreach ($fichiers as $description) {
+				// TODO: Bug ici, si 2 fichiers sur 1 seul champ (input file multiple).
+				// découvrir comment gère html/php d'habitude pour ce cas.
+				$this->integrer_fichier($champ, $description);
+			}
+		}
+
+		return $liste;
+	}
+
+	/**
+	 * Retourne la liste des fichiers complets, classés par champ
+	 *
+	 * @return array Liste [ champ => [ chemin ]]
+	**/
+	public function trouver_fichiers_complets() {
+		// la théorie veut ce rangement :
+		// $dir/{champ}/{identifiant_fichier}/{nom du fichier.extension}
+		$directory = $this->dir_final;
+
+		// pas de répertoire… pas de fichier… simple comme bonjour :)
+		if (!is_dir($directory)) {
+			return [];
+		}
+
+		$liste = [];
+
+		$files = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator($directory)
+		);
+
+		foreach ($files as $filename) {
+			if ($filename->isDir()) continue; // . ..
+			if ($filename->getFilename()[0] == '.') continue; // .ok
+
+			$chemin = $filename->getPathname();
+			$champ  = basename(dirname(dirname($chemin)));
+
+			$liste[$champ][] = $this->decrire_fichier($chemin);
+			$this->debug("Fichier retrouvé : $chemin");
+		}
+
+		return $liste;
 	}
 
 
@@ -187,12 +252,9 @@ class Bigup {
 			return false;
 		}
 
-		// Renseigner le formulaire et champ utilisé.
-		$identifiant = substr($this->formulaire_args, 0, 6);
-		$this->formulaire_identifiant = $identifiant;
 		$this->champ = $champ;
 
-		$this->debug("Token OK : formulaire $this->formulaire, champ $champ, identifiant $identifiant");
+		$this->debug("Token OK : formulaire $this->formulaire, champ $champ, identifiant $this->formulaire_identifiant");
 
 		return true;
 	}
@@ -239,24 +301,49 @@ class Bigup {
 	}
 
 	/**
+	 * Calcule un identifiant de formulaire en fonction de son hash
+	 *
+	 * @return string l'identifiant
+	**/
+	public function identifier_formulaire() {
+		return $this->formulaire_identifiant = substr($this->formulaire_args, 0, 6);
+	}
+
+	/**
 	 * Intégrer le fichier indiqué dans `$FILES`
 	 *
-	 * @param string $key Clé d'enregistrement
-	 * @param string $chemin
-	 * @return string Clé d'enregistrement
+	 * @param string $key
+	 *     Clé d'enregistrement
+	 * @param string|array $description
+	 *     array : Description déjà calculée
+	 *     string : chemin du fichier
+	 * @return array
+	 *     Description du fichier
 	**/
-	public function integrer_fichier($key, $chemin) {
+	public function integrer_fichier($key, $description) {
+		if (!is_array($description)) {
+			$description = $this->decrire_fichier($description); 
+		}
+		return $_FILES[$key] = $description;
+	}
+
+	/**
+	 * Décrire un fichier (comme dans `$_FILES`)
+	 *
+	 * @param string $chemin
+	 * @return array
+	**/
+	public function decrire_fichier($chemin) {
 		$filename = basename($chemin);
-
-		// on réécrit $_FILES avec les valeurs du fichier complet
-		$_FILES[$key]['name'] = $filename;
-		$_FILES[$key]['tmp_name'] = $chemin;
-		$_FILES[$key]['size'] = filesize($chemin);
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
-		$_FILES[$key]['type'] = finfo_file($finfo, $chemin);
-
-		// fichier complété
-		return $key;
+		$desc = [
+			'name' => $filename,
+			'pathname' => $chemin, // celui là n'y est pas normalement dans $_FILES
+			'tmp_name' => $chemin,
+			'size' => filesize($chemin),
+			'type' => finfo_file($finfo, $chemin),
+		];
+		return $desc;
 	}
 
 
