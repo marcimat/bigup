@@ -180,12 +180,14 @@ $.bigup_template = function(name, multiple) {
  */
 $.bigup_template_fichier = function(file) {
 
+	// retouver l'extension
+	var extension = $.trouver_extension(file.name);
+
 	var template =
 		'\n<div class="fichier">'
 		+ '\n\t<div class="actions">'
 		+ '\n\t</div>'
-		+ '\n\t<img width="52" height="52" alt="" src="../plugins-dist/medias/prive/vignettes/jpg.png">'
-		+ '\n\t<div class="infos">'
+		+ '\n\t<div class="infos vignette_extension ' + extension + '">'
 		+ '\n\t\t<span class="name"><strong>' + file.name + '</strong></span>'
 		+ '\n\t\t<span class="size">' + file.size + '</span>'
 		+ '\n\t\t<span class="mime">' + file.type + '</span>'
@@ -194,5 +196,35 @@ $.bigup_template_fichier = function(file) {
 
 	return template;
 };
+
+/**
+ * Retrouve (et corrige) une extension dans un nom de fichier
+ */
+$.trouver_extension = function(name) {
+	// retouver l'extension
+	var re = /(?:\.([^.]+))?$/;
+	var extension = re.exec(name)[1];
+	extension = extension.toLowerCase();
+
+	// cf corriger_extension() dans plugin medias.
+	switch (extension) {
+		case 'htm':
+			extension='html';
+			break;
+		case 'jpeg':
+			extension='jpg';
+			break;
+		case 'tiff':
+			extension='tif';
+			break;
+		case 'aif':
+			extension='aiff';
+			break;
+		case 'mpeg':
+			extension='mpg';
+			break;
+	}
+	return extension;
+}
 
 })(jQuery);

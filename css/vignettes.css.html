@@ -1,0 +1,12 @@
+#HTTP_HEADER{Content-Type: text/css; charset=iso-8859-15}
+#HTTP_HEADER{Vary: Accept-Encoding}
+
+.vignette_extension {
+	background-image:url([(#CHEMIN{prive/vignettes/defaut.png}|url_absolue)]);
+	background-repeat:no-repeat;
+	background-position: center left;
+}
+<BOUCLE_vignettes(DATA){source tableau,#VAL{prive/vignettes/}|find_all_in_path{[.]png$}}>
+#SET{ext,#VALEUR|basename|explode{'.'}|reset}[(#REM)
+][(#GET{ext}|!={defaut}|?{.vignette_extension.#GET{ext} \{ background-image:url([(#VALEUR|url_absolue)]) \}}][(#REM)
+]</BOUCLE_vignettes>

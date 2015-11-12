@@ -21,12 +21,8 @@
 	float:right;
 	margin-top:1em;
 }
-.bigup_fichiers img {
-	float:left;
-	margin-right: 0.5em;
-}
 .bigup_fichiers .infos {
-	margin-left:1em;
+	padding-left:60px;
 }
 .bigup_fichiers .infos span {
 	display:block;
