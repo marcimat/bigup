@@ -321,6 +321,13 @@ class Bigup {
 		include_spip('inc/session');
 		if (!$identifiant = session_get('login')) {
 			$identifiant = session_get('id_auteur');
+			// visiteur anonyme ? on prend un identifiant de session PHP.
+			if (!$identifiant) {
+				if (session_status() == PHP_SESSION_NONE) {
+					session_start();
+				}
+				$identifiant = "0." . session_id();
+			}
 		}
 		return $this->auteur = $identifiant;
 	}
