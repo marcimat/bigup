@@ -311,23 +311,29 @@ class Bigup {
 	/**
 	 * Identifier l'auteur qui accède
 	 *
-	 * @todo
-	 *     Gérer le cas des auteurs anonymes, peut être avec l'identifiant de session php.
+	 * Retrouve un identifiant unique, même pour les auteurs anonymes.
+	 * Si on connait l'auteur, on essaie de mettre un nom humain
+	 * pour une meilleure visibilité du répertoire.
+	 * 
+	 * Retourne un identifiant d'auteur :
+	 * - {id_auteur}.{login} sinon
+	 * - {id_auteur} sinon
+	 * - 0.{session_id}
 	 *
 	 * @return string
 	**/
 	public function identifier_auteur() {
 		// un nom d'identifiant humain si possible
 		include_spip('inc/session');
-		if (!$identifiant = session_get('login')) {
-			$identifiant = session_get('id_auteur');
-			// visiteur anonyme ? on prend un identifiant de session PHP.
-			if (!$identifiant) {
-				if (session_status() == PHP_SESSION_NONE) {
-					session_start();
-				}
-				$identifiant = "0." . session_id();
+		$identifiant = session_get('id_auteur');
+		// visiteur anonyme ? on prend un identifiant de session PHP.
+		if (!$identifiant) {
+			if (session_status() == PHP_SESSION_NONE) {
+				session_start();
 			}
+			$identifiant .= "." . session_id();
+		} elseif ($login = session_get('login')) {
+			$identifiant .= "." . $login;
 		}
 		return $this->auteur = $identifiant;
 	}
