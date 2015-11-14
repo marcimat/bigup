@@ -138,6 +138,79 @@ Enfin après le traitement du formulaire, tous les fichiers complets
 non utilisés de celui-ci sont enlevés. 
 
 
+### Création d'un formulaire pour uploader les fichiers
+
+Pour qu'il soit compatible à la fois avec et sans javascript,
+il va falloir prendre en compte, côté PHP et HTML, un certain nombre d'éléments.
+
+#### Côté HTML
+
+Le formulaire (la balise `<form>`) doit être posté et autoriser les fichiers (multipart/form-data)
+ce qui revient à écrire la plupart du temps :
+
+    <form method="post" action="#ENV{action}" enctype="multipart/form-data">
+
+Les input qui autorisent plusieurs fichiers doivent l'indiquer :
+- avec un nom de variable tableau, tel que `name='fichiers[]'`
+- avec la propriété `multiple`
+
+La saisie `bigup_fichier` s'occupe de cela dès lors que l'option multiple
+est activée.
+
+
+### Côté PHP
+
+Il va falloir faire un peu de sorcellerie pour gérer la variable `$_FILES`
+qui arrive. Effectivement, elle peut en html5 recevoir plusieurs fichiers
+pour un même champ.
+
+Pour info, si le name n'est pas un tableau, disons avec `name='fichier'`,
+et même si `multiple` est présent, un seul fichier sera reçu (le dernier
+de la sélection certainement), et on reçoit un `$_FILES` du genre :
+
+    'fichier' => array(
+        'name' => 'xxx.png'
+        'type' => 'image/png'
+        'tmp_name' => 'tmp/nnn'
+        'error' => 0
+        'size' => 42603
+    )
+
+Dès que le name est un tableau, disons avec `name='fichiers[]'`,
+et même si `multiple` est absent, on reçoit un tableau pour chaque clé,
+par exemple pour 1 fichier envoyé (avec ou sans `multiple`) :
+
+    'fichiers' => array(
+        'name' => array(
+            0 => 'xxx.png'
+        ),
+        'type' => array(
+            0 => 'image/png'
+        ),
+        'tmp_name' => array(
+            0 => 'tmp/nnn',
+        ),
+        'error' => array(
+            0 => 0
+        ),
+        'size' => array(
+            0 => 42603
+        )
+    )
+
+S'il y a plusieurs fichiers envoyés (avec `multiple` présent), on reçoit donc
+plusieurs entrées pour chaque clés :
+
+    'fichiers' => array(
+        'name' => array(
+            0 => 'xxx.png',
+            1 => 'autre.jpg',
+            2 => 'tetris.png'
+        ),
+        ...
+    )
+
+
 
 ## Todo
 
@@ -155,10 +228,7 @@ non utilisés de celui-ci sont enlevés.
 - Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
 - Pouvoir restreindre par mime type 
 - Pouvoir restreindre par extension
-- Gérer un identifiant unique pour les auteurs anonymes
-  (identifiant de session php devrait convenir)
 - Après le traitement, supprimer les fichiers non utilisés du formulaire.
-- Comment est géré normalement `<input file multiple>` dans $_FILES ?
 
 ### Autre
 
