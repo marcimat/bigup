@@ -41,8 +41,8 @@ $.fn.bigup = function() {
 				bigup_token: token,
 				formulaire_action: formulaire_action,
 				formulaire_action_args: formulaire_action_args,
-				accept: accept, // pourra servir au serveur pour éviter un stockage inutile
-			}
+				accept: accept 
+			} // accept pourra servir au serveur pour éviter un stockage inutile
 		});
 
 		// Si l'upload html5 n'est pas supporté,
@@ -66,7 +66,8 @@ $.fn.bigup = function() {
 		$zone.show();
 
 		// Assigner la zone et son bouton à flow.
-		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
+		// flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
+		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple);
 		flow.assignDrop($zone);
 
 		// Valider chaque fichier déposé en fonction du 'accept' de l'input.
@@ -189,7 +190,7 @@ $.bigup_template_fichier = function(file) {
 		+ '\n\t</div>'
 		+ '\n\t<div class="infos vignette_extension ' + extension + '">'
 		+ '\n\t\t<span class="name"><strong>' + file.name + '</strong></span>'
-		+ '\n\t\t<span class="size">' + file.size + '</span>'
+		+ '\n\t\t<span class="size">' + $.taille_en_octets(file.size) + '</span>'
 		+ '\n\t\t<span class="mime">' + file.type + '</span>'
 		+ '\n\t</div>'
 		+ '\n</div>\n';
@@ -225,6 +226,29 @@ $.trouver_extension = function(name) {
 			break;
 	}
 	return extension;
+}
+
+
+/**
+ * Calcule une taille en octets humainement lisible
+ * @param int taille Taille en octets
+ * @return string 
+ */
+$.taille_en_octets = function(taille) {
+	var ko = 1024;
+	var t_octets = "<:taille_octets|texte_script:>";
+	var t_ko     = "<:taille_ko|texte_script:>";
+	var t_mo     = "<:taille_mo|texte_script:>";
+	var t_go     = "<:taille_go|texte_script:>";
+	if (taille < ko) {
+		return t_octets.replace('@taille@', taille);
+	} else if (taille < ko * ko) {
+		return t_ko.replace('@taille@', Math.round(taille/ko * 10) / 10);
+	} else if (taille < ko * ko * ko) {
+		return t_mo.replace('@taille@', Math.round(taille/ko/ko * 10) / 10);
+	} else {
+		return t_go.replace('@taille@', Math.round(taille/ko/ko/ko * 10) / 10);
+	}
 }
 
 })(jQuery);
