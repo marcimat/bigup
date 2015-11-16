@@ -20,6 +20,14 @@
 .bigup_fichiers .actions {
 	float:right;
 	margin-top:1em;
+	text-align:right;
+}
+.bigup_fichiers .actions .bigup-btn.btn {
+	padding: 3px 8px;
+}
+.bigup_fichiers .actions progress {
+	display:block;
+	margin-bottom:.5em;
 }
 .bigup_fichiers .infos {
 	padding-left:60px;
@@ -40,7 +48,7 @@
 	font-weight:bold;
 }
 
-.dropfile .btn {
+.bigup-btn.btn {
 	-moz-user-select: none;
 	border: 1px solid transparent;
 	border-radius: 4px;
@@ -55,20 +63,20 @@
 	vertical-align: middle;
 	white-space: nowrap;
 }
-.dropfile .btn:hover,
-.dropfile .btn:focus {
+.bigup-btn.btn:hover,
+.bigup-btn.btn:focus {
 	color: #333;
 	text-decoration: none;
 }
 
-.dropfile .btn-default {
+.bigup-btn.btn-default {
 	background-color: #fff;
 	border-color: #ccc;
 	color: #333;
 }
-.dropfile .btn-default:hover,
-.dropfile .btn-default:focus,
-.dropfile .btn-default:active {
+.bigup-btn.btn-default:hover,
+.bigup-btn.btn-default:focus,
+.bigup-btn.btn-default:active {
 	background-color: #ebebeb;
 	border-color: #adadad;
 	color: #333;
