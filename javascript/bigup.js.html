@@ -20,10 +20,10 @@ $(document).ready(function(){
 $.fn.bigup = function() {
 	$(this).each(function() {
 		// trouver les paramètres ciblant le formulaire
-		var name = $(this).attr('name');
-		var token = $(this).data('token');
+		var name     = $(this).attr('name');
+		var token    = $(this).data('token');
 		var multiple = $(this).prop('multiple');
-		var accept = $(this).prop('accept');
+		var accept   = $(this).prop('accept');
 
 		var $form = $(this).parents('form');
 		var target = $form.attr('action');
@@ -41,8 +41,8 @@ $.fn.bigup = function() {
 				bigup_token: token,
 				formulaire_action: formulaire_action,
 				formulaire_action_args: formulaire_action_args,
-				accept: accept 
-			} // accept pourra servir au serveur pour éviter un stockage inutile
+				accept: accept // accept pourra servir au serveur pour éviter un stockage inutile
+			}
 		});
 
 		// Si l'upload html5 n'est pas supporté,
@@ -66,8 +66,7 @@ $.fn.bigup = function() {
 		$zone.show();
 
 		// Assigner la zone et son bouton à flow.
-		// flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
-		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple);
+		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
 		flow.assignDrop($zone);
 
 		// Valider chaque fichier déposé en fonction du 'accept' de l'input.
@@ -105,17 +104,22 @@ $.fn.bigup = function() {
 					// Ajouter le fichier à la zone
 					var template = $.bigup_template_fichier(file.file);
 					$zone.append(template);
+					// Conserver en mémoire l'emplacement
+					// Inversement, depuis l'emplacement, pouvoir retrouver le fichier
+					file.zone = $zone.find(".fichier:last-child").animateAppend().data('file', file);
 				}
 				flow.upload();
 			}
 		});
 
 		flow.on('fileProgress', function(file, chunk){
-			console.log("progress", file, chunk);
+			var percent = Math.round(file._prevUploadedSize / file.size * 100);
+			file.zone.find('progress').val(percent).text( percent + " %" );
 		});
 
 		flow.on('fileSuccess', function(file, message, chunk){
 			console.info("success", file, message, chunk);
+			file.zone.find("progress").remove();
 		});
 
 		flow.on('fileError', function(file, message, chunk){
@@ -160,13 +164,26 @@ $.bigup_isValidFile = function(file, acceptedFiles) {
 
 
 /**
+ * Annuler le transfert d'un fichier déposé qui se téléverse
+ */
+$.bigup_annuler_transfert = function(me) {
+	var $fichier = $(me).parents('.fichier');
+	var file = $fichier.data('file');
+	file.cancel();
+	$fichier.animateRemove(function(){
+		$(this).remove();
+	});
+}
+
+
+/**
  * Crée un template HTML de la zone de dépot de fichier pour un nom de champ donné.
  */
 $.bigup_template = function(name, multiple) {
 
 	var template =  
 		'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
-		+ '\n\t<span class="dropfilebutton btn btn-default"><:bigup:televerser|texte_script:></span>'
+		+ '\n\t<span class="dropfilebutton bigup-btn btn btn-default"><:bigup:televerser|texte_script:></span>'
 		+ '\n\t<span class="dropfileor"><:bigup:ou|texte_script:></span>'
 		+ '\n\t<span class="dropfiletext">'
 		+ '\n\t\t' + (multiple ? '<:bigup:deposer_vos_fichiers_ici|texte_script:>' : '<:bigup:deposer_votre_fichier_ici|texte_script:>' )
@@ -183,10 +200,13 @@ $.bigup_template_fichier = function(file) {
 
 	// retouver l'extension
 	var extension = $.trouver_extension(file.name);
+	var t_annuler = "<:bouton_annuler|texte_script:>";
 
 	var template =
 		'\n<div class="fichier">'
 		+ '\n\t<div class="actions">'
+		+ '\n\t\t<progress value="0" max="100">0 %</progress>'
+		+ '\n\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_annuler_transfert(this); return false;">' + t_annuler + '</span>'
 		+ '\n\t</div>'
 		+ '\n\t<div class="infos vignette_extension ' + extension + '">'
 		+ '\n\t\t<span class="name"><strong>' + file.name + '</strong></span>'
@@ -197,6 +217,7 @@ $.bigup_template_fichier = function(file) {
 
 	return template;
 };
+
 
 /**
  * Retrouve (et corrige) une extension dans un nom de fichier
