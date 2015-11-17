@@ -6,13 +6,14 @@ Fournit une API
 ## Fonctionnement général
 
 Un formulaire va pouvoir stoker les fichiers envoyés par un champ
-de input de type file, le temps de la rédaction de ce formulaire,
-jusqu'au traitement de celui-ci. Ainsi si des erreurs de saisie sont présentes,
+input de type file, le temps de la rédaction de ce formulaire,
+jusqu'au traitement de celui-ci. Ainsi, si des erreurs de saisie sont présentes,
 les fichiers n'ont pas à être de nouveau envoyés.
 
 Il est possible, dans le code html du formulaire de lister les fichiers
 déjà envoyés, pour chaque champ de type file concerné (et de pouvoir demander
 leur suppression).
+
 
 ### Amélioration javascript
 
@@ -65,7 +66,7 @@ du fichier lui-même, selon cette arborescence :
 Quelques notes :
 
 - les morceaux de fichiers ont la même arborescence, mais sont stokés dans `parts` au lieu de `final`
-- l'auteur est le login, sinon l'id_auteur, sinon une clé basée sur la session PHP
+- l'auteur c'est "{id_auteur}.{login}", sinon "{id_auteur}", sinon "0.hash" pour les anonymes, dépendant de la session PHP en cours.
 - l'identifiant du formulaire dépend de son hash (c'est à dire des arguments d'appel du formulaire)
 - l'identifiant du fichier permet de discriminer 2 fichiers de même nom (mais pas de même contenu) utilisés pour le même champ.
 
@@ -77,7 +78,7 @@ Elle découpe un fichier en morceau, et pour chaque morceau fait
 une demande au serveur pour savoir s'il possède déjà ce morceau.
 S'il ne l'a pas, ce morceau est téléversé.
 
-La réception côté PHP est géré dans le fichier d'option du plugin,
+La réception côté PHP est géré dans un fichier d'action (bigup.php)
 qui retourne simplement un header PHP avec le statut http correspondant
 au traitement qui a été fait. L'autorisation de déposer un fichier
 est conditionné à un token calculé à partir des informations
@@ -92,10 +93,10 @@ de Flow.js.
 ### Le token
 
 Le token peut être calculé en utilisant la balise `#BIGUP_TOKEN{nom}`
-où 'nom' est la valeur du name de l'input. Attention cependant, cette
-balise dans son usage par défaut doit avoir accès à `#ENV{form}` et
-`#ENV{formulaire_args}` donc attention si vous l'utilisez dans
-une inclusion à avoir ces informations.
+où 'nom' est la valeur du name de l'input. Cependant, cette balise
+dans son usage par défaut doit avoir accès à `#ENV{form}` et
+`#ENV{formulaire_args}` donc attention si elle est utilisée dans
+une inclusion à bien transmettre `env` ou ces valeurs.
 
 Le token est valide 24h par défaut (afficher le formulaire
 donne systématiquement un nouveau token).
@@ -104,15 +105,17 @@ donne systématiquement un nouveau token).
 ### La saisie
 
 La balise `#SAISIE_FICHIER` est une extension à la balise `#SAISIE`
-qui calcule automatiquement les valeurs `token` et `fichiers` avec
-respectivement le token, et la liste des fichiers en attente pour ce champ.
+qui calcule automatiquement en plus les valeurs
+
+- `token` : la valeur du résultat de `#BIGUP_TOKEN{nom}`
+- `fichiers` : la liste des fichiers déjà en attente pour ce champ.
 
 Le plugin dispose d'une saisie `bigup` à laquelle on peut passer
 un certain nombre d'options. Les plus utiles sont :
 
-- accept : pour limiter à certains types de fichier acceptés
+- `accept` : pour limiter à certains types de fichier acceptés
            (comme la valeur de l'attribut html5)
-- multiple : pour autoriser plusieurs fichiers pour ce champ.
+- `multiple` : pour autoriser plusieurs fichiers pour ce champ.
 
 Exemple :
 
@@ -216,10 +219,7 @@ plusieurs entrées pour chaque clés :
 
 ### JS
 
-- Gérer un affichage d'erreur
 - Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
-- Afficher la progression
-- Bouton pour annuler un envoi en cours
 - Bouton pour effacer un envoi effectué
 
 ### PHP
