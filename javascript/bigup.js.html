@@ -83,7 +83,6 @@ $.fn.bigup = function() {
 
 		// Téléverser aussitôt les fichiers valides déposés
 		flow.on('filesSubmitted', function (files) {
-			console.log('filesSubmitted', files);
 			if (files.length) {
 				for (var i = 0; i < files.length; i++) {
 					var file = files[i];
@@ -112,22 +111,27 @@ $.fn.bigup = function() {
 			}
 		});
 
+		// Actualiser la barre de progression de l'upload
 		flow.on('fileProgress', function(file, chunk){
 			var percent = Math.round(file._prevUploadedSize / file.size * 100);
 			file.zone.find('progress').text( percent + " %" ).animer_progress(percent);
 		});
 
+		// Réussite de l'opload :
+		// Adapter le bouton 'Annuler' => 'Enlever'
+		// Enlève la barre de progression
 		flow.on('fileSuccess', function(file, message, chunk){
 			console.info("success", file, message, chunk);
 			file.zone.find(".cancel").fadeOut("normal", function(){ $(this).remove(); });
-			// Attendre qu'on soit forcément à 100% sur le progress et l'enlever en douceur
-			file.zone.find("progress").delay(1000).fadeOut("normal", function(){
-				 $(this).slideUp("normal", function(){ $(this).remove(); });
-			});
+			file.zone.find("progress").retirer_progress();
 		});
 
+		// Erreur, pas de bol !
+		// Afficher l'erreur
+		// Retirer la barre de progression
 		flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
+			file.zone.find("progress").retirer_progress();
 		});
 
 		return true;
@@ -185,23 +189,27 @@ $.bigup_annuler_transfert = function(me) {
 $.fn.animer_progress = function(val) {
 	$(this).each(function() {
 		var me = this;
-		$({
-			// The value at present
-			interpVal: me.value
-		}).animate({
-			interpVal: val
-		}, {
-			// How long this interpolation should take
+		$({percent: me.value}).animate({percent: val}, {
 			duration: 1000,
-			// The function to set the progress bar's value to the inter val
-			step: function () {
-				me.value = this.interpVal;
-			}
+			step: function () { me.value = this.percent; }
 		});
 	});
 	return this;
 }
 
+
+/**
+ * Retire une balise progress du html, en douceur
+ */
+$.fn.retirer_progress = function(val) {
+	$(this).each(function() {
+		// meme durée que sur animer_progress() pour attendre la fin
+		$(this).delay(1000).fadeOut("normal", function(){
+			$(this).slideUp("normal", function(){ $(this).remove(); });
+		});
+	});
+	return this;
+}
 
 /**
  * Crée un template HTML de la zone de dépot de fichier pour un nom de champ donné.
