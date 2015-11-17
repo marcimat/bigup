@@ -84,6 +84,9 @@ $.fn.bigup = function() {
 		// Téléverser aussitôt les fichiers valides déposés
 		flow.on('filesSubmitted', function (files) {
 			if (files.length) {
+				$.each(files, function(key, file) {
+					file.zone.ajouter_progress();
+				});
 				flow.upload();
 			}
 		});
@@ -215,6 +218,16 @@ $.bigup_annuler_transfert = function(me) {
 }
 
 /**
+ * Ajoute une balise progress dans le contenu, en douceur
+ */
+$.fn.ajouter_progress = function() {
+	var progress = $('<progress value="0" max="100" style="display:none">0 %</progress>');
+	$(this).append(progress);
+	progress.fadeIn(1000); /* marche pas terrible */
+	return this;
+}
+
+/**
  * Augmente une balise progress à la valeur indiquée. Mais doucement
  */
 $.fn.animer_progress = function(val) {
@@ -233,11 +246,9 @@ $.fn.animer_progress = function(val) {
  * Retire une balise progress du html, en douceur
  */
 $.fn.retirer_progress = function(val) {
-	$(this).each(function() {
-		// meme durée que sur animer_progress() pour attendre la fin
-		$(this).delay(1000).fadeOut("normal", function(){
-			$(this).slideUp("normal", function(){ $(this).remove(); });
-		});
+	// meme durée que sur animer_progress() pour attendre la fin
+	$(this).delay(1000).fadeOut("normal", function(){
+		$(this).slideUp("normal", function(){ $(this).remove(); });
 	});
 	return this;
 }
@@ -280,7 +291,6 @@ $.bigup_template_fichier = function(file) {
 		+ '\n\t\t\t<span class="size">' + $.taille_en_octets(file.size) + '</span>'
 		+ '\n\t\t</div>'
 		+ '\n\t</div>'
-		+ '\n\t\t<progress value="0" max="100">0 %</progress>'
 		+ '\n</div>\n';
 
 	return template;
