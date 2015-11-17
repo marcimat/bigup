@@ -17,6 +17,12 @@
 .bigup_fichiers .fichier + .fichier {
 	border-top:none;
 }
+.bigup_fichiers .fichier.erreur {
+	border-left: 2px solid #fa4b19;
+}
+.bigup_fichiers .fichier .message_erreur {
+	color: #D31603;
+}
 .bigup_fichiers .actions {
 	float:right;
 	margin-top:1em;
@@ -32,6 +38,7 @@
 }
 .bigup_fichiers .infos {
 	padding-left:60px;
+	min-height:54px; /* laisser de l'espace à l'icone */
 }
 .bigup_fichiers .infos span {
 	display:block;

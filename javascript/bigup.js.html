@@ -56,7 +56,7 @@ $.fn.bigup = function() {
 
 		// S'il n'y en a pas, créer le template par défaut et l'ajouter
 		if (!$zone.length) {
-			var template = $.bigup_template(name, multiple);
+			var template = $.bigup_template_zone_depot(name, multiple);
 			$(this).after(template);
 			$zone = $form.find(".dropfile_" + name);
 		}
@@ -69,44 +69,21 @@ $.fn.bigup = function() {
 		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
 		flow.assignDrop($zone);
 
-		// Valider chaque fichier déposé en fonction du 'accept' de l'input.
-		flow.on('fileAdded', function(file,  event){
-			if (typeof file.flowObj.opts.query.accept !== undefined) {
-				var accept = file.flowObj.opts.query.accept;
-				if (accept && !$.bigup_isValidFile(file.file, accept)) {
-					// TODO: afficher une vraie erreur
-					console.log("Fichier non accepté !");
-					return false;
-				}
+		// Présenter le fichier dans liste des fichiers en cours
+		// Valider le fichier déposé en fonction du 'accept' de l'input (si présent).
+		flow.on('fileAdded', function(file,  event) {
+			$.bigup_ajouter_fichier(file);
+			if (!$.bigup_accepter_fichier(file)) {
+				$.bigup_presenter_erreur(file, "Fichier non accepté !");
+				// TODO: afficher une vraie erreur
+				console.log("Fichier non accepté !");
+				return false;
 			}
 		});
 
 		// Téléverser aussitôt les fichiers valides déposés
 		flow.on('filesSubmitted', function (files) {
 			if (files.length) {
-				for (var i = 0; i < files.length; i++) {
-					var file = files[i];
-
-					var $input = file.flowObj.opts.input;
-					var name = file.flowObj.opts.fileParameterName;
-
-					// Trouver une zone où afficher les fichiers dans le HTML existant
-					var $zone = $input.parents('form').find(".fichiers_" + name);
-
-					// S'il n'y en a pas, créer le template par défaut et l'ajouter
-					if (!$zone.length) {
-						var template = "<div class='bigup_fichiers fichiers_" + name + "'></div>";
-						$input.before(template);
-						$zone = $form.find(".fichiers_" + name);
-					}
-
-					// Ajouter le fichier à la zone
-					var template = $.bigup_template_fichier(file.file);
-					$zone.append(template);
-					// Conserver en mémoire l'emplacement
-					// Inversement, depuis l'emplacement, pouvoir retrouver le fichier
-					file.zone = $zone.find(".fichier:last-child").animateAppend().data('file', file);
-				}
 				flow.upload();
 			}
 		});
@@ -137,6 +114,50 @@ $.fn.bigup = function() {
 		return true;
 	});
 }
+
+/**
+ * Ajoute le fichier transmis dans la liste des fichiers au dessus
+ * de la zone de dépot
+ */
+$.bigup_ajouter_fichier = function(file) {
+	var $input = file.flowObj.opts.input;
+	var name = file.flowObj.opts.fileParameterName;
+
+	// Trouver une zone où afficher les fichiers dans le HTML existant
+	var $zone = $input.parents('form').find(".fichiers_" + name);
+
+	// S'il n'y en a pas, créer le template par défaut et l'ajouter
+	if (!$zone.length) {
+		var template = "<div class='bigup_fichiers fichiers_" + name + "'></div>";
+		$input.before(template);
+		$zone = $input.parents('form').find(".fichiers_" + name);
+	}
+
+	// Ajouter le fichier à la zone
+	var template = $.bigup_template_fichier(file.file);
+	$zone.append(template);
+
+	// Conserver en mémoire l'emplacement dans file
+	// Inversement, depuis l'emplacement, pouvoir retrouver le fichier
+	file.zone = $zone.find(".fichier:last-child").animateAppend().data('file', file);
+
+	return true;
+}
+
+/**
+ * Tester que le fichier est valide par rapport à l'attribut `accept` de l'input.
+ * @return true si OK.
+ */
+$.bigup_accepter_fichier = function(file) {
+	if (typeof file.flowObj.opts.query.accept !== undefined) {
+		var accept = file.flowObj.opts.query.accept;
+		if (accept && !$.bigup_isValidFile(file.file, accept)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 
 /**
  * Vérifier un fichier par rapport à un attribut 'accept'
@@ -170,6 +191,16 @@ $.bigup_isValidFile = function(file, acceptedFiles) {
 	return false;
 };
 
+/**
+ * Une erreur est apparue sur un fichier à téléverser.
+ * L'indiquer
+ */
+$.bigup_presenter_erreur = function(file, message) {
+	var $zone = file.zone;
+	$zone.addClass('erreur');
+	$zone.find('.infos').append("<span class='message_erreur'>" + message + "</span>");
+	return true;
+}
 
 /**
  * Annuler le transfert d'un fichier déposé qui se téléverse
@@ -214,7 +245,7 @@ $.fn.retirer_progress = function(val) {
 /**
  * Crée un template HTML de la zone de dépot de fichier pour un nom de champ donné.
  */
-$.bigup_template = function(name, multiple) {
+$.bigup_template_zone_depot = function(name, multiple) {
 
 	var template =  
 		'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
