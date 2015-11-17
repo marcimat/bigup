@@ -110,7 +110,16 @@ $.fn.bigup = function() {
 		// Retirer la barre de progression
 		flow.on('fileSuccess', function(file, message, chunk){
 			console.info("success", file, message, chunk);
-			file.zone.find(".cancel").fadeOut("normal", function(){ $(this).remove(); });
+			var desc = $.parseJSON(message);
+			// enlever le bouton annuler
+			file.zone.find(".cancel").fadeOut("normal", function(){
+				$(this).remove();
+				// et mettre un bouton enlever !
+				if (desc.identifiant) {
+					var name = file.flowObj.opts.fileParameterName;
+					file.zone.bigup_ajouter_bouton_enlever(name, desc.identifiant);
+				}
+			});
 			file.zone.find("progress").retirer_progress();
 		});
 
@@ -128,7 +137,7 @@ $.fn.bigup = function() {
 }
 
 /**
- * Remplacer les boutons "Enlever" sur les fichiers déjà présents
+ * Remplacer les boutons "Enlever" d'origine sur les fichiers déjà présents
  * dans le formulaire (listés au dessus du champ).
  *
  * On remplace par un équivalent qui fera la chose en pur JS + ajax
@@ -140,17 +149,32 @@ $.fn.bigup_remplacer_boutons_enlever = function(name) {
 	// Trouver les fichiers s'il y en a
 	var $fichiers = $(this).find(".fichiers_" + name + " .fichier");
 	$fichiers.each(function(){
-		$(this).find("button[name=bigup_enlever_fichier]").each(function(){
-			var hash = $(this).val();
-			var js = "$.bigup_enlever_fichier(this, '" + name + "', '" + hash + "'); return true;";
-			var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">' + t_enlever + '</span>';
-			var $actions = $(this).parent();
-			$(this).remove();
-			$actions.append(inserer);
-		});
+		var $button = $(this).find("button[name=bigup_enlever_fichier]");
+		var hash = $button.val();
+		$button.remove();
+		$(this).bigup_ajouter_bouton_enlever(name, hash);
 	});
+
 	return this;
 }
+
+/**
+ * Ajoute un "Enlever" sur un fichier 
+ *
+ * @param string name Nom du champ (name) concerné.
+ */
+$.fn.bigup_ajouter_bouton_enlever = function(name, hash) {
+	var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
+
+	var js = "$.bigup_enlever_fichier(this, '" + name + "', '" + hash + "'); return true;";
+	var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">' + t_enlever + '</span>';
+
+	$(this).find('.actions').append(inserer);
+
+	return this;
+}
+
+
 
 
 /**

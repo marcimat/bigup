@@ -188,7 +188,13 @@ class Bigup {
 				array(0),
 				'genie/'
 			);
-			$this->send(200);
+
+			// envoyer quelques infos sur le fichier reçu
+			$desc = $this->decrire_fichier($res);
+			// ne pas permettre de connaître le chemin complet
+			unset($desc['pathname'], $desc['tmp_name']);
+
+			$this->send(200, $desc);
 		}
 
 		if (is_int($res)) {
@@ -447,11 +453,16 @@ class Bigup {
 	 * Envoie le code header indiqué… et arrête tout.
 	 *
 	 * @param int $code
+	 * @param array|null $data Données à faire envoyer en json
 	 * @return void
 	**/
-	public function send($code) {
+	public function send($code, $data = null) {
 		$this->debug("> send $code");
 		http_response_code($code);
+		if ($data) {
+			header("Content-Type: application/json; charset=" . $GLOBALS['meta']['charset']);
+			echo json_encode($data);
+		}
 		exit;
 	}
 
