@@ -18,7 +18,10 @@ $(document).ready(function(){
  * gère l'upload de ou des fichiers, via html5 et flow.js
  */
 $.fn.bigup = function() {
-	$(this).each(function() {
+	$(this).not(".bigup_done").each(function() {
+		// indiquer que l'input est traité. Évite de charger plusieurs fois Flow
+		$(this).addClass('bigup_done');
+
 		// trouver les paramètres ciblant le formulaire
 		var name     = $(this).attr('name').replace(/\\[\\]$/, ""); // Note : \[\] est déjà un échappement SPIP !
 		var token    = $(this).data('token');
