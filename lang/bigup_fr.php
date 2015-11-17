@@ -7,6 +7,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 
 	// B
 	'bigup_titre' => 'Big Upload',
+	'bouton_enlever' => 'Enlever',
 
 	// C
 	'cfg_charger_public' => 'Script dans l’espace public',

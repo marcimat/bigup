@@ -62,6 +62,21 @@ class Bigup {
 	private $token_expiration = 3600 * 24;
 
 	/**
+	 * Nom d'une action demandée
+	 *
+	 * Si pas de précision => gestion par Flow
+	 * 
+	 * @var string
+	**/
+	private $action = '';
+
+	/**
+	 * Hash d'un fichier (en cas de suppression demandée)
+	 * @var string
+	**/
+	private $hash_fichier = '';
+
+	/**
 	 * Nom du répertoire, dans _DIR_TMP, qui va stocker les fichiers et morceaux de fichiers
 	 * @var string */
 	private $cache_dir = 'bigupload';
@@ -96,9 +111,11 @@ class Bigup {
 	 * Retrouve les paramètres pertinents pour gérer le test ou la réception de fichiers.
 	**/
 	public function recuperer_parametres() {
+		$this->action          = _request('bigup_action'); 
 		$this->token           = _request('bigup_token');
 		$this->formulaire      = _request('formulaire_action');
 		$this->formulaire_args = _request('formulaire_action_args');
+		$this->hash_fichier    = _request('hash');
 		$this->identifier_formulaire();
 	}
 
@@ -106,17 +123,54 @@ class Bigup {
 	 * Répondre
 	 *
 	 * Envoie un statut HTTP de réponse et quitte, en fonction de ce qui était demandé,
-	 * soit tester un morceau de fichier, soit réceptionner un morceau de fichier.
+	 *
+	 * - soit tester un morceau de fichier,
+	 * - soit réceptionner un morceau de fichier,
+	 * - soit effacer un fichier
 	 *
 	 * Si les hash ne correspondaient pas, le programme quitte évidemment.
 	**/
 	public function repondre() {
 		if (!$this->verifier_token()) {
-			return $this->send(415);
+			return $this->send(403);
 		}
 
 		$this->calculer_chemin_repertoires();
 
+		if ($this->action) {
+			switch ($this->action) {
+				case "effacer":
+					return $this->repondre_effacer();
+					break;
+				default:
+					return $this->send(403);
+					break;
+			}
+		}
+
+		return $this->repondre_flow();
+	}
+
+	/**
+	 * Répondre le cas de suppression d'un fichier
+	 *
+	 * L'identifiant de fichier est le md5 du chemin de stockage.
+	**/
+	public function repondre_effacer() {
+		if (!$this->hash_fichier) {
+			return $this->send(404);
+		}
+		if (!$this->enlever_fichier($this->hash_fichier)) {
+			return $this->send(404);
+		}
+		return $this->send(201);
+	}
+
+
+	/**
+	 * Répondre le cas de réception ou test de morceau de fichier
+	**/
+	public function repondre_flow() {
 		include_spip('inc/Bigup/Flow');
 		$flow = new Flow();
 		$flow->definir_repertoire('parts', $this->dir_parts);
