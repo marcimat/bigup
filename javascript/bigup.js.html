@@ -84,9 +84,7 @@ $.fn.bigup = function() {
 		flow.on('fileAdded', function(file,  event) {
 			$.bigup_ajouter_fichier(file);
 			if (!$.bigup_accepter_fichier(file)) {
-				$.bigup_presenter_erreur(file, "Fichier non accepté !");
-				// TODO: afficher une vraie erreur
-				console.log("Fichier non accepté !");
+				$.bigup_presenter_erreur(file, "Type de fichier incorrect !");
 				return false;
 			}
 		});
@@ -122,6 +120,7 @@ $.fn.bigup = function() {
 		flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
 			file.zone.find("progress").retirer_progress();
+			$.bigup_presenter_erreur(file, "Erreur de transfert !");
 		});
 
 		return true;
