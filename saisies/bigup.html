@@ -22,7 +22,7 @@
 </div>
 </B_fichiers>
 
-<input type="file" name="#ENV{nom}" 
+<input type="file" name="#ENV{nom}[(#GET{multiple}|?{\[\]})]" 
 	class="file bigup[ (#ENV{class})]"
 	[(#GET{multiple}|oui)multiple ]
 	[accept="(#ENV{accept}|attribut_html)"]

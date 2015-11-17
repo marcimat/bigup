@@ -20,7 +20,7 @@ $(document).ready(function(){
 $.fn.bigup = function() {
 	$(this).each(function() {
 		// trouver les paramètres ciblant le formulaire
-		var name     = $(this).attr('name');
+		var name     = $(this).attr('name').replace(/\\[\\]$/, ""); // Note : \[\] est déjà un échappement SPIP !
 		var token    = $(this).data('token');
 		var multiple = $(this).prop('multiple');
 		var accept   = $(this).prop('accept');
@@ -119,7 +119,7 @@ $.fn.bigup = function() {
 
 		// Réussite de l'opload :
 		// Adapter le bouton 'Annuler' => 'Enlever'
-		// Enlève la barre de progression
+		// Retirer la barre de progression
 		flow.on('fileSuccess', function(file, message, chunk){
 			console.info("success", file, message, chunk);
 			file.zone.find(".cancel").fadeOut("normal", function(){ $(this).remove(); });
