@@ -177,6 +177,7 @@ class Bigup {
 		$flow->definir_repertoire('final', $this->dir_final);
 		$res = $flow->run();
 
+		// le fichier est complet
 		if (is_string($res)) {
 			// remettre le fichier dans $FILES
 			# $this->integrer_fichier($this->champ, $res);
@@ -193,6 +194,9 @@ class Bigup {
 			$desc = $this->decrire_fichier($res);
 			// ne pas permettre de connaître le chemin complet
 			unset($desc['pathname'], $desc['tmp_name']);
+
+			// nettoyer le chemin des répertoires temporaires du coup.
+			$this->supprimer_repertoire_fichier(dirname($res), 'parts');
 
 			$this->send(200, $desc);
 		}
@@ -242,7 +246,8 @@ class Bigup {
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $k => $description) {
 				if ($description['identifiant'] == $identifiant) {
-					$this->supprimer_repertoire_fichier(dirname($description['pathname']));
+					// en théorie, le chemin 'parts' a déjà été nettoyé
+					$this->supprimer_repertoire_fichier(dirname($description['pathname']), 'final');
 					return true;
 				}
 			}
@@ -257,9 +262,11 @@ class Bigup {
 	 *
 	 * @param string $chemin
 	 *     Chemin du répertoire stockant un fichier bigup
+	 * @param string $quoi
+	 *     Quelle partie supprimer : 'final', 'parts' ou 'tout' (les 2)
 	 * @return bool
 	 */
-	function supprimer_repertoire_fichier($chemin) {
+	function supprimer_repertoire_fichier($chemin, $quoi = 'tout') {
 
 		// on vérifie que ce chemin concerne bigup uniquement
 		if (strpos($chemin, $this->dir_final) === 0) {
@@ -270,13 +277,20 @@ class Bigup {
 			return false;
 		}
 
-		// Suppression du contenu de ce répertoire.
 		include_spip('inc/flock');
-		supprimer_repertoire($this->dir_final . $path);
-		supprimer_repertoire($this->dir_parts . $path);
 
-		$this->supprimer_repertoires_vides($this->dir_final);
-		$this->supprimer_repertoires_vides($this->dir_parts);
+		// Suppression du contenu du fichier final
+		if (in_array($quoi, array('tout', 'final'))) {
+			supprimer_repertoire($this->dir_final . $path);
+			$this->supprimer_repertoires_vides($this->dir_final);
+		}
+
+		// Suppression du contenu des morcaux du fichier
+		if (in_array($quoi, array('tout', 'parts'))) {
+			supprimer_repertoire($this->dir_parts . $path);
+			$this->supprimer_repertoires_vides($this->dir_parts);
+		}
+
 		return true;
 	}
 
@@ -288,8 +302,7 @@ class Bigup {
 	 * @param string $chemin Chemin du fichier dont on veut nettoyer le répertoire de stockage de ce fichier
 	 * @return bool
 	 */
-	function supprimer_repertoires_vides($chemin)
-	{
+	function supprimer_repertoires_vides($chemin) {
 		// on se restreint au répertoire cache de bigup tout de même.
 		if (strpos($chemin, _DIR_TMP . $this->cache_dir) !== 0) {
 			return false;
