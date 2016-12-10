@@ -173,7 +173,7 @@ function bigup_nettoyer_repertoire_recursif($repertoire, $age_max = 24*3600) {
 	}
 
 	foreach ($fichiers as $fichier) {
-		$chemin = $repertoire . '/' . $fichier;
+		$chemin = $repertoire . DIRECTORY_SEPARATOR . $fichier;
 		if (is_dir($chemin)) {
 			bigup_nettoyer_repertoire_recursif($chemin, $age_max);
 		}

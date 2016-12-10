@@ -242,13 +242,78 @@ class Bigup {
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $k => $description) {
 				if ($description['identifiant'] == $identifiant) {
-					@unlink($description['pathname']);
+					$this->supprimer_repertoire_fichier(dirname($description['pathname']));
 					return true;
 				}
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Supprimer le répertoire indiqué et les répertoires parents éventuellement.
+	 *
+	 *
+	 * @param string $chemin
+	 *     Chemin du répertoire stockant un fichier bigup
+	 * @return bool
+	 */
+	function supprimer_repertoire_fichier($chemin) {
+
+		// on vérifie que ce chemin concerne bigup uniquement
+		if (strpos($chemin, $this->dir_final) === 0) {
+			$path = substr($chemin, strlen($this->dir_final));
+		} elseif (strpos($chemin, $this->dir_parts) === 0) {
+			$path = substr($chemin, strlen($this->dir_final));
+		} else {
+			return false;
+		}
+
+		// Suppression du contenu de ce répertoire.
+		include_spip('inc/flock');
+		supprimer_repertoire($this->dir_final . $path);
+		supprimer_repertoire($this->dir_parts . $path);
+
+		$this->supprimer_repertoires_vides($this->dir_final);
+		$this->supprimer_repertoires_vides($this->dir_parts);
+		return true;
+	}
+
+	/**
+	 * Supprimer les répertoires intermédiaires jusqu'au chemin indiqué si leurs contenus sont vides.
+	 *
+	 * S'il n'y avait qu'un seul fichier dans tmp/bigupload, tout sera nettoyé, jusqu'au répertoire bigupload.
+	 *
+	 * @param string $chemin Chemin du fichier dont on veut nettoyer le répertoire de stockage de ce fichier
+	 * @return bool
+	 */
+	function supprimer_repertoires_vides($chemin)
+	{
+		// on se restreint au répertoire cache de bigup tout de même.
+		if (strpos($chemin, _DIR_TMP . $this->cache_dir) !== 0) {
+			return false;
+		}
+
+		$chemin = substr($chemin, strlen(_DIR_TMP));
+		while ($chemin and ($chemin !== '.')) {
+
+			$fichiers = scandir(_DIR_TMP . $chemin);
+			if ($fichiers === false) {
+				$chemin = dirname($chemin);
+				continue;
+			}
+
+			$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+			if (!$fichiers) {
+				supprimer_repertoire(_DIR_TMP . $chemin);
+				$chemin = dirname($chemin);
+				continue;
+			}
+
+			return true;
+		}
+		return true;
 	}
 
 	/**
