@@ -1,6 +1,3 @@
-.bigup_fichiers {
-	margin-bottom:1em;
-}
 .bigup_fichiers .fichier {
 	background:rgba(255,255,255,.95);
 	border: 1px solid #ddd;
@@ -14,6 +11,7 @@
 .bigup_fichiers .fichier:last-child {
 	border-bottom-left-radius:5px;
 	border-bottom-right-radius:5px;
+	margin-bottom:1em;
 }
 .bigup_fichiers .fichier + .fichier {
 	border-top:none;
