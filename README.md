@@ -220,7 +220,9 @@ plusieurs entrées pour chaque clés :
 ### JS
 
 - Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
-- Bouton pour effacer un envoi effectué
+- Ne pas pouvoir envoyer plusieurs fichiers si la saisie n'est pas multiple.
+  Et ne pas proposer l'upload une fois un fichier déjà uploadé.
+  
 
 ### PHP
 

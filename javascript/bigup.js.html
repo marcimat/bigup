@@ -15,7 +15,7 @@ $(document).ready(function(){
 
 /**
  * Pour un input de type file sélectionné,
- * gère l'upload de ou des fichiers, via html5 et flow.js
+ * gère l'upload du ou des fichiers, via html5 et flow.js
  */
 $.fn.bigup = function() {
 	$(this).not(".bigup_done").each(function() {
@@ -40,6 +40,7 @@ $.fn.bigup = function() {
 			fileParameterName: name,
 			testChunks: true,
 			maxFiles: (multiple ? 0 : 1), // TODO: gérer un nombre de fichiers maxi
+			singleFile: !multiple,
 			simultaneousUploads: 2, // 3 par défaut
 			permanentErrors : [403, 404, 415, 500, 501], // ajout de 403 à la liste par défaut.
 			query: {
