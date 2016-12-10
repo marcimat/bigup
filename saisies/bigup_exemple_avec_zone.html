@@ -1,10 +1,11 @@
 
 #SET{multiple,#ENV{multiple}|=={oui}}
 
-<input type="file" name="#ENV{nom}" 
+<input type="file" name="#ENV{nom}[(#GET{multiple}|?{\[\]})]"
 	class="file bigup[ (#ENV{class})]"
 	[(#GET{multiple}|oui)multiple ]
-	data-token="" />
+	[accept="(#ENV{accept}|attribut_html)"]
+	data-token="#ENV{token}" />
 
 [(#REM)
 	Si le formulaire contient une classe .dropfile_{nom},
