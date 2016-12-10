@@ -86,7 +86,7 @@ function calculer_balise_BIGUP_TOKEN($champ, $form, $form_args) {
 	}
 	$time = time();
 	$token = $champ . ':' . $time . ':' . calculer_action_auteur("bigup/$form/$form_args/$champ/$time");
-	return  $token;
+	return $token;
 }
 
 
