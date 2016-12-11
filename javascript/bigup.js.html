@@ -58,32 +58,43 @@ $.fn.bigup = function() {
 			return false;
 		}
 
+		// flow facilement accessible depuis l'input.
+		$(this).data('flow', flow);
+
 		// S'il y a déjà des fichiers en attente, remplacer leurs boutons "Enlever"
 		// par un équivalent en JS, ce qui évite de tout recharger le formulaire pour ça.
 		$form.bigup_remplacer_boutons_enlever(name);
 
 		// Trouver une zone où déposer les fichiers dans le HTML existant
-		var $zone = $form.find(".dropfile_" + name);
+		var $zone_depot = $form.find(".dropfile_" + name);
 
 		// S'il n'y en a pas, créer le template par défaut et l'ajouter
-		if (!$zone.length) {
+		if (!$zone_depot.length) {
 			var template = $.bigup_template_zone_depot(name, multiple);
 			$(this).after(template);
-			$zone = $form.find(".dropfile_" + name);
+			$zone_depot = $form.find(".dropfile_" + name);
 		}
 
-		// Voir la zone, cacher l'input original
+		// stocker des infos utilse dans flow.
+		flow.$form = $form;
+		flow.$zone_depot = $zone_depot;
+
+
+		// Cacher l'input original
 		$(this).hide();
-		$zone.show();
+
+		// Voir la zone, si on n'a pas déjà atteint le quota de fichiers
+        $.bigup_adapter_visibilite_zone_depot(flow);
 
 		// Assigner la zone et son bouton à flow.
-		flow.assignBrowse($zone.find('.dropfilebutton'), false, !multiple, {accept: accept});
-		flow.assignDrop($zone);
+		flow.assignBrowse($zone_depot.find('.dropfilebutton'), false, !multiple, {accept: accept});
+		flow.assignDrop($zone_depot);
 
 		// Présenter le fichier dans liste des fichiers en cours
 		// Valider le fichier déposé en fonction du 'accept' de l'input (si présent).
 		flow.on('fileAdded', function(file,  event) {
 			$.bigup_ajouter_fichier(file);
+			$.bigup_adapter_visibilite_zone_depot(file.flowObj);
 			if (!$.bigup_accepter_fichier(file)) {
 				$.bigup_presenter_erreur(file, "Type de fichier incorrect !");
 				return false;
@@ -138,11 +149,26 @@ $.fn.bigup = function() {
 }
 
 /**
+ * Affiche ou cache la zone de dépot en fonction du nombre de fichiers déjà actifs
+ *
+ * @param object flow L'objet flow.js
+ */
+$.bigup_adapter_visibilite_zone_depot = function(flow) {
+    var nb = flow.$form.find(".fichiers_" + flow.opts.fileParameterName + " .fichier").length;
+	if (!flow.opts.maxFiles || (flow.opts.maxFiles > nb)) {
+		flow.$zone_depot.show();
+	} else {
+		flow.$zone_depot.hide();
+	}
+}
+
+/**
  * Remplacer les boutons "Enlever" d'origine sur les fichiers déjà présents
  * dans le formulaire (listés au dessus du champ).
  *
  * On remplace par un équivalent qui fera la chose en pur JS + ajax
- * @param string name Nom du champ (name) concerné.
+ * @param string name
+ *     Nom du champ (name) concerné.
  */
 $.fn.bigup_remplacer_boutons_enlever = function(name) {
 	var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
@@ -281,7 +307,7 @@ $.fn.bigup_presenter_erreur = function(message) {
 $.bigup_annuler_transfert = function(me) {
 	var file = $(me).parents('.fichier').data('file');
 	file.cancel();
-    $.bigup_enlever_fichier(me, file.flowObj.opts.fileParameterName, file.uniqueIdentifier);
+	$.bigup_enlever_fichier(me, file.flowObj.opts.fileParameterName, file.uniqueIdentifier);
 }
 
 /**
@@ -318,6 +344,7 @@ $.bigup_enlever_fichier = function(me, name, identifiant) {
 	.done(function() {
 		$fichier.animateRemove(function(){
 			$(this).remove();
+			$.bigup_adapter_visibilite_zone_depot($input.data('flow'));
 		});
 	})
 	.fail(function() {
