@@ -283,6 +283,17 @@ Bigup.prototype = {
 			me.progress.retirer(file.emplacement.find("progress"));
 		});
 
+		// Un fichier a été enlevé, soit par nous, soit par Flow
+		// lorsqu'on a ajouté un fichier supplémentaire alors que la saisie
+		// attend un fichier unique.
+		this.flow.on('fileRemoved', function(file) {
+			// si ce n'est pas nous qui avons supprimé ce fichier
+			if (!file.bigup_deleted) {
+				me.enlever_fichier(file.emplacement);
+			}
+
+		});
+
 		// Erreur, pas de bol !
 		// Afficher l'erreur
 		// Retirer la barre de progression
@@ -444,13 +455,23 @@ Bigup.prototype = {
 	 *
 	 * @param jquery emplacement
 	 *     Emplacement du fichier dans la liste des fichiers
-	 * @param string identifiant
-	 *     Identifiant du fichier
-	 *     Soit celui de flow.js, soit celui du serveur
-	 *     pour les fichiers présents à l'ouverture du formulaire
 	 */
-	enlever_fichier: function(emplacement, identifiant) {
+	enlever_fichier: function(emplacement) {
 		var me = this;
+
+		// Identifiant du fichier
+		// Soit celui de flow.js, soit celui du serveur
+		// pour les fichiers présents à l'ouverture du formulaire
+		var identifiant = emplacement.data('identifiant')
+		// si on a un data 'file', le désintégrer…
+		if (file = emplacement.data('file')) {
+			file.abort();
+			file.bigup_deleted = true;
+			file.cancel();
+			if (!identifiant) {
+				identifiant = file.uniqueIdentifier;
+			}
+		}
 
 		$.post(this.target, {
 			action: "bigup",
@@ -542,15 +563,7 @@ Bigup.prototype = {
 $.bigup_enlever_fichier = function(me) {
 	var emplacement = $(me).parents('.fichier');
 	var bigup       = emplacement.data('bigup');
-	var identifiant = emplacement.data('identifiant')
-	// si on a un data 'file', le désintégrer…
-	if (file = emplacement.data('file')) {
-		file.cancel();
-		if (!identifiant) {
-			identifiant = file.uniqueIdentifier;
-		}
-	}
-	file.bigup.enlever_fichier(emplacement, identifiant);
+	bigup.enlever_fichier(emplacement);
 };
 
 
