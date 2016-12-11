@@ -140,7 +140,7 @@ function Bigup(params, opts) {
 				var template =
 					'\n<div class="fichier">'
 					+ '\n\t<div class="actions">'
-					+ '\n\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_annuler_transfert(this); return false;">' + t_annuler + '</span>'
+					+ '\n\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_enlever_fichier(this); return false;">' + t_annuler + '</span>'
 					+ '\n\t</div>'
 					+ '\n\t<div class="description">'
 					+ '\n\t\t<div class="vignette_extension ' + extension + '" title="' + file.type + '"></div>'
@@ -531,29 +531,26 @@ Bigup.prototype = {
 
 
 /**
- * Annuler le transfert d'un fichier déposé qui se téléverse
- * @param object me
- *   L'élément qui a cliqué
- */
-$.bigup_annuler_transfert = function(me) {
-	var file = $(me).parents('.fichier').data('file');
-	file.cancel();
-	file.bigup.enlever_fichier(file.emplacement, file.uniqueIdentifier);
-};
-
-/**
- * Enlevé un fichier déjà téléversé
+ * Enlever un fichier déjà téléversé ou annuler un transfert en cours
+ *
+ * La différence tient dans la présence de l'identifiant du fichier.
+ * C'est l'identifiant sur le serveur si le fichier est complet là bas.
+ *
  * @param object me
  *   L'élément qui a cliqué
  */
 $.bigup_enlever_fichier = function(me) {
 	var emplacement = $(me).parents('.fichier');
-	var bigup = emplacement.data('bigup');
+	var bigup       = emplacement.data('bigup');
+	var identifiant = emplacement.data('identifiant')
 	// si on a un data 'file', le désintégrer…
 	if (file = emplacement.data('file')) {
 		file.cancel();
+		if (!identifiant) {
+			identifiant = file.uniqueIdentifier;
+		}
 	}
-	bigup.enlever_fichier(emplacement, emplacement.data('identifiant'));
+	file.bigup.enlever_fichier(emplacement, identifiant);
 };
 
 
