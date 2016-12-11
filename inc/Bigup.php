@@ -71,10 +71,18 @@ class Bigup {
 	private $action = '';
 
 	/**
-	 * Hash d'un fichier (en cas de suppression demandée)
+	 * Identifiant d'un fichier (en cas de suppression demandée)
+	 *
+	 * Cet identifiant est soit un md5 du chemin du fichier sur le serveur
+	 * (envoyé dans la clé 'identifiant' des fichiers déjà présents pour ce formulaire),
+	 *
+	 * Soit un identifiant (uniqueIdentifier) qui sert au rangement du fichier, calculé
+	 * par Flow.js ou Resumable.js à partir du nom et de la taille du fichier.
+	 * Cet identifiant là est envoyé si on annule un fichier en cours de téléversement.
+	 *
 	 * @var string
 	**/
-	private $hash_fichier = '';
+	private $identifiant = '';
 
 	/**
 	 * Nom du répertoire, dans _DIR_TMP, qui va stocker les fichiers et morceaux de fichiers
@@ -111,11 +119,13 @@ class Bigup {
 	 * Retrouve les paramètres pertinents pour gérer le test ou la réception de fichiers.
 	**/
 	public function recuperer_parametres() {
-		$this->action          = _request('bigup_action'); 
+		// obligatoires
 		$this->token           = _request('bigup_token');
 		$this->formulaire      = _request('formulaire_action');
 		$this->formulaire_args = _request('formulaire_action_args');
-		$this->hash_fichier    = _request('hash');
+		// optionnels
+		$this->action          = _request('bigup_action');
+		$this->identifiant     = _request('identifiant');
 		$this->identifier_formulaire();
 	}
 
@@ -157,13 +167,18 @@ class Bigup {
 	 * L'identifiant de fichier est le md5 du chemin de stockage.
 	**/
 	public function repondre_effacer() {
-		if (!$this->hash_fichier) {
+		if (!$this->identifiant) {
 			return $this->send(404);
 		}
-		if (!$this->enlever_fichier($this->hash_fichier)) {
-			return $this->send(404);
+		// si c'est un md5, c'est l'identifiant
+		if (strlen($this->identifiant) == 32 and ctype_xdigit($this->identifiant)) {
+			if ($this->enlever_fichier_depuis_identifiant($this->identifiant)) {
+				return $this->send(201);
+			}
+		} elseif ($this->enlever_fichier_depuis_repertoire($this->identifiant)) {
+			return $this->send(201);
 		}
-		return $this->send(201);
+		return $this->send(404);
 	}
 
 
@@ -232,13 +247,13 @@ class Bigup {
 
 
 	/**
-	 * Enlève un fichier complet dont le hash est indiqué
+	 * Enlève un fichier complet dont l'identifiant est indiqué
 	 *
 	 * @param string $identifiant
 	 *     Un identifiant du fichier
 	 * @return bool True si le fichier est trouvé (et donc enlevé)
 	**/
-	public function enlever_fichier($identifiant) {
+	public function enlever_fichier_depuis_identifiant($identifiant) {
 		$this->calculer_chemin_repertoires();
 		$liste = $this->trouver_fichiers_complets();
 		$this->debug("Demande de suppression du fichier $identifiant");
@@ -254,6 +269,22 @@ class Bigup {
 		}
 
 		return false;
+	}
+
+
+	/**
+	 * Enlève un fichier (probablement partiel) dont le nom est indiqué
+	 *
+	 * @param string $repertoire
+	 *     Un repertoire de stockage du fichier.
+	 *     Il correspond au `uniqueIdentifier` transmis par le JS
+	 * @return bool True si le fichier est trouvé (et donc enlevé)
+	 **/
+	public function enlever_fichier_depuis_repertoire($repertoire) {
+		$this->calculer_chemin_repertoires();
+		$this->debug("Demande de suppression du fichier dans $repertoire");
+		$this->supprimer_repertoire_fichier($this->dir_final . DIRECTORY_SEPARATOR . $repertoire, 'tout');
+		return true;
 	}
 
 	/**
@@ -280,13 +311,13 @@ class Bigup {
 		include_spip('inc/flock');
 
 		// Suppression du contenu du fichier final
-		if (in_array($quoi, array('tout', 'final'))) {
+		if (in_array($quoi, ['tout', 'final'])) {
 			supprimer_repertoire($this->dir_final . $path);
 			$this->supprimer_repertoires_vides($this->dir_final);
 		}
 
 		// Suppression du contenu des morcaux du fichier
-		if (in_array($quoi, array('tout', 'parts'))) {
+		if (in_array($quoi, ['tout', 'parts'])) {
 			supprimer_repertoire($this->dir_parts . $path);
 			$this->supprimer_repertoires_vides($this->dir_parts);
 		}
@@ -310,6 +341,10 @@ class Bigup {
 
 		$chemin = substr($chemin, strlen(_DIR_TMP));
 		while ($chemin and ($chemin !== '.')) {
+			if (!is_dir(_DIR_TMP . $chemin)) {
+				$chemin = dirname($chemin);
+				continue;
+			}
 
 			$fichiers = scandir(_DIR_TMP . $chemin);
 			if ($fichiers === false) {
@@ -477,12 +512,12 @@ class Bigup {
 	}
 
 	/**
-	 * Calcule un identifiant de formulaire en fonction de son hash
+	 * Calcule un identifiant de formulaire en fonction de ses arguments
 	 *
 	 * @return string l'identifiant
 	**/
 	public function identifier_formulaire() {
-		return $this->formulaire_identifiant = substr($this->formulaire_args, 0, 6);
+		return $this->formulaire_identifiant = substr(md5($this->formulaire_args), 0, 6);
 	}
 
 	/**

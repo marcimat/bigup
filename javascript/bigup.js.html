@@ -42,7 +42,7 @@ $.fn.bigup = function() {
 			maxFiles: (multiple ? 0 : 1), // TODO: gérer un nombre de fichiers maxi
 			singleFile: !multiple,
 			simultaneousUploads: 2, // 3 par défaut
-			permanentErrors : [403, 404, 415, 500, 501], // ajout de 403 à la liste par défaut.
+			permanentErrors : [403, 404, 413, 415, 500, 501], // ajout de 403 à la liste par défaut.
 			query: {
 				action: "bigup",
 				bigup_token: token,
@@ -151,9 +151,9 @@ $.fn.bigup_remplacer_boutons_enlever = function(name) {
 	var $fichiers = $(this).find(".fichiers_" + name + " .fichier");
 	$fichiers.each(function(){
 		var $button = $(this).find("button[name=bigup_enlever_fichier]");
-		var hash = $button.val();
+		var identifiant = $button.val();
 		$button.remove();
-		$(this).bigup_ajouter_bouton_enlever(name, hash);
+		$(this).bigup_ajouter_bouton_enlever(name, identifiant);
 	});
 
 	return this;
@@ -163,11 +163,12 @@ $.fn.bigup_remplacer_boutons_enlever = function(name) {
  * Ajoute un "Enlever" sur un fichier 
  *
  * @param string name Nom du champ (name) concerné.
+ * @param string identifiant Identifiant (md5 du chemin sur le serveur) du fichier concerné
  */
-$.fn.bigup_ajouter_bouton_enlever = function(name, hash) {
+$.fn.bigup_ajouter_bouton_enlever = function(name, identifiant) {
 	var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
 
-	var js = "$.bigup_enlever_fichier(this, '" + name + "', '" + hash + "'); return true;";
+	var js = "$.bigup_enlever_fichier(this, '" + name + "', '" + identifiant + "'); return true;";
 	var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">' + t_enlever + '</span>';
 
 	$(this).find('.actions').append(inserer);
@@ -274,14 +275,13 @@ $.fn.bigup_presenter_erreur = function(message) {
 
 /**
  * Annuler le transfert d'un fichier déposé qui se téléverse
+ * @param object me
+ *   L'élément qui a cliqué
  */
 $.bigup_annuler_transfert = function(me) {
-	var $fichier = $(me).parents('.fichier');
-	var file = $fichier.data('file');
+	var file = $(me).parents('.fichier').data('file');
 	file.cancel();
-	$fichier.animateRemove(function(){
-		$(this).remove();
-	});
+    $.bigup_enlever_fichier(me, file.flowObj.opts.fileParameterName, file.uniqueIdentifier);
 }
 
 /**
@@ -290,10 +290,10 @@ $.bigup_annuler_transfert = function(me) {
  *     L'élément qui a cliqué
  * @param string name
  *     Le name de l'input file
- * @param string hash
- *     Le hash du fichier sur le serveur
+ * @param string identifiant
+ *     L'identifiant du fichier sur le serveur
  */
-$.bigup_enlever_fichier = function(me, name, hash) {
+$.bigup_enlever_fichier = function(me, name, identifiant) {
 	var $fichier = $(me).parents('.fichier');
 	var $form = $fichier.parents('form');
 	var $input = $form.find('input.bigup[name=' + name + ']');
@@ -313,7 +313,7 @@ $.bigup_enlever_fichier = function(me, name, hash) {
 		formulaire_action_args: formulaire_action_args,
 		bigup_token: token,
 		bigup_action: 'effacer',
-		hash: hash,
+		identifiant: identifiant,
 	})
 	.done(function() {
 		$fichier.animateRemove(function(){
