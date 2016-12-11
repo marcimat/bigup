@@ -549,6 +549,10 @@ $.bigup_annuler_transfert = function(me) {
 $.bigup_enlever_fichier = function(me) {
 	var emplacement = $(me).parents('.fichier');
 	var bigup = emplacement.data('bigup');
+	// si on a un data 'file', le désintégrer…
+	if (file = emplacement.data('file')) {
+		file.cancel();
+	}
 	bigup.enlever_fichier(emplacement, emplacement.data('identifiant'));
 };
 
