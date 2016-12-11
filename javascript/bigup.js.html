@@ -9,7 +9,6 @@ $(document).ready(function(){
 	}
 	formulaires_avec_bigup();
 	onAjaxLoad(formulaires_avec_bigup);
-
 });
 
 
@@ -22,282 +21,514 @@ $.fn.bigup = function() {
 		// indiquer que l'input est traité. Évite de charger plusieurs fois Flow
 		$(this).addClass('bigup_done');
 
-		// trouver les paramètres ciblant le formulaire
-		var name     = $(this).attr('name').replace(/\\[\\]$/, ""); // Note : \[\] est déjà un échappement SPIP !
-		var token    = $(this).data('token');
+		var $input = $(this);
+		var $form = $input.parents('form');
 		var multiple = $(this).prop('multiple');
-		var accept   = $(this).prop('accept');
+		var single = !multiple;
 
-		var $form = $(this).parents('form');
-		var target = $form.attr('action');
-		var formulaire_action = $form.find('input[name=formulaire_action]').val();
-		var formulaire_action_args = $form.find('input[name=formulaire_action_args]').val();
+		// Équivalent au filtre sinon
+		var sinon = function(valeur, defaut) {
+			return valeur ? valeur : defaut;
+		}
 
-		// La librairie d'upload
-		var flow = new Flow({
-			input: $(this),
-			target: target,
-			fileParameterName: name,
-			testChunks: true,
-			maxFiles: (multiple ? 0 : 1), // TODO: gérer un nombre de fichiers maxi
-			singleFile: !multiple,
-			simultaneousUploads: 2, // 3 par défaut
-			permanentErrors : [403, 404, 413, 415, 500, 501], // ajout de 403 à la liste par défaut.
-			query: {
-				action: "bigup",
-				bigup_token: token,
-				formulaire_action: formulaire_action,
-				formulaire_action_args: formulaire_action_args,
-				accept: accept // accept pourra servir au serveur pour éviter un stockage inutile
+		var bigup = new Bigup(
+			{
+				form: $form,
+				input: $input,
+				formulaire_action: $form.find('input[name=formulaire_action]').val(),
+				formulaire_action_args: $form.find('input[name=formulaire_action_args]').val(),
+				target: $form.attr('action'),
+				token: $input.data('token'),
+				name: $input.attr('name').replace(/\\[\\]$/, ""), // Note : \[\] est déjà un échappement SPIP !
+				multiple: multiple,
+			},
+			{
+				contraintes: {
+					accept: $input.prop('accept'),
+					maxFiles: (single ? 1 : sinon($input.data('maxFiles'), 0)),
+					maxFileSize: sinon($input.data('maxFileSize'), 0),
+				}
 			}
-		});
+		);
 
-		// Si l'upload html5 n'est pas supporté,
-		// on laisse la gestion au formulaire… comme au bon vieux temps
-		if (!flow.support) {
+		if (!bigup.support) {
 			return false;
 		}
 
-		// flow facilement accessible depuis l'input.
-		$(this).data('flow', flow);
+		// Prendre en compte les fichiers déjà présents à l'ouverture du formulaire
+		bigup.integrer_fichiers_presents();
+		// Gérer le dépot de fichiers
+		bigup.gerer_depot_fichiers();
 
-		// S'il y a déjà des fichiers en attente, remplacer leurs boutons "Enlever"
-		// par un équivalent en JS, ce qui évite de tout recharger le formulaire pour ça.
-		$form.bigup_remplacer_boutons_enlever(name);
+	});
+}
 
-		// Trouver une zone où déposer les fichiers dans le HTML existant
-		var $zone_depot = $form.find(".dropfile_" + name);
+/**
+ * Bigup gère les fichiers des input concernés (avec Flow.js)
+ * et leur communication avec SPIP
+ *
+ * @param [params]
+ * @param {jquery} [params.form]
+ * @param {jquery} [params.input]
+ * @param {string} [params.formulaire_action]
+ * @param {string} [params.formulaire_action_args]
+ * @param {string} [params.target]
+ * @param {string} [params.token]
+ * @param {string} [params.name]
+ * @param {bool}   [params.multiple]
+ * @param [opts]
+ * @param {object} [opts.contraintes]
+ * @param {string} [opts.contraintes.accept]
+ * @param {int}    [opts.contraintes.maxFiles]
+ * @param {int}    [opts.contraintes.maxFileSize]
+ * @constructor
+ */
+function Bigup(params, opts) {
 
-		// S'il n'y en a pas, créer le template par défaut et l'ajouter
-		if (!$zone_depot.length) {
-			var template = $.bigup_template_zone_depot(name, multiple);
-			$(this).after(template);
-			$zone_depot = $form.find(".dropfile_" + name);
+	this.form = params.form;
+	this.input = params.input;
+	this.formulaire_action = params.formulaire_action;
+	this.formulaire_action_args = params.formulaire_action_args;
+	this.target = params.target;
+	this.token = params.token;
+	this.name = params.name;
+	this.multiple = params.multiple;
+	this.zones = {
+		depot: null,
+		fichiers: null
+	};
+
+	/**
+	 * Default options for flow.js
+	 * @type {Object}
+	 */
+	this.defaults = {
+		contraintes: {
+			accept: '',
+			maxFiles: 1,
+			maxFileSize: 0,
+			toto: 30,
+		},
+		templates: {
+			zones: {
+				// Zone de dépot des fichiers
+				depot: function (name, multiple) {
+					var template =
+						'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
+						+ '\n\t<span class="dropfilebutton bigup-btn btn btn-default"><:bigup:televerser|texte_script:></span>'
+						+ '\n\t<span class="dropfileor"><:bigup:ou|texte_script:></span>'
+						+ '\n\t<span class="dropfiletext">'
+						+ '\n\t\t' + (multiple
+							? '<:bigup:deposer_vos_fichiers_ici|texte_script:>'
+							: '<:bigup:deposer_votre_fichier_ici|texte_script:>' )
+						+ '\n\t</:span:>'
+						+ '\n</div>\n';
+					return template;
+				},
+				// Zone de liste des fichiers déposés (conteneur)
+				fichiers: function (name) {
+					var template = "<div class='bigup_fichiers fichiers_" + name + "'></div>";
+					return template;
+				},
+			},
+			// Présentation d'un fichier déposé
+			fichier: function(file) {
+				// retouver l'extension
+				var extension = $.trouver_extension(file.name);
+				var t_annuler = "<:bouton_annuler|texte_script:>";
+
+				var template =
+					'\n<div class="fichier">'
+					+ '\n\t<div class="actions">'
+					+ '\n\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_annuler_transfert(this); return false;">' + t_annuler + '</span>'
+					+ '\n\t</div>'
+					+ '\n\t<div class="description">'
+					+ '\n\t\t<div class="vignette_extension ' + extension + '" title="' + file.type + '"></div>'
+					+ '\n\t\t<div class="infos">'
+					+ '\n\t\t\t<span class="name"><strong>' + file.name + '</strong></span>'
+					+ '\n\t\t\t<span class="size">' + $.taille_en_octets(file.size) + '</span>'
+					+ '\n\t\t</div>'
+					+ '\n\t</div>'
+					+ '\n</div>\n';
+
+				return template;
+			}
 		}
+	};
 
-		// stocker des infos utilse dans flow.
-		flow.$form = $form;
-		flow.$zone_depot = $zone_depot;
+	/**
+	 * Current options
+	 * @type {Object}
+	 */
+	this.opts = $.extend(true, this.defaults, opts || {});
 
+	// La librairie d'upload
+	this.flow = new Flow({
+		input: this.input,
+		target: this.target,
+		fileParameterName: this.name,
+		testChunks: true,
+		maxFiles: this.opts.contraintes.maxFiles,
+		singleFile: !this.opts.contraintes.multiple,
+		simultaneousUploads: 2, // 3 par défaut
+		permanentErrors : [403, 404, 413, 415, 500, 501], // ajout de 403 à la liste par défaut.
+		query: {
+			action: "bigup",
+			bigup_token: this.token,
+			formulaire_action: this.formulaire_action,
+			formulaire_action_args: this.formulaire_action_args,
+			accept: this.opts.contraintes.accept // accept pourra servir au serveur pour éviter un stockage inutile
+		}
+	});
 
-		// Cacher l'input original
-		$(this).hide();
+	// sait on gérer (upload html5 requis) ?
+	this.support = this.flow.support;
 
-		// Voir la zone, si on n'a pas déjà atteint le quota de fichiers
-        $.bigup_adapter_visibilite_zone_depot(flow);
+	// Bigup accessible depuis l'input
+	this.input.data('bigup', this);
+}
 
-		// Assigner la zone et son bouton à flow.
-		flow.assignBrowse($zone_depot.find('.dropfilebutton'), false, !multiple, {accept: accept});
-		flow.assignDrop($zone_depot);
+Bigup.prototype = {
+
+	/**
+	 * Intégrer les fichiers déjà listés dans la zone des fichiers, au chargement du formulaire
+	 *
+	 * Remplacer les boutons "Enlever" d'origine sur les fichiers déjà présents
+	 * dans le formulaire (listés au dessus du champ).
+	 * On remplace par un équivalent qui fera la chose en pur JS + ajax
+	 *
+	 * Affecter l'objet bigup sur chaque emplacement de fichier pour facilités.
+	 */
+	integrer_fichiers_presents: function() {
+		// Définir la zone de listing des fichiers
+		this.creer_zone_fichiers();
+		var me = this;
+
+		// Trouver les fichiers s'il y en a
+		this.zones.fichiers.find('.fichier').each(function(){
+			var $button = $(this).find("button[name=bigup_enlever_fichier]");
+			var identifiant = $button.val();
+			$button.remove();
+			$(this)
+				.data('bigup', me)
+				.data('identifiant', identifiant);
+			me.ajouter_bouton_enlever(this);
+		});
+	},
+
+	/**
+	 * Ajoute un "Enlever" sur un fichier
+	 *
+	 * @param string fichien DOM de l'emplacement de présentation du fichier
+	 */
+	ajouter_bouton_enlever: function(fichier) {
+		var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
+		var js = "$.bigup_enlever_fichier(this); return true;";
+		var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">' + t_enlever + '</span>';
+		$(fichier).find('.actions').append(inserer);
+		return this;
+	},
+
+	/**
+	 * Gérer le dépot des fihiers
+	 */
+	gerer_depot_fichiers: function() {
+		this.definir_zone_depot();
+		var me = this;
 
 		// Présenter le fichier dans liste des fichiers en cours
 		// Valider le fichier déposé en fonction du 'accept' de l'input (si présent).
-		flow.on('fileAdded', function(file,  event) {
-			$.bigup_ajouter_fichier(file);
-			$.bigup_adapter_visibilite_zone_depot(file.flowObj);
-			if (!$.bigup_accepter_fichier(file)) {
-				$.bigup_presenter_erreur(file, "Type de fichier incorrect !");
+		this.flow.on('fileAdded', function(file,  event) {
+			me.ajouter_fichier(file);
+			me.adapter_visibilite_zone_depot();
+			if (!me.accepter_fichier(file)) {
+				me.presenter_erreur(file.emplacement, "Type de fichier incorrect !"); // TODO: traduction
 				return false;
 			}
 		});
 
 		// Téléverser aussitôt les fichiers valides déposés
-		flow.on('filesSubmitted', function (files) {
+		this.flow.on('filesSubmitted', function (files) {
 			if (files.length) {
 				$.each(files, function(key, file) {
-					file.zone.ajouter_progress();
+					me.progress.ajouter(file.emplacement);
 				});
-				flow.upload();
+				me.flow.upload();
 			}
 		});
 
 		// Actualiser la barre de progression de l'upload
-		flow.on('fileProgress', function(file, chunk){
+		this.flow.on('fileProgress', function(file, chunk){
 			var percent = Math.round(file._prevUploadedSize / file.size * 100);
-			file.zone.find('progress').text( percent + " %" ).animer_progress(percent);
+			var progress = file.emplacement.find('progress');
+			progress.text( percent + " %" );
+			me.progress.animer(progress, percent);
 		});
 
 		// Réussite de l'opload :
 		// Adapter le bouton 'Annuler' => 'Enlever'
 		// Retirer la barre de progression
-		flow.on('fileSuccess', function(file, message, chunk){
+		this.flow.on('fileSuccess', function(file, message, chunk){
 			console.info("success", file, message, chunk);
 			var desc = $.parseJSON(message);
 			// enlever le bouton annuler
-			file.zone.find(".cancel").fadeOut("normal", function(){
+			file.emplacement.find(".cancel").fadeOut("normal", function(){
 				$(this).remove();
 				// et mettre un bouton enlever !
 				if (desc.identifiant) {
-					var name = file.flowObj.opts.fileParameterName;
-					file.zone.bigup_ajouter_bouton_enlever(name, desc.identifiant);
+					file.emplacement.data('identifiant', desc.identifiant);
+					me.ajouter_bouton_enlever(file.emplacement);
 				}
 			});
-			file.zone.find("progress").retirer_progress();
+			me.progress.retirer(file.emplacement.find("progress"));
 		});
 
 		// Erreur, pas de bol !
 		// Afficher l'erreur
 		// Retirer la barre de progression
-		flow.on('fileError', function(file, message, chunk){
+		this.flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
-			file.zone.find("progress").retirer_progress();
-			$.bigup_presenter_erreur(file, "Erreur de transfert !");
+			file.emplacement.find("progress").retirer_progress();
+			me.presenter_erreur(file.emplacement, "Erreur de transfert !"); // Todo: traduction
 		});
+	},
 
-		return true;
-	});
-}
+	/**
+	 * créer la zone de dépot et l'indiquer à Flow.js
+	 */
+	definir_zone_depot: function() {
+		// Cacher l'input original
+		this.input.hide();
+		this.creer_zone_depot();
 
-/**
- * Affiche ou cache la zone de dépot en fonction du nombre de fichiers déjà actifs
- *
- * @param object flow L'objet flow.js
- */
-$.bigup_adapter_visibilite_zone_depot = function(flow) {
-    var nb = flow.$form.find(".fichiers_" + flow.opts.fileParameterName + " .fichier").length;
-	if (!flow.opts.maxFiles || (flow.opts.maxFiles > nb)) {
-		flow.$zone_depot.show();
-	} else {
-		flow.$zone_depot.hide();
-	}
-}
+		// Voir la zone, si on n'a pas déjà atteint le quota de fichiers
+		this.adapter_visibilite_zone_depot();
 
-/**
- * Remplacer les boutons "Enlever" d'origine sur les fichiers déjà présents
- * dans le formulaire (listés au dessus du champ).
- *
- * On remplace par un équivalent qui fera la chose en pur JS + ajax
- * @param string name
- *     Nom du champ (name) concerné.
- */
-$.fn.bigup_remplacer_boutons_enlever = function(name) {
-	var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
+		// Assigner la zone et son bouton à flow.
+		this.flow.assignBrowse(
+			this.zones.depot.find('.dropfilebutton'),
+			false,
+			!this.multiple,
+			{accept: this.opts.contraintes.accept}
+		);
+		this.flow.assignDrop(this.zones.depot);
+	},
 
-	// Trouver les fichiers s'il y en a
-	var $fichiers = $(this).find(".fichiers_" + name + " .fichier");
-	$fichiers.each(function(){
-		var $button = $(this).find("button[name=bigup_enlever_fichier]");
-		var identifiant = $button.val();
-		$button.remove();
-		$(this).bigup_ajouter_bouton_enlever(name, identifiant);
-	});
+	/**
+	 * Créer la zone de dépot des fichiers
+	 */
+	creer_zone_depot: function() {
+		// Trouver une zone où déposer les fichiers dans le HTML existant
+		var $zone_depot = this.form.find(".dropfile_" + this.name);
 
-	return this;
-}
-
-/**
- * Ajoute un "Enlever" sur un fichier 
- *
- * @param string name Nom du champ (name) concerné.
- * @param string identifiant Identifiant (md5 du chemin sur le serveur) du fichier concerné
- */
-$.fn.bigup_ajouter_bouton_enlever = function(name, identifiant) {
-	var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
-
-	var js = "$.bigup_enlever_fichier(this, '" + name + "', '" + identifiant + "'); return true;";
-	var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">' + t_enlever + '</span>';
-
-	$(this).find('.actions').append(inserer);
-
-	return this;
-}
-
-
-
-
-/**
- * Ajoute le fichier transmis dans la liste des fichiers au dessus
- * de la zone de dépot
- */
-$.bigup_ajouter_fichier = function(file) {
-	var $input = file.flowObj.opts.input;
-	var name = file.flowObj.opts.fileParameterName;
-
-	// Trouver une zone où afficher les fichiers dans le HTML existant
-	var $zone = $input.parents('form').find(".fichiers_" + name);
-
-	// S'il n'y en a pas, créer le template par défaut et l'ajouter
-	if (!$zone.length) {
-		var template = "<div class='bigup_fichiers fichiers_" + name + "'></div>";
-		$input.before(template);
-		$zone = $input.parents('form').find(".fichiers_" + name);
-	}
-
-	// Ajouter le fichier à la zone
-	var template = $.bigup_template_fichier(file.file);
-	$zone.append(template);
-
-	// Conserver en mémoire l'emplacement dans file
-	// Inversement, depuis l'emplacement, pouvoir retrouver le fichier
-	file.zone = $zone.find(".fichier:last-child").animateAppend().data('file', file);
-
-	return true;
-}
-
-/**
- * Tester que le fichier est valide par rapport à l'attribut `accept` de l'input.
- * @return true si OK.
- */
-$.bigup_accepter_fichier = function(file) {
-	if (typeof file.flowObj.opts.query.accept !== undefined) {
-		var accept = file.flowObj.opts.query.accept;
-		if (accept && !$.bigup_isValidFile(file.file, accept)) {
-			return false;
+		// S'il n'y en a pas, créer le template par défaut et l'ajouter
+		if (!$zone_depot.length) {
+			var template = this.opts.templates.zones.depot(this.name, this.multiple);
+			this.input.after(template);
+			$zone_depot = this.form.find(".dropfile_" + this.name);
 		}
-	}
-	return true;
-}
 
+		this.zones.depot = $zone_depot;
+	},
 
-/**
- * Vérifier un fichier par rapport à un attribut 'accept'
- * Code issu de Dropzone.
- */
-$.bigup_isValidFile = function(file, acceptedFiles) {
-	var baseMimeType, mimeType, validType, _i, _len;
-	if (!acceptedFiles) {
-		return true;
-	}
-	acceptedFiles = acceptedFiles.split(",");
-	mimeType = file.type;
-	baseMimeType = mimeType.replace(/\/.*$/, "");
-	for (_i = 0, _len = acceptedFiles.length; _i < _len; _i++) {
-		validType = acceptedFiles[_i];
-		validType = validType.trim();
-		if (validType.charAt(0) === ".") {
-			if (file.name.toLowerCase().indexOf(validType.toLowerCase(), file.name.length - validType.length) !== -1) {
-				return true;
-			}
-		} else if (/\/\*$/.test(validType)) {
-			if (baseMimeType === validType.replace(/\/.*$/, "")) {
-				return true;
-			}
+	/**
+	 * Créer la zone de listing des fichiers téléversés ou en cours de téléversement
+	 */
+	creer_zone_fichiers: function() {
+		// Trouver une zone où afficher les fichiers dans le HTML existant
+		var $fichiers = this.form.find(".fichiers_" + this.name);
+
+		// S'il n'y en a pas, créer le template par défaut et l'ajouter
+		if (!$fichiers.length) {
+			var template = this.opts.templates.zones.fichiers(this.name);
+			this.input.before(template);
+			$fichiers = this.form.find(".fichiers_" + this.name);
+		}
+
+		this.zones.fichiers = $fichiers;
+	},
+
+	/**
+	 * Affiche ou cache la zone de dépot en fonction du nombre de fichiers déjà actifs
+	 */
+	adapter_visibilite_zone_depot: function() {
+		var nb = this.zones.fichiers.find(".fichier").length;
+		if (!this.opts.contraintes.maxFiles || (this.opts.contraintes.maxFiles > nb)) {
+			this.zones.depot.show();
 		} else {
-			if (mimeType === validType) {
-				return true;
+			this.zones.depot.hide();
+		}
+	},
+
+	/**
+	 * Tester que le fichier est valide par rapport à l'attribut `accept` de l'input.
+	 * @param FlowFile file
+	 * @return true si OK.
+	 */
+	accepter_fichier: function(file) {
+		if (this.opts.contraintes.accept) {
+			var accept = this.opts.contraintes.accept;
+			if (accept && !this.valider_fichier(file.file, accept)) {
+				return false;
 			}
 		}
+		return true;
+	},
+
+	/**
+	 * Vérifier un fichier par rapport à un attribut 'accept'
+	 * Code issu de Dropzone.
+	 *
+	 * @param html5.file file
+	 * @param html5.accept acceptedFiles
+	 * @return bool
+	 */
+	valider_fichier: function(file, acceptedFiles) {
+		var baseMimeType, mimeType, validType, _i, _len;
+		if (!acceptedFiles) {
+			return true;
+		}
+		acceptedFiles = acceptedFiles.split(",");
+		mimeType = file.type;
+		baseMimeType = mimeType.replace(/\/.*$/, "");
+		for (_i = 0, _len = acceptedFiles.length; _i < _len; _i++) {
+			validType = acceptedFiles[_i];
+			validType = validType.trim();
+			if (validType.charAt(0) === ".") {
+				if (file.name.toLowerCase().indexOf(validType.toLowerCase(), file.name.length - validType.length) !== -1) {
+					return true;
+				}
+			} else if (/\/\*$/.test(validType)) {
+				if (baseMimeType === validType.replace(/\/.*$/, "")) {
+					return true;
+				}
+			} else {
+				if (mimeType === validType) {
+					return true;
+				}
+			}
+		}
+		return false;
+	},
+
+	/**
+	 * Ajoute le fichier transmis dans la liste des fichiers
+	 *
+	 * @param FlowFile file
+	 */
+	ajouter_fichier: function(file) {
+
+		// pouvoir nous retrouver facilement
+		file.bigup = this;
+
+		// zone de listing des fichiers
+		this.creer_zone_fichiers();
+
+		// Ajouter le fichier à la zone
+		var template = this.opts.templates.fichier(file.file);
+		this.zones.fichiers.append(template);
+
+		// Conserver en mémoire l'objet sur la vue du fichier, et inversement.
+		var fichier = this.zones.fichiers.find(".fichier:last-child");
+		file.emplacement = fichier;
+		fichier
+			.animateAppend()
+			.data('file', file)
+			.data('bigup', this);
+
+		return true;
+	},
+
+	/**
+	 * Enlève le fichier transmis dans la liste des fichiers
+	 *
+	 * @param jquery emplacement
+	 *     Emplacement du fichier dans la liste des fichiers
+	 * @param string identifiant
+	 *     Identifiant du fichier
+	 *     Soit celui de flow.js, soit celui du serveur
+	 *     pour les fichiers présents à l'ouverture du formulaire
+	 */
+	enlever_fichier: function(emplacement, identifiant) {
+		var me = this;
+
+		$.post(this.target, {
+			action: "bigup",
+			formulaire_action: this.formulaire_action,
+			formulaire_action_args: this.formulaire_action_args,
+			bigup_token: this.token,
+			bigup_action: 'effacer',
+			identifiant: identifiant,
+		})
+		.done(function() {
+			emplacement.animateRemove(function(){
+				$(this).remove();
+				me.adapter_visibilite_zone_depot();
+			});
+		})
+		.fail(function() {
+			me.presenter_erreur(emplacement, "Un problème est survenu…"); // [TODO] Traduction
+		});
+	},
+
+	/**
+	 * Afficher une erreur sur un fichier
+	 * @param string emplacement
+	 *     Emplacement du fichier dans la liste des fichiers
+	 * @param string message
+	 *     Message d'erreur
+	 */
+	presenter_erreur: function(emplacement, message) {
+		emplacement
+			.addClass('erreur')
+			.find('.infos')
+			.append("<span class='message_erreur'>" + message + "</span>");
+		return this;
+	},
+
+	progress: {
+		/**
+		 * Ajoute une balise progress dans le contenu, en douceur
+		 * 	@param string emplacement
+		 *     Emplacement du fichier dans la liste des fichiers
+		 */
+		ajouter: function(emplacement) {
+			var progress = $('<progress value="0" max="100" style="display:none">0 %</progress>');
+			emplacement.append(progress);
+			progress.fadeIn(1000); /* marche pas terrible */
+			return this;
+		},
+
+		/**
+		 * Augmente une balise progress à la valeur indiquée. Mais doucement
+		 * @param jquery progress Le progress concerné.
+		 * @param int val Valeur que l'on veut attribuer au progress.
+		 */
+		animer: function(progress, val) {
+			progress.each(function() {
+				var me = this;
+				$({percent: me.value}).animate({percent: val}, {
+					duration: 1000,
+					step: function () { me.value = this.percent; }
+				});
+			});
+			return this;
+		},
+
+		/**
+		 * Retire une balise progress du html, en douceur
+		 * @param jquery progress Le progress concerné.
+		 */
+		retirer: function(progress) {
+			// meme durée que sur animer_progress() pour attendre la fin
+			progress.delay(1000).fadeOut("normal", function(){
+				$(this).slideUp("normal", function(){ $(this).remove(); });
+			});
+			return this;
+		}
 	}
-	return false;
 };
 
-/**
- * Une erreur est apparue sur un fichier à téléverser.
- * L'indiquer
- */
-$.bigup_presenter_erreur = function(file, message) {
-	var $zone = file.zone;
-	$zone.bigup_presenter_erreur(message);
-	return true;
-}
-
-/**
- * Ajoute une erreur sur la description d'un fichier
- */
-$.fn.bigup_presenter_erreur = function(message) {
-	$(this).addClass('erreur').find('.infos').append("<span class='message_erreur'>" + message + "</span>");
-	return this;
-}
 
 /**
  * Annuler le transfert d'un fichier déposé qui se téléverse
@@ -307,135 +538,25 @@ $.fn.bigup_presenter_erreur = function(message) {
 $.bigup_annuler_transfert = function(me) {
 	var file = $(me).parents('.fichier').data('file');
 	file.cancel();
-	$.bigup_enlever_fichier(me, file.flowObj.opts.fileParameterName, file.uniqueIdentifier);
-}
-
-/**
- * Enlève le fichier du serveur et sur la liste des fichiers déjà téléversés
- * @param object me
- *     L'élément qui a cliqué
- * @param string name
- *     Le name de l'input file
- * @param string identifiant
- *     L'identifiant du fichier sur le serveur
- */
-$.bigup_enlever_fichier = function(me, name, identifiant) {
-	var $fichier = $(me).parents('.fichier');
-	var $form = $fichier.parents('form');
-	var $input = $form.find('input.bigup[name=' + name + ']');
-	if (!$input.length) {
-		var $input = $form.find('input.bigup[name="' + name + '[]"]');
-	}
-
-	// trouver les paramètres ciblant le formulaire
-	var token = $input.data('token');
-	var target = $form.attr('action');
-	var formulaire_action = $form.find('input[name=formulaire_action]').val();
-	var formulaire_action_args = $form.find('input[name=formulaire_action_args]').val();
-
-	$.post(target, {
-		action: "bigup",
-		formulaire_action: formulaire_action,
-		formulaire_action_args: formulaire_action_args,
-		bigup_token: token,
-		bigup_action: 'effacer',
-		identifiant: identifiant,
-	})
-	.done(function() {
-		$fichier.animateRemove(function(){
-			$(this).remove();
-			$.bigup_adapter_visibilite_zone_depot($input.data('flow'));
-		});
-	})
-	.fail(function() {
-		$fichier.bigup_presenter_erreur("Un problème est survenu…");
-	});
-}
-
-
-
-/**
- * Ajoute une balise progress dans le contenu, en douceur
- */
-$.fn.ajouter_progress = function() {
-	var progress = $('<progress value="0" max="100" style="display:none">0 %</progress>');
-	$(this).append(progress);
-	progress.fadeIn(1000); /* marche pas terrible */
-	return this;
-}
-
-/**
- * Augmente une balise progress à la valeur indiquée. Mais doucement
- */
-$.fn.animer_progress = function(val) {
-	$(this).each(function() {
-		var me = this;
-		$({percent: me.value}).animate({percent: val}, {
-			duration: 1000,
-			step: function () { me.value = this.percent; }
-		});
-	});
-	return this;
-}
-
-
-/**
- * Retire une balise progress du html, en douceur
- */
-$.fn.retirer_progress = function(val) {
-	// meme durée que sur animer_progress() pour attendre la fin
-	$(this).delay(1000).fadeOut("normal", function(){
-		$(this).slideUp("normal", function(){ $(this).remove(); });
-	});
-	return this;
-}
-
-/**
- * Crée un template HTML de la zone de dépot de fichier pour un nom de champ donné.
- */
-$.bigup_template_zone_depot = function(name, multiple) {
-
-	var template =  
-		'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
-		+ '\n\t<span class="dropfilebutton bigup-btn btn btn-default"><:bigup:televerser|texte_script:></span>'
-		+ '\n\t<span class="dropfileor"><:bigup:ou|texte_script:></span>'
-		+ '\n\t<span class="dropfiletext">'
-		+ '\n\t\t' + (multiple ? '<:bigup:deposer_vos_fichiers_ici|texte_script:>' : '<:bigup:deposer_votre_fichier_ici|texte_script:>' )
-		+ '\n\t</:span:>'
-		+ '\n</div>\n';
-
-	return template;
+	file.bigup.enlever_fichier(file.emplacement, file.uniqueIdentifier);
 };
 
 /**
- * Crée un template HTML de la vue d'un fichier
+ * Enlevé un fichier déjà téléversé
+ * @param object me
+ *   L'élément qui a cliqué
  */
-$.bigup_template_fichier = function(file) {
-
-	// retouver l'extension
-	var extension = $.trouver_extension(file.name);
-	var t_annuler = "<:bouton_annuler|texte_script:>";
-
-	var template =
-		'\n<div class="fichier">'
-		+ '\n\t<div class="actions">'
-		+ '\n\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_annuler_transfert(this); return false;">' + t_annuler + '</span>'
-		+ '\n\t</div>'
-		+ '\n\t<div class="description">'
-		+ '\n\t\t<div class="vignette_extension ' + extension + '" title="' + file.type + '"></div>'
-		+ '\n\t\t<div class="infos">'
-		+ '\n\t\t\t<span class="name"><strong>' + file.name + '</strong></span>'
-		+ '\n\t\t\t<span class="size">' + $.taille_en_octets(file.size) + '</span>'
-		+ '\n\t\t</div>'
-		+ '\n\t</div>'
-		+ '\n</div>\n';
-
-	return template;
+$.bigup_enlever_fichier = function(me) {
+	var emplacement = $(me).parents('.fichier');
+	var bigup = emplacement.data('bigup');
+	bigup.enlever_fichier(emplacement, emplacement.data('identifiant'));
 };
 
 
 /**
  * Retrouve (et corrige) une extension dans un nom de fichier
+ * @param string name Nom d'un fichier
+ * @return string Extension du fichier
  */
 $.trouver_extension = function(name) {
 	// retouver l'extension
@@ -462,13 +583,13 @@ $.trouver_extension = function(name) {
 			break;
 	}
 	return extension;
-}
+};
 
 
 /**
  * Calcule une taille en octets humainement lisible
  * @param int taille Taille en octets
- * @return string 
+ * @return string
  */
 $.taille_en_octets = function(taille) {
 	var ko = 1024;
@@ -485,6 +606,7 @@ $.taille_en_octets = function(taille) {
 	} else {
 		return t_go.replace('@taille@', Math.round(taille/ko/ko/ko * 10) / 10);
 	}
-}
+};
+
 
 })(jQuery);

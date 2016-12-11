@@ -5,7 +5,10 @@
 	class="file bigup[ (#ENV{class})]"
 	[(#GET{multiple}|oui)multiple ]
 	[accept="(#ENV{accept}|attribut_html)"]
-	data-token="#ENV{token}" />
+	data-token="#ENV{token}"[
+	data-maxFiles="(#ENV{maxFiles})"][
+	data-maxFileSize="(#ENV{maxFileSize})"]
+/>
 
 [(#REM)
 	Si le formulaire contient une classe .dropfile_{nom},
