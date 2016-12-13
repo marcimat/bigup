@@ -25,6 +25,7 @@
 .bigup_fichiers .actions {
 	float:right;
 	margin-top:1em;
+	margin-left:1em;
 	text-align:right;
 }
 .bigup_fichiers .actions .bigup-btn.btn {
@@ -40,6 +41,10 @@
 	width:52px;
 	height:52px; /* laisser de l'espace à l'icone */
 	margin-right:.5em;
+}
+.bigup_fichiers .infos {
+	display:block;
+	word-break: break-all;
 }
 .bigup_fichiers .infos span {
 	display:block;
