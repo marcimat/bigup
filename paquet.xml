@@ -23,8 +23,9 @@
 	<pipeline nom="header_prive" inclure="bigup_pipelines.php" />
 	<pipeline nom="insert_head_css" inclure="bigup_pipelines.php" />
 	<pipeline nom="jquery_plugins" inclure="bigup_pipelines.php" />
+	<pipeline nom="formulaire_fond" action="medias_formulaire_fond" inclure="bigup_pipelines.php" />
+	<pipeline nom="formulaire_charger" action="medias_formulaire_charger" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_charger" inclure="bigup_pipelines.php" />
-	<pipeline nom="formulaire_fond" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_pre_verifier" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_verifier" inclure="bigup_pipelines.php" />
 

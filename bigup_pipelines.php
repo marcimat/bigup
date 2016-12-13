@@ -91,9 +91,6 @@ function bigup_get_bigup($flux) {
  * @return array
 **/
 function bigup_formulaire_charger($flux) {
-	if (in_array($flux['args']['form'], ['joindre_document'])) {
-		$flux['data']['_rechercher_uploads'] = true;
-	}
 
 	if (empty($flux['data']['_rechercher_uploads'])) {
 		return $flux;
@@ -157,20 +154,34 @@ function bigup_formulaire_verifier($flux) {
 
 
 /**
- * Utiliser Bigup sur le formulaire d'ajout de documents du plugin Medias
+ * Ajouter bigup sur le formulaire de documents du plugin Medias
  *
  * @param array $flux
  * @return array
  **/
-function bigup_formulaire_fond($flux) {
+function bigup_medias_formulaire_charger($flux) {
 	if (in_array($flux['args']['form'], ['joindre_document'])) {
-		$flux['data'] = bigup_inserer_classe_css($flux['data'], 'fichier_upload', $flux['args']['contexte']);
+		$flux['data']['_rechercher_uploads'] = true;
 	}
 	return $flux;
 }
 
 /**
- * Ajouter la classe CSS bigup sur certains champs input files d'un formulaire
+ * Utiliser Bigup sur le formulaire d'ajout de documents du plugin Medias
+ *
+ * @param array $flux
+ * @return array
+ **/
+function bigup_medias_formulaire_fond($flux) {
+	if (in_array($flux['args']['form'], ['joindre_document'])) {
+		$flux['data'] = bigup_preparer_input_file($flux['data'], 'fichier_upload', $flux['args']['contexte']);
+	}
+	return $flux;
+}
+
+/**
+ * Sur certains champs input files d'un formulaire, ajouter le token, les fichiers déjà présents
+ * et la classe css bigup.
  *
  * @param string $formulaire
  *     Contenu du formulaire
@@ -178,8 +189,10 @@ function bigup_formulaire_fond($flux) {
  *     Nom du ou des champs concernés
  * @param array $contexte
  *     Le contexte doit fournir au moins 'form' et 'formulaire_args'
+ * @param string $input_class
+ *     Classe CSS à ajouter aux input file concernés
  */
-function bigup_inserer_classe_css($formulaire, $champs, $contexte) {
+function bigup_preparer_input_file($formulaire, $champs, $contexte, $input_class = 'bigup') {
 	if (!$champs) {
 		return $formulaire;
 	}
@@ -192,19 +205,37 @@ function bigup_inserer_classe_css($formulaire, $champs, $contexte) {
 	}
 
 	include_spip('bigup_fonctions');
-	$bigup_class = 'bigup';
 
 	foreach ($champs as $champ) {
-		$regexp = '#<input(?:[^>]*)name\s*=\s*[\"\']{1}' . $champ . '(?:\[\])?[\"\']{1}(?:[^>]*)/>#Uims';
+
+		$regexp =
+			'#<input'
+			. '(?:[^>]*)'            // du contenu sans >
+			. 'name\s*=\s*[\"\']{1}' // name=" ou name='
+			. $champ                 // notre nom de champ
+			. '(?<multiple>\[\])?'   // le nom de champ a [] ? => multiple
+			. '[\"\']{1}'            // fin du name
+			. '(?:[^>]*)'            // du contenu sans >
+			. '/>#Uims';
+
+
 		if (preg_match($regexp, $formulaire, $regs)) {
 			$input = $new = $regs[0];
 
-			$new = str_replace('class="', 'class="' . $bigup_class . ' ', $new);
-			$new = str_replace('class=\'', 'class=\'' . $bigup_class . ' ', $new);
+			// Ajouter la classe CSS demandée
+			$new = str_replace('class="', 'class="' . $input_class . ' ', $new);
+			$new = str_replace('class=\'', 'class=\'' . $input_class . ' ', $new);
 
+			// Ajouter le token
 			$token = calculer_balise_BIGUP_TOKEN($champ, $contexte['form'], $contexte['formulaire_args']);
 			$new = str_replace('/>', ' data-token="' . $token . '" />', $new);
 
+			// Ajouter multiple si le name possède []
+			if (!empty($regs['multiple'])) {
+				$new = str_replace('/>', ' multiple />', $new);
+			}
+
+			// Ajouter les fichiers déjà présents
 			$fichiers = '';
 			if (!empty($contexte['_fichiers'][$champ])) {
 				$fichiers = recuperer_fond(
