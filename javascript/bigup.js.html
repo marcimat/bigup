@@ -23,22 +23,10 @@ $.fn.bigup = function() {
 
 		var $input = $(this);
 		var $form = $input.parents('form');
-		var multiple = $(this).prop('multiple');
-		var single = !multiple;
 
 		// Équivalent au filtre sinon
 		var sinon = function(valeur, defaut) {
 			return valeur ? valeur : defaut;
-		}
-
-		// Enlève une arcre sur une URL
-		var enlever_ancre = function(url) {
-			p = url.indexOf('#');
-			if (p!=-1) {
-				ancre = url.substring(p);
-				url = url.substring(0,p);
-			}
-			return url;
 		}
 
 		var bigup = new Bigup(
@@ -47,15 +35,12 @@ $.fn.bigup = function() {
 				input: $input,
 				formulaire_action: $form.find('input[name=formulaire_action]').val(),
 				formulaire_action_args: $form.find('input[name=formulaire_action_args]').val(),
-				target: enlever_ancre($form.attr('action')),
 				token: $input.data('token'),
-				name: $input.attr('name').replace(/\\[\\]$/, ""), // Note : \[\] est déjà un échappement SPIP !
-				multiple: multiple,
 			},
 			{
 				contraintes: {
 					accept: $input.prop('accept'),
-					maxFiles: (single ? 1 : sinon($input.data('maxFiles'), 0)),
+					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
 					maxFileSize: sinon($input.data('maxFileSize'), 0),
 				}
 			}
@@ -82,10 +67,7 @@ $.fn.bigup = function() {
  * @param {jquery} [params.input]
  * @param {string} [params.formulaire_action]
  * @param {string} [params.formulaire_action_args]
- * @param {string} [params.target]
  * @param {string} [params.token]
- * @param {string} [params.name]
- * @param {bool}   [params.multiple]
  * @param [opts]
  * @param {object} [opts.contraintes]
  * @param {string} [opts.contraintes.accept]
@@ -99,25 +81,26 @@ function Bigup(params, opts) {
 	this.input = params.input;
 	this.formulaire_action = params.formulaire_action;
 	this.formulaire_action_args = params.formulaire_action_args;
-	this.target = params.target;
 	this.token = params.token;
-	this.name = params.name;
-	this.multiple = params.multiple;
+
+
+	this.target = this.enlever_ancre(this.form.attr('action'));
+	this.name = this.input.attr('name').replace(/\\[\\]$/, ""); // Note : \[\] est déjà un échappement SPIP !
+	// On distingue 'multiple' (l'attribut) et 'tabulaire' (la présence de [] au name)
+	// car PHP ne va pas gérer le tableau FILES de la même façon
+	this.multiple  = this.input.prop('multiple');
+	this.tabulaire = (this.name !== this.input.attr('name'));
+
 	this.zones = {
 		depot: null,
 		fichiers: null
 	};
 
-	/**
-	 * Default options for flow.js
-	 * @type {Object}
-	 */
 	this.defaults = {
 		contraintes: {
 			accept: '',
 			maxFiles: 1,
 			maxFileSize: 0,
-			toto: 30,
 		},
 		templates: {
 			zones: {
@@ -187,7 +170,8 @@ function Bigup(params, opts) {
 			bigup_token: this.token,
 			formulaire_action: this.formulaire_action,
 			formulaire_action_args: this.formulaire_action_args,
-			accept: this.opts.contraintes.accept // accept pourra servir au serveur pour éviter un stockage inutile
+			accept: this.opts.contraintes.accept, // accept pourra servir au serveur pour éviter un stockage inutile
+			tabulaire: this.tabulaire
 		}
 	});
 
@@ -199,6 +183,19 @@ function Bigup(params, opts) {
 }
 
 Bigup.prototype = {
+
+	/**
+	 * Enlève une ancre d'une URL
+	 * @param string $url
+	 */
+	enlever_ancre: function(url) {
+		p = url.indexOf('#');
+		if (p!=-1) {
+			ancre = url.substring(p);
+			url = url.substring(0,p);
+		}
+		return url;
+	},
 
 	/**
 	 * Intégrer les fichiers déjà listés dans la zone des fichiers, au chargement du formulaire
