@@ -91,6 +91,9 @@ function bigup_get_bigup($flux) {
  * @return array
 **/
 function bigup_formulaire_charger($flux) {
+	if (in_array($flux['args']['form'], ['joindre_document'])) {
+		$flux['data']['_rechercher_uploads'] = true;
+	}
 
 	if (empty($flux['data']['_rechercher_uploads'])) {
 		return $flux;
@@ -101,9 +104,31 @@ function bigup_formulaire_charger($flux) {
 		$flux['data']['_fichiers'] = $fichiers;
 	}
 
+	if (empty($flux['data']['_hidden'])) {
+		$flux['data']['_hidden'] = '';
+	}
+	$flux['data']['_hidden'] .= '<input type="hidden" name="bigup_retrouver_fichiers" value="1" />';
+
 	return $flux;
 }
 
+/**
+ * Branchement avant vérifications
+ *
+ * On remet $_FILES avec les fichiers présents pour ce formulaire,
+ * et avant que la fonction verifier native du formulaire soit utilisée,
+ * de sorte qu'elle ait accès à $_FILES rempli.
+ *
+ * @param array $flux
+ * @return array
+ */
+function bigup_formulaire_pre_verifier($flux) {
+	if (_request('bigup_retrouver_fichiers')) {
+		$bigup = bigup_get_bigup($flux);
+		$bigup->reinserer_fichiers();
+	}
+	return $flux;
+}
 
 /**
  * Branchement sur verifier
@@ -128,4 +153,70 @@ function bigup_formulaire_verifier($flux) {
 	}
 
 	return $flux;
+}
+
+
+/**
+ * Utiliser Bigup sur le formulaire d'ajout de documents du plugin Medias
+ *
+ * @param array $flux
+ * @return array
+ **/
+function bigup_formulaire_fond($flux) {
+	if (in_array($flux['args']['form'], ['joindre_document'])) {
+		$flux['data'] = bigup_inserer_classe_css($flux['data'], 'fichier_upload', $flux['args']['contexte']);
+	}
+	return $flux;
+}
+
+/**
+ * Ajouter la classe CSS bigup sur certains champs input files d'un formulaire
+ *
+ * @param string $formulaire
+ *     Contenu du formulaire
+ * @param string|string[] $champs
+ *     Nom du ou des champs concernés
+ * @param array $contexte
+ *     Le contexte doit fournir au moins 'form' et 'formulaire_args'
+ */
+function bigup_inserer_classe_css($formulaire, $champs, $contexte) {
+	if (!$champs) {
+		return $formulaire;
+	}
+	if (!is_array($champs)) {
+		$champs = [$champs];
+	}
+
+	if (empty($contexte['form']) or empty($contexte['formulaire_args'])) {
+		return $formulaire;
+	}
+
+	include_spip('bigup_fonctions');
+	$bigup_class = 'bigup';
+
+	foreach ($champs as $champ) {
+		$regexp = '#<input(?:[^>]*)name\s*=\s*[\"\']{1}' . $champ . '(?:\[\])?[\"\']{1}(?:[^>]*)/>#Uims';
+		if (preg_match($regexp, $formulaire, $regs)) {
+			$input = $new = $regs[0];
+
+			$new = str_replace('class="', 'class="' . $bigup_class . ' ', $new);
+			$new = str_replace('class=\'', 'class=\'' . $bigup_class . ' ', $new);
+
+			$token = calculer_balise_BIGUP_TOKEN($champ, $contexte['form'], $contexte['formulaire_args']);
+			$new = str_replace('/>', ' data-token="' . $token . '" />', $new);
+
+			$fichiers = '';
+			if (!empty($contexte['_fichiers'][$champ])) {
+				$fichiers = recuperer_fond(
+					'saisies/inc-bigup_liste_fichiers',
+					array(
+						'nom' => $champ,
+						'fichiers' => $contexte['_fichiers'][$champ]
+					)
+				);
+			}
+			$formulaire = str_replace($input, $fichiers . $new, $formulaire);
+		}
+	}
+	return $formulaire;
 }

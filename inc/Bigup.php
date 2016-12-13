@@ -557,6 +557,7 @@ class Bigup {
 			'tmp_name' => $chemin,
 			'size' => filesize($chemin),
 			'type' => finfo_file($finfo, $chemin),
+			'error' => 0, // hum
 		];
 		return $desc;
 	}

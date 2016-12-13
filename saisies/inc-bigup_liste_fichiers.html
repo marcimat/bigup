@@ -1,0 +1,22 @@
+<B_fichiers>
+	<div class='bigup_fichiers fichiers_#ENV{nom}'>
+		<BOUCLE_fichiers(DATA){source tableau, #FICHIERS}>
+		<div class='fichier'>
+			<div class='actions'>
+				<button class='submit' type='submit'
+						name='bigup_enlever_fichier' value="#IDENTIFIANT"
+						onclick="jQuery(this).parents('form').find('input,textarea,select').filter('[required]').prop('required', false); return true;">
+					<:bigup:bouton_enlever:>
+				</button>
+			</div>
+			<div class='description'>
+				<div class="vignette_extension #EXTENSION" title="[(#TYPE|attribut_html)]"></div>
+				<div class='infos'>
+					<span class='name'><strong>#NAME</strong></span>
+					<span class='size'>[(#SIZE|taille_en_octets)]</span>
+				</div>
+			</div>
+		</div>
+		</BOUCLE_fichiers>
+	</div>
+</B_fichiers>

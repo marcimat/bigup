@@ -24,6 +24,8 @@
 	<pipeline nom="insert_head_css" inclure="bigup_pipelines.php" />
 	<pipeline nom="jquery_plugins" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_charger" inclure="bigup_pipelines.php" />
+	<pipeline nom="formulaire_fond" inclure="bigup_pipelines.php" />
+	<pipeline nom="formulaire_pre_verifier" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_verifier" inclure="bigup_pipelines.php" />
 
 	<necessite nom="saisies"  compatibilite="[2.5.0;]" />

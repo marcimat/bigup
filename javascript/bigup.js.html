@@ -31,13 +31,23 @@ $.fn.bigup = function() {
 			return valeur ? valeur : defaut;
 		}
 
+		// Enlève une arcre sur une URL
+		var enlever_ancre = function(url) {
+			p = url.indexOf('#');
+			if (p!=-1) {
+				ancre = url.substring(p);
+				url = url.substring(0,p);
+			}
+			return url;
+		}
+
 		var bigup = new Bigup(
 			{
 				form: $form,
 				input: $input,
 				formulaire_action: $form.find('input[name=formulaire_action]').val(),
 				formulaire_action_args: $form.find('input[name=formulaire_action_args]').val(),
-				target: $form.attr('action'),
+				target: enlever_ancre($form.attr('action')),
 				token: $input.data('token'),
 				name: $input.attr('name').replace(/\\[\\]$/, ""), // Note : \[\] est déjà un échappement SPIP !
 				multiple: multiple,
