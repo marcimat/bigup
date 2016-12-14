@@ -86,7 +86,19 @@ function bigup_get_bigup($flux) {
  * La recherche est conditionné par la présence dans le contexte
  * de la clé `_rechercher_uploads`. Ceci permet d'éviter de chercher
  * des fichiers pour les formulaires qui n'en ont pas besoin.
- * 
+ *
+ * Réinsère les fichiers déjà présents pour ce formulaire
+ * dans `$_FILES` (a priori assez peu utile dans le chargement)
+ * et ajoute la description des fichiers présents pour chaque champ,
+ * dans l'environnement, dans la clé utilisée habituellement
+ * pour mettre les valeurs des saisies du champ. C'est à dire que
+ * si au moins un fichier est présent pour un champ, `#ENV{le_nom_du_champ}`
+ * est un tableau et chaque entrée est un sous tableau décrivant un fichier.
+ *
+ * Ajoute également un hidden, qui s'il est posté, demandera à recréer $_FILES
+ * juste avant la fonction verifier(). Voir `bigup_formulaire_pre_verifier()`
+ *
+ * @see bigup_formulaire_pre_verifier():
  * @param array $flux
  * @return array
 **/
@@ -98,7 +110,8 @@ function bigup_formulaire_charger($flux) {
 
 	$bigup = bigup_get_bigup($flux);
 	if ($fichiers = $bigup->reinserer_fichiers()) {
-		$flux['data']['_fichiers'] = $fichiers;
+		#$flux['data']['_fichiers'] = $fichiers;
+		$flux['data'] = array_merge($flux['data'], $fichiers);
 	}
 
 	if (empty($flux['data']['_hidden'])) {
@@ -112,7 +125,7 @@ function bigup_formulaire_charger($flux) {
 /**
  * Branchement avant vérifications
  *
- * On remet $_FILES avec les fichiers présents pour ce formulaire,
+ * On remet `$_FILES` avec les fichiers présents pour ce formulaire,
  * et avant que la fonction verifier native du formulaire soit utilisée,
  * de sorte qu'elle ait accès à $_FILES rempli.
  *
