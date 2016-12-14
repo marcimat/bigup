@@ -20,8 +20,7 @@ include_spip('balise/saisie');
  * Compile la balise `#SAISIE_FICHIER` qui retourne le code HTML de la saisie de formulaire indiquée.
  *
  * Identique à peu de choses près à la balise `#SAISIE`
- * - calcule le token en fonction du nom du champ : ajoute `token = #BIGUP_TOKEN{nom}`
- * - remplace `valeur = #ENV*{nom}` par `valeur = #ENV{_fichiers/nom}`
+ * - ajoute `fichiers = #ENV{_fichiers/nom}`
  *
  * @syntaxe `#SAISIE_FICHIER{type,nom[,option=xx,...]}`
  *
@@ -37,22 +36,22 @@ function balise_SAISIE_FICHIER_dist($p) {
 	// creer #ENV*{$titre} (* pour les cas de tableau serialises par exemple, que l'on veut reutiliser)
 	$env_titre   = Pile::creer_balise('ENV', array('param' => array($titre), 'etoile' => '*')); // #ENV*{titre}
 
-	// copier, pas cloner l'objet par référence
-	$fichiers = unserialize(serialize($titre));
-	$fichiers[0]->texte = '_fichiers/' . $fichiers[0]->texte;
-
-	// creer #ENV{_fichiers/$titre}
-	$fichiers = Pile::creer_balise('ENV', array('param' => array($fichiers)));
-
-	// creer #BIGUP_TOKEN{$titre}
-	$token = Pile::creer_balise('BIGUP_TOKEN', array('param' => array($titre)));
+	// créer #ENV*{_fichiers/$titre}
+	$_fichiers = new Texte();
+	$_fichiers->texte = '_fichiers/';
+	$fichiers = Pile::creer_balise(
+		'ENV',
+		array(
+			'param' => array(array_merge(array($_fichiers), $titre)),
+			'etoile' => '*'
+		)
+	);
 
 	// on modifie $p pour ajouter des arguments
 	// {nom=$titre, valeur=#ENV{$titre}, erreurs, type_saisie=$type, fond=saisies/_base}
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'nom', $titre);
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'valeur', $env_titre);
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'fichiers', $fichiers); // ajouté par rapport à `#SAISIE`
-	$p = Pile::creer_et_ajouter_argument_balise($p, 'token', $token);       // ajouté par rapport à `#SAISIE`
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'type_saisie', $type_saisie);
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'erreurs');
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'fond', 'saisies/_base');
