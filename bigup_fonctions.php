@@ -16,46 +16,94 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  * Compile la balise `#BIGUP_TOKEN` qui calcule un token
  * autorisant l'envoi de fichiers par morceaux
  *
- * À utiliser à l'intérieur d'un formulaire CVT.
- * 
+ * À utiliser à l'intérieur d'un formulaire CVT ou dans un fichier de saisies.
+ * Dans une utilisation dans 'saisies/', il faut transmettre `form` et `formulaire_args`
+ * du formulaire pour le calcul.
+ *
+ * Le token généré se base sur la valeur de l'attribut `name`
+ * de l'input que l'on peut recevoir soit :
+ *
+ * - en écriture html : `fichiers[images]`
+ * - en écriture comprise par Saisies : `fichiers/images`
+ *
+ * Si l'input est voué à recevoir plusieurs fichiers
+ * (attribut `multiple` et name avec `[]` tel que `fichiers[images][]`
+ * il faut aussi l'indiquer, soit:
+ *
+ * - en écriture html : `fichiers[images][]`
+ * - en écriture Saisies : `fichiers/images/`
+ *
+ * Par habitude d'usage avec le plugin Saisies, on accepte aussi
+ * une forme plus habituelle en transmettant un paramètre `multiple`
+ * (en 4è paramètre de la balise, valant par défaut `#ENV{multiple}`)
+ * indiquant que le token concerne un input recevant plusieurs fichiers.
+ * On l'écrit :
+ *
+ * - en écriture html : `fichiers[images]`
+ * - en écriture Saisies : `fichiers/images`
+ *
+ * La balise accepte 4 paramètres, tous automatiquement récupérés dans l'environnement
+ * s'ils ne sont pas renseignés :
+ *
+ * - nom : la valeur de l'attribut name. Défaut `#ENV{nom}`
+ * - form : le nom du formulaire. Défaut `#ENV{form}`
+ * - formulaire_args : hash des arguments du formulaire. Défaut `#ENV{formulaire_args}`
+ * - multiple : indication d'un champ multiple, si valeur 'oui' ou 'multiple'. Défaut `#ENV{multiple}`
+ *
+ *
+ *
+ * @syntaxe `#BIGUP_TOKEN{name, multiple, form, formulaire_args}`
+ *
  * @example
- *     - `#BIGUP_TOKEN{file}`
- *     - `#BIGUP_TOKEN` utilisera `#ENV{nom}` en nom de champ
- *     - `#BIGUP_TOKEN{#ENV{nom}}`
+ *     - `#BIGUP_TOKEN` utilisera `#ENV{nom}` en nom de champ par défaut
+ *     - `#BIGUP_TOKEN{#ENV{nom}, #ENV{multiple}, #ENV{form}, #ENV{formulaire_args}}` : valeurs par défaut.
+ *     - `#BIGUP_TOKEN{file}` : champ unique
+ *     - `#BIGUP_TOKEN{file\[\]}` : champ multiple
+ *     - `#BIGUP_TOKEN{file/}` : champ multiple
+ *     - `#BIGUP_TOKEN{file, multiple}` : champ multiple
+ *     - Le token sera calculé dans la saisie bigup :
+ *       `[(#SAISIE{bigup, file, form, formulaire_args, label=Fichier, ... })]`
+ *     - Le token est calculé dans l'appel :
+ *       `[(#SAISIE{bigup, file, token=#BIGUP_TOKEN{file}, label=Fichier, ... })]`
+ *
+ * @see saisies/bigup.html Pour un usage dans une saisie.
  *
  * @note
- *     La signature complète est `#BIGTOKEN{champ, form, formulaire_args}`
- * 
+ *     La signature complète est `#BIGUP_TOKEN{champ, multiple, form, formulaire_args}`
+ *
  *     La balise nécessite de connaître le nom du formulaire
  *     (par défaut `#ENV{form}` ainsi que le hash de ses arguments
  *     (par défaut `#ENV{formulaire_args}`.
  *
- *     Si cette balise est utilisée dans une inclusion, il faut penser
- *     à transmettre à l'inclure form et formulaire_args donc ;
- *     de même dans une `#SAISIE`, qui est un inclure comme un autre.
- * 
+ *     Si cette balise est utilisée dans une inclusion (tel que `#INCLURE` ou `#SAISIE`),
+ *     il faut penser à transmettre à l'inclure `form` et `formulaire_args`.
+ *
  * @balise
  * @uses calculer_balise_BIGUP_TOKEN()
- * 
+ *
  * @param Champ $p
  *     Pile au niveau de la balise
  * @return Champ
  *     Pile complétée par le code à générer
-**/
+ **/
 function balise_BIGUP_TOKEN($p){
 	if (!$_champ = interprete_argument_balise(1, $p)) {
 		$_champ = "@\$Pile[0]['nom']";
 	}
 
-	if (!$_form = interprete_argument_balise(2, $p)) {
+	if (!$_multiple = interprete_argument_balise(2, $p)) {
+		$_multiple = "@\$Pile[0]['multiple']";
+	}
+
+	if (!$_form = interprete_argument_balise(3, $p)) {
 		$_form = "@\$Pile[0]['form']";
 	}
 
-	if (!$_form_args = interprete_argument_balise(3, $p)) {
+	if (!$_form_args = interprete_argument_balise(4, $p)) {
 		$_form_args = "@\$Pile[0]['formulaire_args']";
 	}
 
-	$p->code = "calculer_balise_BIGUP_TOKEN($_champ, $_form, $_form_args)";
+	$p->code = "calculer_balise_BIGUP_TOKEN($_champ, $_multiple, $_form, $_form_args)";
 
 	$p->interdire_scripts = false;
 	return $p;
@@ -71,6 +119,8 @@ function balise_BIGUP_TOKEN($p){
  * 
  * @param string $champ
  *      Nom du champ input du formulaire
+ * @param string|bool $multiple
+ *      Indique si le champ est multiple
  * @param string $form
  *      Nom du formulaire
  * @param string $form_args
@@ -79,12 +129,23 @@ function balise_BIGUP_TOKEN($p){
  *      String : Le token
  *      false : Erreur : un des arguments est vide.
 **/
-function calculer_balise_BIGUP_TOKEN($champ, $form, $form_args) {
+function calculer_balise_BIGUP_TOKEN($champ, $multiple, $form, $form_args) {
+
 	if (!$champ OR !$form OR !$form_args) {
 		spip_log("Demande de token bigup, mais un argument est vide", _LOG_ERREUR);
 		return false;
 	}
 	$time = time();
+
+	// le vrai nom du champ pour le token (truc/muche => truc[muche])
+	$champ = saisie_nom2name($champ);
+
+	// Ajouter [] s'il est multiple et s'il ne l'a pas déjà.
+	if (in_array($multiple, [true, 'oui', 'multiple'])) {
+		if (substr($champ, -2) != '[]') {
+			$champ = $champ . '[]';
+		}
+	}
 	$token = $champ . ':' . $time . ':' . calculer_action_auteur("bigup/$form/$form_args/$champ/$time");
 	return $token;
 }
