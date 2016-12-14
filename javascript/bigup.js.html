@@ -83,13 +83,10 @@ function Bigup(params, opts) {
 	this.formulaire_action_args = params.formulaire_action_args;
 	this.token = params.token;
 
-
 	this.target = this.enlever_ancre(this.form.attr('action'));
-	this.name = this.input.attr('name').replace(/\\[\\]$/, ""); // Note : \[\] est déjà un échappement SPIP !
-	// On distingue 'multiple' (l'attribut) et 'tabulaire' (la présence de [] au name)
-	// car PHP ne va pas gérer le tableau FILES de la même façon
+	this.name = this.input.attr('name');
+	this.class_name = this.nom2classe(this.name);
 	this.multiple  = this.input.prop('multiple');
-	this.tabulaire = ((this.name !== this.input.attr('name')) ? 1 : 0);
 
 	this.zones = {
 		depot: null,
@@ -171,7 +168,6 @@ function Bigup(params, opts) {
 			formulaire_action: this.formulaire_action,
 			formulaire_action_args: this.formulaire_action_args,
 			accept: this.opts.contraintes.accept, // accept pourra servir au serveur pour éviter un stockage inutile
-			tabulaire: this.tabulaire
 		}
 	});
 
@@ -195,6 +191,16 @@ Bigup.prototype = {
 			url = url.substring(0,p);
 		}
 		return url;
+	},
+
+	/**
+	 * Transforme un name en classe
+	 * @see saisie_nom2classe() en PHP.
+	 * @param string name
+	 * @return string
+	 */
+	nom2classe: function(nom) {
+		return nom.replace(/\/|\\[|&#91/g, '_').replace(/\]|&#93/g, '');
 	},
 
 	/**
@@ -337,13 +343,13 @@ Bigup.prototype = {
 	 */
 	creer_zone_depot: function() {
 		// Trouver une zone où déposer les fichiers dans le HTML existant
-		var $zone_depot = this.form.find(".dropfile_" + this.name);
+		var $zone_depot = this.form.find(".dropfile_" + this.class_name);
 
 		// S'il n'y en a pas, créer le template par défaut et l'ajouter
 		if (!$zone_depot.length) {
-			var template = this.opts.templates.zones.depot(this.name, this.multiple);
+			var template = this.opts.templates.zones.depot(this.class_name, this.multiple);
 			this.input.after(template);
-			$zone_depot = this.form.find(".dropfile_" + this.name);
+			$zone_depot = this.form.find(".dropfile_" + this.class_name);
 		}
 
 		this.zones.depot = $zone_depot;
@@ -354,13 +360,13 @@ Bigup.prototype = {
 	 */
 	creer_zone_fichiers: function() {
 		// Trouver une zone où afficher les fichiers dans le HTML existant
-		var $fichiers = this.form.find(".fichiers_" + this.name);
+		var $fichiers = this.form.find(".fichiers_" + this.class_name);
 
 		// S'il n'y en a pas, créer le template par défaut et l'ajouter
 		if (!$fichiers.length) {
-			var template = this.opts.templates.zones.fichiers(this.name);
+			var template = this.opts.templates.zones.fichiers(this.class_name);
 			this.input.before(template);
-			$fichiers = this.form.find(".fichiers_" + this.name);
+			$fichiers = this.form.find(".fichiers_" + this.class_name);
 		}
 
 		this.zones.fichiers = $fichiers;
@@ -486,8 +492,7 @@ Bigup.prototype = {
 			formulaire_action_args: this.formulaire_action_args,
 			bigup_token: this.token,
 			bigup_action: 'effacer',
-			identifiant: identifiant,
-			tabulaire: this.tabulaire,
+			identifiant: identifiant
 		})
 		.done(function() {
 			emplacement.animateRemove(function(){
