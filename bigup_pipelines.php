@@ -268,14 +268,20 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 				$new = str_replace('class=\'', 'class=\'' . $options['input_class'] . ' ', $new);
 			}
 
-			// Ajouter le token
-			$token = calculer_balise_BIGUP_TOKEN($champ, $contexte['form'], $contexte['formulaire_args']);
-			$new = str_replace('/>', ' data-token="' . $token . '" />', $new);
-
 			// Ajouter multiple si le name possède []
 			if (!empty($regs['multiple'])) {
 				$new = str_replace('/>', ' multiple />', $new);
 			}
+
+			// Ajouter le token
+			$token = calculer_balise_BIGUP_TOKEN(
+				$champ,
+				!empty($regs['multiple']),
+				$contexte['form'],
+				$contexte['formulaire_args']
+			);
+			$new = str_replace('/>', ' data-token="' . $token . '" />', $new);
+
 
 			// Ajouter les fichiers déjà présents
 			$fichiers = '';

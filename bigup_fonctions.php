@@ -34,7 +34,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  *
  * Par habitude d'usage avec le plugin Saisies, on accepte aussi
  * une forme plus habituelle en transmettant un paramètre `multiple`
- * (en 4è paramètre de la balise, valant par défaut `#ENV{multiple}`)
+ * (en 2è paramètre de la balise, valant par défaut `#ENV{multiple}`)
  * indiquant que le token concerne un input recevant plusieurs fichiers.
  * On l'écrit :
  *
@@ -49,10 +49,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  * - formulaire_args : hash des arguments du formulaire. Défaut `#ENV{formulaire_args}`
  * - multiple : indication d'un champ multiple, si valeur 'oui' ou 'multiple'. Défaut `#ENV{multiple}`
  *
- *
- *
  * @syntaxe `#BIGUP_TOKEN{name, multiple, form, formulaire_args}`
- *
  * @example
  *     - `#BIGUP_TOKEN` utilisera `#ENV{nom}` en nom de champ par défaut
  *     - `#BIGUP_TOKEN{#ENV{nom}, #ENV{multiple}, #ENV{form}, #ENV{formulaire_args}}` : valeurs par défaut.
@@ -66,7 +63,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  *       `[(#SAISIE{bigup, file, token=#BIGUP_TOKEN{file}, label=Fichier, ... })]`
  *
  * @see saisies/bigup.html Pour un usage dans une saisie.
- *
+ * @see balise_SAISIE_FICHIER_dist()
  * @note
  *     La signature complète est `#BIGUP_TOKEN{champ, multiple, form, formulaire_args}`
  *
@@ -76,6 +73,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  *
  *     Si cette balise est utilisée dans une inclusion (tel que `#INCLURE` ou `#SAISIE`),
  *     il faut penser à transmettre à l'inclure `form` et `formulaire_args`.
+ *     La balise `#SAISIE_FICHIER` s'en occupe.
  *
  * @balise
  * @uses calculer_balise_BIGUP_TOKEN()
