@@ -28,21 +28,40 @@
 				obligatoire=oui,
 				rows=3})]
 
+			[(#REM)
+				Calcul du token d'autorisation avec la balise \#SAISIE native :
+
+				* Soit on transmet les arguments 'form' et 'formulaire_args'
+				  (et la balise BIGUP_TOKEN pourra se calculer dans la saisies/bigup.html).
+				  - Exemple : \#SAISIE{bigup, nom, form, formulaire_args, ...
+
+				* Soit on transmet l'argument 'token' en le faisant calculer ici,
+				  (dans ce cas il faut lui indiquer les paramètres name et multiple).
+				  - Exemple : \#SAISIE{bigup, nom, token=#BIGUP_TOKEN{nom}, ...
+				  - Exemple : \#SAISIE{bigup, nom, token=#BIGUP_TOKEN{nom, multiple}, ...
+
+				Sinon utiliser la balise \#SAISIE_FICHIER qui ajoute automatiquement form et formulaire_args.
+			]
+
 			[(#SAISIE_FICHIER{bigup, file,
 				label=Un seul fichier possible})]
 
-			[(#SAISIE_FICHIER{bigup, images, 
+			[(#SAISIE_FICHIER{bigup, images,
 				label=Plusieurs fichiers images (par mime/type),
 				accept=image/*,
 				multiple=oui})]
 
-			[(#SAISIE_FICHIER{bigup, extension, 
+			[(#SAISIE_FICHIER{bigup, extension,
 				label=Plusieurs fichiers pdf (par extension),
 				multiple=oui,
 				accept=.pdf})]
 
-			[(#SAISIE_FICHIER{bigup, autre,
-				label=Un autre fichier})]
+			[(#SAISIE_FICHIER{bigup, animaux/chats/noir,
+				label=1 chat noir (sous tableaux unique) })]
+
+			[(#SAISIE_FICHIER{bigup, animaux/chats/blancs,
+				label=des chats blancs (sous tableaux multiple),
+				multiple=oui})]
 
 		</div>
 

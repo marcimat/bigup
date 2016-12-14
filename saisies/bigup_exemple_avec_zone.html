@@ -1,11 +1,12 @@
 
 #SET{multiple,#ENV{multiple}|=={oui}}
 
-<input type="file" name="#ENV{nom}[(#GET{multiple}|?{\[\]})]"
+<input type="file" name="[(#ENV{nom}|saisie_nom2name)][(#GET{multiple}|?{\[\]})]"
 	class="file bigup[ (#ENV{class})]"
 	[(#GET{multiple}|oui)multiple ]
 	[accept="(#ENV{accept}|attribut_html)"]
-	data-token="#ENV{token}"[
+	data-class="[(#ENV{nom}|saisie_nom2classe)]"
+	data-token="#ENV{token,#BIGUP_TOKEN}"[
 	data-maxFiles="(#ENV{maxFiles})"][
 	data-maxFileSize="(#ENV{maxFileSize})"]
 />

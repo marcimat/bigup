@@ -11,7 +11,6 @@
 
 if (!defined('_ECRIRE_INC_VERSION')) return;
 
-
 /**
  * Compile la balise `#BIGUP_TOKEN` qui calcule un token
  * autorisant l'envoi de fichiers par morceaux
@@ -146,6 +145,7 @@ function calculer_balise_BIGUP_TOKEN($champ, $multiple, $form, $form_args) {
 			$champ = $champ . '[]';
 		}
 	}
+	include_spip('inc/securiser_action');
 	$token = $champ . ':' . $time . ':' . calculer_action_auteur("bigup/$form/$form_args/$champ/$time");
 	return $token;
 }
