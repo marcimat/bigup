@@ -48,6 +48,17 @@ class Bigup {
 	private $champ = '';
 
 	/**
+	 * Le champ est-il tabulaire ?
+	 *
+	 * - true si (`name="truc[]"`)
+	 * - false si (`name="truc"`) (par défaut)
+	 *
+	 * PHP n'écrit pas `$_FILES` de la même manière dans un cas ou dans l'autre
+	 *
+	 * @var bool */
+	private $tabulaire = false;
+
+	/**
 	 * Token de la forme `champ:time:cle`
 	 * @var string
 	**/
@@ -126,6 +137,7 @@ class Bigup {
 		// optionnels
 		$this->action          = _request('bigup_action');
 		$this->identifiant     = _request('identifiant');
+		$this->tabulaire       = (_request('tabulaire') ? true : false);
 		$this->identifier_formulaire();
 	}
 
@@ -391,8 +403,12 @@ class Bigup {
 
 			$chemin = $filename->getPathname();
 			$champ  = basename(dirname(dirname($chemin)));
+			$tabulaire = (substr($champ, -2) == '[]');
+			if ($tabulaire) {
+				$champ = substr($champ, 0, -2);
+			}
 
-			$liste[$champ][] = $this->decrire_fichier($chemin);
+			$liste[$champ][] = $this->decrire_fichier($chemin, $tabulaire);
 			$this->debug("Fichier retrouvé : $chemin");
 		}
 
@@ -478,7 +494,7 @@ class Bigup {
 			. DIRECTORY_SEPARATOR . $this->auteur
 			. DIRECTORY_SEPARATOR . $this->formulaire
 			. DIRECTORY_SEPARATOR . $this->formulaire_identifiant
-			. DIRECTORY_SEPARATOR . $this->champ;
+			. DIRECTORY_SEPARATOR . $this->champ . ($this->tabulaire ? '[]' : '');
 	}
 
 	/**
@@ -523,7 +539,13 @@ class Bigup {
 	/**
 	 * Intégrer le fichier indiqué dans `$FILES`
 	 *
-	 * @param string $key
+	 * Si name=truc (pas tabulaire) :
+	 * $_FILES[champ][name] = 'le nom du fichier'
+	 *
+	 * Si name=truc[] (tabulaire) :
+	 * $_FILES[champ][name][0] = 'le nom du fichier'
+	 *
+	 * @param string $champ
 	 *     Clé d'enregistrement
 	 * @param string|array $description
 	 *     array : Description déjà calculée
@@ -531,20 +553,43 @@ class Bigup {
 	 * @return array
 	 *     Description du fichier
 	**/
-	public function integrer_fichier($key, $description) {
+	public function integrer_fichier($champ, $description) {
 		if (!is_array($description)) {
 			$description = $this->decrire_fichier($description); 
 		}
-		return $_FILES[$key] = $description;
+		if ($description['tabulaire']) {
+
+			// s'assurer d'avoir le même numéro d'index dans FILES
+			// pour toutes les infos de ce fichier
+			if (empty($_FILES[$champ])) {
+				$_FILES[$champ] = [];
+				$index = 0;
+			} else {
+				$k = key($_FILES[$champ]);
+				$index = count($_FILES[$champ][$k]);
+			}
+
+			foreach ($description as $cle => $valeur) {
+				if (!array_key_exists($cle, $_FILES[$champ])) {
+					$_FILES[$champ][$cle] = [];
+				}
+				$_FILES[$champ][$cle][$index] = $valeur;
+			}
+		} else {
+			$_FILES[$champ] = $description;
+		}
+		return $description;
 	}
 
 	/**
 	 * Décrire un fichier (comme dans `$_FILES`)
 	 *
 	 * @param string $chemin
+	 * @param bool $tabulaire
+	 *     Ajoute une info pour savoir si le fichier est stocké comme 'tabulaire'
 	 * @return array
 	**/
-	public function decrire_fichier($chemin) {
+	public function decrire_fichier($chemin, $tabulaire = false) {
 		$filename = basename($chemin);
 		$extension = pathinfo($chemin, PATHINFO_EXTENSION);
 		include_spip('action/ajouter_documents');
@@ -558,6 +603,7 @@ class Bigup {
 			'size' => filesize($chemin),
 			'type' => finfo_file($finfo, $chemin),
 			'error' => 0, // hum
+			'tabulaire' => $tabulaire,
 		];
 		return $desc;
 	}

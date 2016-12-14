@@ -89,7 +89,7 @@ function Bigup(params, opts) {
 	// On distingue 'multiple' (l'attribut) et 'tabulaire' (la présence de [] au name)
 	// car PHP ne va pas gérer le tableau FILES de la même façon
 	this.multiple  = this.input.prop('multiple');
-	this.tabulaire = (this.name !== this.input.attr('name'));
+	this.tabulaire = ((this.name !== this.input.attr('name')) ? 1 : 0);
 
 	this.zones = {
 		depot: null,
@@ -100,7 +100,7 @@ function Bigup(params, opts) {
 		contraintes: {
 			accept: '',
 			maxFiles: 1,
-			maxFileSize: 0,
+			maxFileSize: 0
 		},
 		templates: {
 			zones: {
@@ -162,7 +162,7 @@ function Bigup(params, opts) {
 		fileParameterName: this.name,
 		testChunks: true,
 		maxFiles: this.opts.contraintes.maxFiles,
-		singleFile: !this.opts.contraintes.multiple,
+		singleFile: !this.multiple,
 		simultaneousUploads: 2, // 3 par défaut
 		permanentErrors : [403, 404, 413, 415, 500, 501], // ajout de 403 à la liste par défaut.
 		query: {
@@ -487,6 +487,7 @@ Bigup.prototype = {
 			bigup_token: this.token,
 			bigup_action: 'effacer',
 			identifiant: identifiant,
+			tabulaire: this.tabulaire,
 		})
 		.done(function() {
 			emplacement.animateRemove(function(){
