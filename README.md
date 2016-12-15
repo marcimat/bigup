@@ -36,71 +36,38 @@ temps et de bande passante.
 Le fonctionnement général s'appuie sur les formulaires CVT de SPIP
 et sur un token généré par la balise `#BIGUP_TOKEN`
 
-Il y a deux parties indépendantes :
+Pour les détails, lire : [le fonctionnement technique](https://gitlab.com/magraine/bigup/wikis/fonctionnement-technique)
 
-### 1. Trouver les fichiers en attente
+### Résumé
 
-Pour chaque formulaire qui le demande, une recherche des fichiers téléversés
-pour ce formulaire par l'auteur connecté et qui sont en encore en attente
-d'utilisation est réalisée.
+Au chargement d'un formulaire CVT, si la clé `_rechercher_uploads` 
+est présente, le plugin Bigup se chargera de retrouver les fichiers
+déjà chargés pour ce formulaire et d'ajouter leur liste, pour chaque
+champ concerné du formulaire, dans l'environnement.
 
-La demande consite à envoyer la clé `_rechercher_uploads` dans le retour
-de la fonction charger(). Ce plugin comprendra qu'il doit retrouver les éventuels
-fichiers. La liste de ses trouvailles est ajouté dans l'environnement du formulaire, 
-sous la même clé que le nom du champ. 
+Ces fichiers sont stokés sur le serveur dans `_DIR_TMP/bigupload`.
+[Lire plus d'informations sur ce stokage dans le wiki](https://gitlab.com/magraine/bigup/wikis/stockage-temporaire-des-fichiers)
 
-Les fichiers en attente (complets ou leurs morceaux en cours de téléversement), 
-sont stockés selon un répertoire précis, qui dépend du formulaire, de l'auteur, 
-du champ (name de l'input), du fichier lui-même, dans le répertoire `_DIR_TMP/bigupload`.
+La saisie `bigup` dans le formulaire peut ensuite gérer l'ajout
+de nouveaux fichiers et présenter la liste des fichiers déjà présents.
 
-(Lire plus d'informations sur ce stokage dans le wiki)[https://gitlab.com/magraine/bigup/wikis/stockage-temporaire-des-fichiers]
-
-
-### 2. Téléverser des fichiers en javascript
-
-Le javascript utilise la librairie Flow.js pour téléverser les fichiers.
-Elle découpe un fichier en morceau, et pour chaque morceau fait 
-une demande au serveur pour savoir s'il possède déjà ce morceau.
-S'il ne l'a pas, ce morceau est téléversé.
-
-La réception côté PHP est géré dans un fichier d'action (bigup.php)
-qui retourne simplement un header PHP avec le statut http correspondant
-au traitement qui a été fait. L'autorisation de déposer un fichier
-est conditionné à un token calculé à partir des informations
-du formulaire, de l'auteur en cours et de l'heure.
-
-Ce token doit être renseigné dans l'attribut `data-token` de l'input.
-Si l'input possède la classe css `bigup` alors le javascript prendra
-en compte ce champ (une zone de glisser déposer apparaît) à l'aide
-de Flow.js.
-
-
-### Le token
-
-Le token peut être calculé en utilisant la balise `#BIGUP_TOKEN{nom}`
-où 'nom' est la valeur du name de l'input. Cependant, cette balise
-dans son usage par défaut doit avoir accès à `#ENV{form}` et
-`#ENV{formulaire_args}` donc attention si elle est utilisée dans
-une inclusion à bien transmettre `env` ou ces valeurs.
-
-Le token est valide 24h par défaut (afficher le formulaire
-donne systématiquement un nouveau token).
-
+Le javascript Bigup qui utilise [la librairie Flow.js](https://github.com/flowjs/flow.js/)
+ajoute un une gestion du téléchargement des fichiers, même très volumineux, 
+en ajax, dès qu'ils sont ajoutés. Le token de l'input, qui est envoyé
+à PHP sert d'autorisation pour recevoir ces fichiers.
 
 ### La saisie
 
 La balise `#SAISIE_FICHIER` est une extension à la balise `#SAISIE`
-qui calcule automatiquement en plus les valeurs
-
-- `token` : la valeur du résultat de `#BIGUP_TOKEN{nom}`
-- `fichiers` : la liste des fichiers déjà en attente pour ce champ.
+qui ajoute automatiquement les valeurs *form* et *formulaire_args*
+nécessaires au calcul de la balise `#BIGUP_TOKEN`
 
 Le plugin dispose d'une saisie `bigup` à laquelle on peut passer
-un certain nombre d'options. Les plus utiles sont :
+un certain nombre d'options, notamment `accept` et `multiple`
 
-- `accept` : pour limiter à certains types de fichier acceptés
-           (comme la valeur de l'attribut html5)
-- `multiple` : pour autoriser plusieurs fichiers pour ce champ.
+Pour les détails lire : 
+[la balise `#SAISIE_FICHIER`](https://gitlab.com/magraine/bigup/wikis/balises/saisie-fichier) 
+ou [la saisie `bigup`](https://gitlab.com/magraine/bigup/wikis/saisies/bigup).
 
 Exemple :
 
@@ -129,7 +96,7 @@ non utilisés de celui-ci sont enlevés.
 ### Création d'un formulaire pour uploader les fichiers
 
 Pour qu'il soit compatible à la fois avec et sans javascript,
-il va falloir prendre en compte, côté PHP et HTML, un certain nombre d'éléments.
+il faut prendre en compte, côté PHP et HTML, un certain nombre d'éléments.
 
 #### Côté HTML
 
@@ -142,7 +109,7 @@ Les input qui autorisent plusieurs fichiers doivent l'indiquer :
 - avec un nom de variable tableau, tel que `name='fichiers[]'`
 - avec la propriété `multiple`
 
-La saisie `bigup_fichier` s'occupe de cela dès lors que l'option multiple
+La saisie `bigup` s'occupe de cela dès lors que l'option multiple
 est activée.
 
 
@@ -150,6 +117,7 @@ est activée.
 
 Pour recréer le tableu `$_FILES` tel que le crée habituellement PHP, 
 il faut connaître la valeur de l'attribut name de la balise input. 
+
 Cette valeur est transmise avec le token calculé, et est inscrite 
 dans le chemin de cache des fichiers reçu. Cela permet, à partir 
 d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
