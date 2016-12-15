@@ -637,9 +637,9 @@ class Bigup {
 	/**
 	 * Décrire un fichier (comme dans `$_FILES`)
 	 *
+	 * @uses retrouver_champ_depuis_chemin()
 	 * @param string $chemin
-	 * @param string $champ
-	 *     La valeur de l'attribut 'name' du champ, tel que `cv`ou 'images[bien][rangees][]`
+	 *     Chemin du fichier dans le cache de bigup.
 	 * @return array
 	**/
 	public function decrire_fichier($chemin) {
@@ -649,14 +649,16 @@ class Bigup {
 		include_spip('action/ajouter_documents');
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$desc = [
+			// présent dans $_FILES
 			'name' => $filename,
-			'pathname' => $chemin, // celui là n'y est pas normalement dans $_FILES
-			'identifiant' => md5($chemin), // celui là n'y est pas normalement dans $_FILES
-			'extension' => corriger_extension(strtolower($extension)), // celui là n'y est pas normalement dans $_FILES
 			'tmp_name' => $chemin,
 			'size' => filesize($chemin),
 			'type' => finfo_file($finfo, $chemin),
 			'error' => 0, // hum
+			// informations supplémentaires (pas dans $_FILES habituellement)
+			'pathname' => $chemin,
+			'identifiant' => md5($chemin),
+			'extension' => corriger_extension(strtolower($extension)),
 			'champ' => $champ,
 		];
 		return $desc;
