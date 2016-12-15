@@ -90,10 +90,7 @@ function bigup_get_bigup($flux) {
  * Réinsère les fichiers déjà présents pour ce formulaire
  * dans `$_FILES` (a priori assez peu utile dans le chargement)
  * et ajoute la description des fichiers présents pour chaque champ,
- * dans l'environnement, dans la clé utilisée habituellement
- * pour mettre les valeurs des saisies du champ. C'est à dire que
- * si au moins un fichier est présent pour un champ, `#ENV{le_nom_du_champ}`
- * est un tableau et chaque entrée est un sous tableau décrivant un fichier.
+ * dans l'environnement.
  *
  * Ajoute également un hidden, qui s'il est posté, demandera à recréer $_FILES
  * juste avant la fonction verifier(). Voir `bigup_formulaire_pre_verifier()`
@@ -110,9 +107,12 @@ function bigup_formulaire_charger($flux) {
 
 	$bigup = bigup_get_bigup($flux);
 	if ($fichiers = $bigup->retrouver_fichiers()) {
-
-		#$flux['data']['_fichiers'] = $fichiers;
-		$flux['data'] = array_merge($flux['data'], $fichiers);
+		foreach ($fichiers as $racine => $listes) {
+			// fonctionne au premier chargement, mais pas après avoir validé le formulaire
+			$flux['data'][$racine] = $fichiers[$racine];
+			// car SPIP prend la valeur dans le request. Du coup, on les met aussi dans le request.
+			set_request($racine, $fichiers[$racine]);
+		}
 	}
 
 	if (empty($flux['data']['_hidden'])) {
@@ -246,6 +246,7 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 	];
 
 	include_spip('bigup_fonctions');
+	include_spip('saisies_fonctions');
 
 	foreach ($champs as $champ) {
 
@@ -262,6 +263,7 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 
 		if (preg_match($regexp, $formulaire, $regs)) {
 			$input = $new = $regs[0];
+			$multiple = !empty($regs['multiple']);
 
 			// Ajouter la classe CSS demandée
 			if ($options['input_class']) {
@@ -270,14 +272,14 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 			}
 
 			// Ajouter multiple si le name possède []
-			if (!empty($regs['multiple'])) {
+			if ($multiple) {
 				$new = str_replace('/>', ' multiple />', $new);
 			}
 
 			// Ajouter le token
 			$token = calculer_balise_BIGUP_TOKEN(
 				$champ,
-				!empty($regs['multiple']),
+				$multiple,
 				$contexte['form'],
 				$contexte['formulaire_args']
 			);
@@ -286,12 +288,14 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 
 			// Ajouter les fichiers déjà présents
 			$fichiers = '';
-			if (!empty($contexte['_fichiers'][$champ])) {
+			$liste_fichiers = table_valeur($contexte, saisie_name2nom($champ));
+			if ($liste_fichiers) {
 				$fichiers = recuperer_fond(
 					'saisies/inc-bigup_liste_fichiers',
 					array(
 						'nom' => $champ,
-						'fichiers' => $contexte['_fichiers'][$champ]
+						'multiple' => $multiple,
+						'fichiers' => ($multiple ? $liste_fichiers : array($liste_fichiers))
 					)
 				);
 			}

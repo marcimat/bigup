@@ -4,6 +4,7 @@
 	Paramètres :
 	- nom : texte du name de l'input
 	- fichiers : La liste décrivant chaque fichier
+	- multiple : L'input file d'origine était multiple ?
 
 ]<B_fichiers>
 	<div class='bigup_fichiers fichiers_[(#ENV{nom}|concat{#ENV{multiple}|=={oui}|?{\[\]}}|saisie_nom2classe)]'>
