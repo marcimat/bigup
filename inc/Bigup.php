@@ -48,17 +48,6 @@ class Bigup {
 	private $champ = '';
 
 	/**
-	 * Le champ est-il tabulaire ?
-	 *
-	 * - true si (`name="truc[]"`)
-	 * - false si (`name="truc"`) (par défaut)
-	 *
-	 * PHP n'écrit pas `$_FILES` de la même manière dans un cas ou dans l'autre
-	 *
-	 * @var bool */
-	private $tabulaire = false;
-
-	/**
 	 * Token de la forme `champ:time:cle`
 	 * @var string
 	**/
@@ -137,7 +126,6 @@ class Bigup {
 		// optionnels
 		$this->action          = _request('bigup_action');
 		$this->identifiant     = _request('identifiant');
-		$this->tabulaire       = (_request('tabulaire') ? true : false);
 		$this->identifier_formulaire();
 	}
 
@@ -235,25 +223,33 @@ class Bigup {
 		$this->send(415);
 	}
 
+	/**
+	 * Retrouve les fichiers qui ont été téléchargés et sont en attente pour ce formulaire
+	 * et prépare le tableau d'environnement
+	 *
+	 * @return array
+	 */
+	public function retrouver_fichiers() {
+		$this->calculer_chemin_repertoires();
+		$liste = $this->trouver_fichiers_complets();
+		$liste = $this->organiser_fichiers_complets($liste);
+		return $liste;
+	}
 
 	/**
 	 * Retrouve les fichiers qui ont été téléchargés et sont en attente pour ce formulaire
-	 * et les réaffecte à $_FILES au passage.
+	 * et les réaffecte à `$_FILES` au passage.
 	 *
 	 * @return array
 	**/
 	public function reinserer_fichiers() {
 		$this->calculer_chemin_repertoires();
 		$liste = $this->trouver_fichiers_complets();
-
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $description) {
-				// TODO: Bug ici, si 2 fichiers sur 1 seul champ (input file multiple).
-				// découvrir comment gère html/php d'habitude pour ce cas.
-				$this->integrer_fichier($champ, $description);
+				$this->integrer_fichier($description);
 			}
 		}
-
 		return $liste;
 	}
 
@@ -377,6 +373,40 @@ class Bigup {
 	}
 
 	/**
+	 * Groupe en tableau les fichiers trouvés
+	 *
+	 * Si un champ est nommé tel que `un[sous][dossier][]` la fonction
+	 * mettra la description du fichier dans un tableau php équivalent.
+	 *
+	 * @param array $liste Liste [ champ => [ description ]]
+	 * @return array Tableau [ racine => [ cle1 => [ cle2 => ... => [ description ]]]]
+	 **/
+	public function organiser_fichiers_complets($liste) {
+		$tries = [];
+		foreach ($liste as $champ => $fichiers) {
+			foreach ($fichiers as $description) {
+				// recréer le tableau lorsque $champ = "a[b][c][]".
+				$arborescence = explode('[', str_replace(']', '', $champ));
+				$me = &$tries;
+				$dernier = array_pop($arborescence);
+				foreach ($arborescence as $a) {
+					if (!array_key_exists($a, $me)) {
+						$me[$a] = array();
+					}
+					$me = &$me[$a];
+				}
+				if (strlen($dernier)) {
+					$me[$dernier] = $description;
+				} else {
+					$me[] = $description;
+				}
+			}
+		}
+		return $tries;
+	}
+
+
+	/**
 	 * Retourne la liste des fichiers complets, classés par champ
 	 *
 	 * @return array Liste [ champ => [ chemin ]]
@@ -402,19 +432,29 @@ class Bigup {
 			if ($filename->getFilename()[0] == '.') continue; // .ok
 
 			$chemin = $filename->getPathname();
-			$champ  = basename(dirname(dirname($chemin)));
-			$tabulaire = (substr($champ, -2) == '[]');
-			if ($tabulaire) {
-				$champ = substr($champ, 0, -2);
-			}
+			$champ = $this->retrouver_champ_depuis_chemin($chemin);
 
-			$liste[$champ][] = $this->decrire_fichier($chemin, $tabulaire);
+			if (empty($liste[$champ])) {
+				$liste[$champ] = [];
+			}
+			$liste[$champ][] = $this->decrire_fichier($chemin);
 			$this->debug("Fichier retrouvé : $chemin");
 		}
 
 		return $liste;
 	}
 
+	/**
+	 * Retrouve un nom de champ depuis un chemin de cache de fichier
+	 *
+	 * @param string $chemin
+	 *     Chemin de stockage du fichier dans le cache de bigupload
+	 * @return string
+	 *     Nom du champ (valeur de l'attribut name de l'input d'origine)
+	 */
+	function retrouver_champ_depuis_chemin($chemin) {
+		return basename(dirname(dirname($chemin)));
+	}
 
 	/**
 	 * Vérifier le token utilisé
@@ -494,7 +534,7 @@ class Bigup {
 			. DIRECTORY_SEPARATOR . $this->auteur
 			. DIRECTORY_SEPARATOR . $this->formulaire
 			. DIRECTORY_SEPARATOR . $this->formulaire_identifiant
-			. DIRECTORY_SEPARATOR . $this->champ . ($this->tabulaire ? '[]' : '');
+			. DIRECTORY_SEPARATOR . $this->champ;
 	}
 
 	/**
@@ -539,11 +579,11 @@ class Bigup {
 	/**
 	 * Intégrer le fichier indiqué dans `$FILES`
 	 *
-	 * Si name=truc (pas tabulaire) :
-	 * $_FILES[champ][name] = 'le nom du fichier'
-	 *
-	 * Si name=truc[] (tabulaire) :
-	 * $_FILES[champ][name][0] = 'le nom du fichier'
+	 * Tout dépend de l'attribut name qui a été posté.
+	 * - name='a' : FILES[a][name] = 'x'
+	 * - name='a[]' : FILES[a][name][0] = 'x'
+	 * - name='a[b]' : FILES[a][name][b] = 'x'
+	 * - name='a[b][]' : FILES[a][name][b][0] = 'x'
 	 *
 	 * @param string $champ
 	 *     Clé d'enregistrement
@@ -553,31 +593,39 @@ class Bigup {
 	 * @return array
 	 *     Description du fichier
 	**/
-	public function integrer_fichier($champ, $description) {
+	public function integrer_fichier($description) {
 		if (!is_array($description)) {
 			$description = $this->decrire_fichier($description); 
 		}
-		if ($description['tabulaire']) {
+		// la valeur complete du name.
+		$champ = $description['champ'];
+		$arborescence = explode('[', str_replace(']', '', $champ));
+		$racine = array_shift($arborescence);
 
-			// s'assurer d'avoir le même numéro d'index dans FILES
-			// pour toutes les infos de ce fichier
-			if (empty($_FILES[$champ])) {
-				$_FILES[$champ] = [];
-				$index = 0;
-			} else {
-				$k = key($_FILES[$champ]);
-				$index = count($_FILES[$champ][$k]);
-			}
-
-			foreach ($description as $cle => $valeur) {
-				if (!array_key_exists($cle, $_FILES[$champ])) {
-					$_FILES[$champ][$cle] = [];
-				}
-				$_FILES[$champ][$cle][$index] = $valeur;
-			}
+		if (!count($arborescence)) {
+			// le plus simple…
+			$_FILES[$racine] = $description;
 		} else {
-			$_FILES[$champ] = $description;
+			foreach ($description as $cle => $valeur) {
+				if (!array_key_exists($cle, $_FILES[$racine])) {
+					$_FILES[$racine][$cle] = [];
+				}
+				$me = &$_FILES[$racine][$cle];
+				$dernier = array_pop($arborescence);
+				foreach ($arborescence as $a) {
+					if (!array_key_exists($a, $me)) {
+						$me[$a] = [];
+					}
+					$me = &$me[$a];
+				}
+				if (strlen($dernier)) {
+					$me[$dernier] = $valeur;
+				} else {
+					$me[] = $valeur;
+				}
+			}
 		}
+
 		return $description;
 	}
 
@@ -585,13 +633,14 @@ class Bigup {
 	 * Décrire un fichier (comme dans `$_FILES`)
 	 *
 	 * @param string $chemin
-	 * @param bool $tabulaire
-	 *     Ajoute une info pour savoir si le fichier est stocké comme 'tabulaire'
+	 * @param string $champ
+	 *     La valeur de l'attribut 'name' du champ, tel que `cv`ou 'images[bien][rangees][]`
 	 * @return array
 	**/
-	public function decrire_fichier($chemin, $tabulaire = false) {
+	public function decrire_fichier($chemin) {
 		$filename = basename($chemin);
 		$extension = pathinfo($chemin, PATHINFO_EXTENSION);
+		$champ = $this->retrouver_champ_depuis_chemin($chemin);
 		include_spip('action/ajouter_documents');
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$desc = [
@@ -603,7 +652,7 @@ class Bigup {
 			'size' => filesize($chemin),
 			'type' => finfo_file($finfo, $chemin),
 			'error' => 0, // hum
-			'tabulaire' => $tabulaire,
+			'champ' => $champ,
 		];
 		return $desc;
 	}
