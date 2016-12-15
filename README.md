@@ -52,8 +52,8 @@ La saisie `bigup` dans le formulaire peut ensuite gérer l'ajout
 de nouveaux fichiers et présenter la liste des fichiers déjà présents.
 
 Le javascript Bigup qui utilise [la librairie Flow.js](https://github.com/flowjs/flow.js/)
-ajoute un une gestion du téléchargement des fichiers, même très volumineux, 
-en ajax, dès qu'ils sont ajoutés. Le token de l'input, qui est envoyé
+ajoute une gestion en ajax du téléversement des fichiers, même très volumineux, 
+dès qu'ils sont ajoutés. Le token de l'input, qui est envoyé
 à PHP sert d'autorisation pour recevoir ces fichiers.
 
 ### La saisie
