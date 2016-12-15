@@ -156,7 +156,6 @@ function Bigup(params, opts) {
 	this.flow = new Flow({
 		input: this.input,
 		target: this.target,
-		fileParameterName: this.name,
 		testChunks: true,
 		maxFiles: this.opts.contraintes.maxFiles,
 		singleFile: !this.multiple,
