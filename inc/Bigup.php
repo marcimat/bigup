@@ -296,6 +296,16 @@ class Bigup {
 	}
 
 	/**
+	 * Efface tous les fichiers envoyés pour ce formulaire par un auteur.
+	 */
+	public function effacer_fichiers() {
+		$this->calculer_chemin_repertoires();
+		$this->debug("Suppression des fichiers restants");
+		$this->supprimer_repertoire_fichier($this->dir_final, 'tout');
+		return true;
+	}
+
+	/**
 	 * Supprimer le répertoire indiqué et les répertoires parents éventuellement.
 	 *
 	 *

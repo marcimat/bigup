@@ -150,7 +150,6 @@ function bigup_formulaire_pre_verifier($flux) {
  * @return array
 **/
 function bigup_formulaire_verifier($flux) {
-
 	// enlever un fichier dont on demande sa suppression
 	if ($identifiant = _request('bigup_enlever_fichier')) {
 		$bigup = bigup_get_bigup($flux);
@@ -162,7 +161,27 @@ function bigup_formulaire_verifier($flux) {
 			$flux['data']['_erreur'] = true;
 		}
 	}
+	return $flux;
+}
 
+
+/**
+ * Branchement sur traiter
+ *
+ * Si on a effectué les traitements sans erreur,
+ * tous les fichiers restants doivent disparaître
+ * du cache.
+ *
+ * @param array $flux
+ * @return array
+ **/
+function bigup_formulaire_traiter($flux) {
+	// à voir si on cherche systématiquement
+	// ou uniquement lorsqu'on a demander à recuperer les fichiers
+	if (empty($flux['data']['message_erreur']) and _request('bigup_retrouver_fichiers')) {
+		$bigup = bigup_get_bigup($flux);
+		$bigup->effacer_fichiers();
+	}
 	return $flux;
 }
 

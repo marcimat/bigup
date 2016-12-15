@@ -34,7 +34,7 @@ temps et de bande passante.
 ## Fonctionnement technique
 
 Le fonctionnement général s'appuie sur les formulaires CVT de SPIP
-et sur un token généré par la balise `#BIGUP_TOKEN` ou `#SAISIE_FICHIER`
+et sur un token généré par la balise `#BIGUP_TOKEN`
 
 Il y a deux parties indépendantes :
 
@@ -46,29 +46,14 @@ d'utilisation est réalisée.
 
 La demande consite à envoyer la clé `_rechercher_uploads` dans le retour
 de la fonction charger(). Ce plugin comprendra qu'il doit retrouver les éventuels
-fichiers. La liste de ses trouvaille est ajouté dans la clé `_fichiers`,
-groupés par nom de champ.
+fichiers. La liste de ses trouvailles est ajouté dans l'environnement du formulaire, 
+sous la même clé que le nom du champ. 
 
-Les fichiers en attente sont stockés selon un répertoire précis,
-qui dépend du formulaire, de l'auteur, du champ (name de l'input),
-du fichier lui-même, selon cette arborescence :
+Les fichiers en attente (complets ou leurs morceaux en cours de téléversement), 
+sont stockés selon un répertoire précis, qui dépend du formulaire, de l'auteur, 
+du champ (name de l'input), du fichier lui-même, dans le répertoire `_DIR_TMP/bigupload`.
 
-- _DIR_TMP
-- bigup
-- final
-- {auteur}
-- {nom du formulaire}
-- {identifiant du formulaire}
-- {champ}
-- {identifiant du fichier}
-- {fichier.extension}
-
-Quelques notes :
-
-- les morceaux de fichiers ont la même arborescence, mais sont stokés dans `parts` au lieu de `final`
-- l'auteur c'est "{id_auteur}.{login}", sinon "{id_auteur}", sinon "0.hash" pour les anonymes, dépendant de la session PHP en cours.
-- l'identifiant du formulaire dépend de son hash (c'est à dire des arguments d'appel du formulaire)
-- l'identifiant du fichier permet de discriminer 2 fichiers de même nom (mais pas de même contenu) utilisés pour le même champ.
+(Lire plus d'informations sur ce stokage dans le wiki)[https://gitlab.com/magraine/bigup/wikis/stockage-temporaire-des-fichiers]
 
 
 ### 2. Téléverser des fichiers en javascript
@@ -163,56 +148,13 @@ est activée.
 
 ### Côté PHP
 
-Il va falloir faire un peu de sorcellerie pour gérer la variable `$_FILES`
-qui arrive. Effectivement, elle peut en html5 recevoir plusieurs fichiers
-pour un même champ.
+Pour recréer le tableu `$_FILES` tel que le crée habituellement PHP, 
+il faut connaître la valeur de l'attribut name de la balise input. 
+Cette valeur est transmise avec le token calculé, et est inscrite 
+dans le chemin de cache des fichiers reçu. Cela permet, à partir 
+d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 
-Pour info, si le name n'est pas un tableau, disons avec `name='fichier'`,
-et même si `multiple` est présent, un seul fichier sera reçu (le dernier
-de la sélection certainement), et on reçoit un `$_FILES` du genre :
-
-    'fichier' => array(
-        'name' => 'xxx.png'
-        'type' => 'image/png'
-        'tmp_name' => 'tmp/nnn'
-        'error' => 0
-        'size' => 42603
-    )
-
-Dès que le name est un tableau, disons avec `name='fichiers[]'`,
-et même si `multiple` est absent, on reçoit un tableau pour chaque clé,
-par exemple pour 1 fichier envoyé (avec ou sans `multiple`) :
-
-    'fichiers' => array(
-        'name' => array(
-            0 => 'xxx.png'
-        ),
-        'type' => array(
-            0 => 'image/png'
-        ),
-        'tmp_name' => array(
-            0 => 'tmp/nnn',
-        ),
-        'error' => array(
-            0 => 0
-        ),
-        'size' => array(
-            0 => 42603
-        )
-    )
-
-S'il y a plusieurs fichiers envoyés (avec `multiple` présent), on reçoit donc
-plusieurs entrées pour chaque clés :
-
-    'fichiers' => array(
-        'name' => array(
-            0 => 'xxx.png',
-            1 => 'autre.jpg',
-            2 => 'tetris.png'
-        ),
-        ...
-    )
-
+[Voir les notes sur `$_FILES` dans le wiki](https://gitlab.com/magraine/bigup/wikis/note-input-file-html5)
 
 ## Todo
 
