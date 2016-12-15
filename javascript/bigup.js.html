@@ -312,7 +312,7 @@ Bigup.prototype = {
 		// Retirer la barre de progression
 		this.flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
-			file.emplacement.find("progress").retirer_progress();
+			me.progress.retirer(file.emplacement.find("progress"));
 			me.presenter_erreur(file.emplacement, "Erreur de transfert !"); // Todo: traduction
 		});
 	},
