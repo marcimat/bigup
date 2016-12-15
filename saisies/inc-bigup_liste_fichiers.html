@@ -6,7 +6,7 @@
 	- fichiers : La liste décrivant chaque fichier
 
 ]<B_fichiers>
-	<div class='bigup_fichiers fichiers_[(#ENV{nom}|saisie_nom2classe]'>
+	<div class='bigup_fichiers fichiers_[(#ENV{nom}|concat{#ENV{multiple}|=={oui}|?{\[\]}}|saisie_nom2classe)]'>
 		<BOUCLE_fichiers(DATA){source tableau, #FICHIERS}>
 		<div class='fichier'>
 			<div class='actions'>
