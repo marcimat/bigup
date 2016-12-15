@@ -207,7 +207,13 @@ function bigup_medias_formulaire_charger($flux) {
  **/
 function bigup_medias_formulaire_fond($flux) {
 	if (in_array($flux['args']['form'], ['joindre_document'])) {
-		$flux['data'] = bigup_preparer_input_file($flux['data'], 'fichier_upload', $flux['args']['contexte']);
+		$flux['data'] = bigup_preparer_input_file(
+			$flux['data'],
+			'fichier_upload',
+			$flux['args']['contexte'],
+			['input_class' => 'bigup_documents']
+		);
+		$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.documents.js') . '"></script>' . "\n";
 	}
 	return $flux;
 }
