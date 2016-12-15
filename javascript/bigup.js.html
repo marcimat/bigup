@@ -15,9 +15,34 @@ $(document).ready(function(){
 /**
  * Pour un input de type file sélectionné,
  * gère l'upload du ou des fichiers, via html5 et flow.js
+ *
+ * Retourne uniquement la liste des input qui viennent
+ * d'être activés avec bigup.
+ *
+ * Ça permet de gérer des callbacks derrière, sans ajouter
+ * la callback à chaque rechargement ajax du js.
+ *
+ *     $('input.bigup')
+ *         .bigup()
+ *         .on('bigup.fileSuccess', function(...){...});
+ *
+ * On peut aussi envoyer une fonction de callback directement.
+ *
+ *     $('input.bigup').bigup({}, {
+ *          fileSuccess: function(...){...},
+ *     });
+ *
+ * @param object options
+ * @param object callbacks
+ * @return jQuery
  */
-$.fn.bigup = function() {
-	$(this).not(".bigup_done").each(function() {
+$.fn.bigup = function(options, callbacks) {
+	// les options… on verra si on l'utilisera
+	var options = options || {};
+	// les callbacks éventuelles directes
+	var callbacks = callbacks || {};
+
+	var inputs_a_gerer = $(this).not(".bigup_done").each(function() {
 		// indiquer que l'input est traité. Évite de charger plusieurs fois Flow
 		$(this).addClass('bigup_done');
 
@@ -43,7 +68,8 @@ $.fn.bigup = function() {
 					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
 					maxFileSize: sinon($input.data('maxFileSize'), 0),
 				}
-			}
+			},
+			callbacks
 		);
 
 		if (!bigup.support) {
@@ -56,6 +82,7 @@ $.fn.bigup = function() {
 		bigup.gerer_depot_fichiers();
 
 	});
+	return inputs_a_gerer;
 }
 
 /**
@@ -73,9 +100,11 @@ $.fn.bigup = function() {
  * @param {string} [opts.contraintes.accept]
  * @param {int}    [opts.contraintes.maxFiles]
  * @param {int}    [opts.contraintes.maxFileSize]
+ * @param [callbacks]
+ * @param {function} [callbacks.fileSuccess]
  * @constructor
  */
-function Bigup(params, opts) {
+function Bigup(params, opts, callbacks) {
 
 	this.form = params.form;
 	this.input = params.input;
@@ -151,6 +180,12 @@ function Bigup(params, opts) {
 	 * @type {Object}
 	 */
 	this.opts = $.extend(true, this.defaults, opts || {});
+
+	// Ajoute chaque callback transmise
+	var me = this;
+	$.each(callbacks || {}, function(nom, callback) {
+		me.input.on('bigup.' + nom, callback);
+	});
 
 	// La librairie d'upload
 	this.flow = new Flow({
@@ -281,7 +316,7 @@ Bigup.prototype = {
 		// Adapter le bouton 'Annuler' => 'Enlever'
 		// Retirer la barre de progression
 		this.flow.on('fileSuccess', function(file, message, chunk){
-			console.info("success", file, message, chunk);
+			// console.info("success", file, message, chunk);
 			var desc = $.parseJSON(message);
 			// enlever le bouton annuler
 			file.emplacement.find(".cancel").fadeOut("normal", function(){
@@ -293,6 +328,7 @@ Bigup.prototype = {
 				}
 			});
 			me.progress.retirer(file.emplacement.find("progress"));
+			me.input.trigger('bigup.fileSuccess', [file, desc]);
 		});
 
 		// Un fichier a été enlevé, soit par nous, soit par Flow
@@ -541,7 +577,7 @@ Bigup.prototype = {
 			progress.each(function() {
 				var me = this;
 				$({percent: me.value}).animate({percent: val}, {
-					duration: 1000,
+					duration: 200,
 					step: function () { me.value = this.percent; }
 				});
 			});
@@ -554,11 +590,47 @@ Bigup.prototype = {
 		 */
 		retirer: function(progress) {
 			// meme durée que sur animer_progress() pour attendre la fin
-			progress.delay(1000).fadeOut("normal", function(){
+			progress.delay(200).fadeOut("normal", function(){
 				$(this).slideUp("normal", function(){ $(this).remove(); });
 			});
 			return this;
 		}
+	},
+
+
+	/**
+	 * Récupère tous les champs que le formulaire poste habituellement
+	 *
+	 * Peut être utile pour faire un hit ajax, sans modifier le formulaire.
+	 * Code en partie repris de dropzone.js
+	 *
+	 * @return object
+	 */
+	getFormData: function () {
+		var inputName, inputType;
+		var data = {};
+
+		this.form.find("input, textarea, select, button").each(function(){
+			inputName = $(this).attr('name');
+			inputType = $(this).attr('type');
+			if (inputName) {
+				if (this.tagName === "SELECT" && this.hasAttribute("multiple")) {
+					$.each(this.options, function (key, option) {
+						if (option.selected) {
+							data[inputName] = option.value;
+						}
+					});
+				} else if (!inputType || (inputType !== "checkbox" && inputType !== "radio") || this.checked) {
+					if ($(this).is("[type='submit']:hidden")) {
+						// pas de submit invisible.
+					} else {
+						data[inputName] = this.value;
+					}
+				}
+			}
+		});
+
+		return data;
 	}
 };
 
