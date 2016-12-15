@@ -580,13 +580,15 @@ class Bigup {
 	 * Intégrer le fichier indiqué dans `$FILES`
 	 *
 	 * Tout dépend de l'attribut name qui a été posté.
+	 * Cette info doit se trouver dans le tableau reçu
+	 * (ou calculé si on envoie le chemin du fichier en cache)
+	 * dans la clé 'champ'.
+	 *
 	 * - name='a' : FILES[a][name] = 'x'
 	 * - name='a[]' : FILES[a][name][0] = 'x'
 	 * - name='a[b]' : FILES[a][name][b] = 'x'
 	 * - name='a[b][]' : FILES[a][name][b][0] = 'x'
 	 *
-	 * @param string $champ
-	 *     Clé d'enregistrement
 	 * @param string|array $description
 	 *     array : Description déjà calculée
 	 *     string : chemin du fichier

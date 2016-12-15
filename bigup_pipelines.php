@@ -110,8 +110,7 @@ function bigup_formulaire_charger($flux) {
 
 	$bigup = bigup_get_bigup($flux);
 	if ($fichiers = $bigup->retrouver_fichiers()) {
-		#echo "\n<pre>"; print_r($fichiers); "</pre>\n";
-		
+
 		#$flux['data']['_fichiers'] = $fichiers;
 		$flux['data'] = array_merge($flux['data'], $fichiers);
 	}
