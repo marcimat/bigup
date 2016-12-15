@@ -606,6 +606,9 @@ class Bigup {
 			// le plus simple…
 			$_FILES[$racine] = $description;
 		} else {
+			if (!array_key_exists($racine, $_FILES)) {
+				$_FILES[$racine] = [];
+			}
 			foreach ($description as $cle => $valeur) {
 				if (!array_key_exists($cle, $_FILES[$racine])) {
 					$_FILES[$racine][$cle] = [];
