@@ -180,7 +180,7 @@ function bigup_formulaire_traiter($flux) {
 	// ou uniquement lorsqu'on a demander à recuperer les fichiers
 	if (empty($flux['data']['message_erreur']) and _request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
-		$bigup->effacer_fichiers();
+		$bigup->effacer_fichiers(_request('bigup_reinjecter_uniquement'));
 	}
 	return $flux;
 }

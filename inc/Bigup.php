@@ -174,10 +174,10 @@ class Bigup {
 		}
 		// si c'est un md5, c'est l'identifiant
 		if (strlen($this->identifiant) == 32 and ctype_xdigit($this->identifiant)) {
-			if ($this->enlever_fichier_depuis_identifiant($this->identifiant)) {
+			if ($this->enlever_fichier_depuis_identifiants($this->identifiant)) {
 				return $this->send(201);
 			}
-		} elseif ($this->enlever_fichier_depuis_repertoire($this->identifiant)) {
+		} elseif ($this->enlever_fichier_depuis_repertoires($this->identifiant)) {
 			return $this->send(201);
 		}
 		return $this->send(404);
@@ -271,20 +271,25 @@ class Bigup {
 	/**
 	 * Enlève un fichier complet dont l'identifiant est indiqué
 	 *
-	 * @param string $identifiant
-	 *     Un identifiant du fichier
+	 * @param string|array $identifiants
+	 *     Identifiant ou liste d'identifiants de fichier
+	 * @param string $quoi
+	 *      Quels répertoires nettoyer (final, parts, tout)
 	 * @return bool True si le fichier est trouvé (et donc enlevé)
 	**/
-	public function enlever_fichier_depuis_identifiant($identifiant) {
+	public function enlever_fichier_depuis_identifiants($identifiants, $quoi = 'final') {
 		$this->calculer_chemin_repertoires();
 		$liste = $this->trouver_fichiers_complets();
-		$this->debug("Demande de suppression du fichier $identifiant");
+		if (!is_array($identifiants)) {
+			$identifiants = [$identifiants];
+		}
+		$this->debug("Demande de suppression de fichier : " . implode(', ', $identifiants));
 
 		foreach ($liste as $champ => $fichiers) {
-			foreach ($fichiers as $k => $description) {
-				if ($description['identifiant'] == $identifiant) {
+			foreach ($fichiers as $description) {
+				if (in_array($description['identifiant'], $identifiants)) {
 					// en théorie, le chemin 'parts' a déjà été nettoyé
-					$this->supprimer_repertoire_fichier(dirname($description['pathname']), 'final');
+					$this->supprimer_repertoire_fichier(dirname($description['pathname']), $quoi);
 					return true;
 				}
 			}
@@ -297,25 +302,42 @@ class Bigup {
 	/**
 	 * Enlève un fichier (probablement partiel) dont le nom est indiqué
 	 *
-	 * @param string $repertoire
-	 *     Un repertoire de stockage du fichier.
+	 * @param string|array $repertoires
+	 *     Un repertoire ou liste de répertoires de stockage du fichier.
 	 *     Il correspond au `uniqueIdentifier` transmis par le JS
 	 * @return bool True si le fichier est trouvé (et donc enlevé)
 	 **/
-	public function enlever_fichier_depuis_repertoire($repertoire) {
+	public function enlever_fichier_depuis_repertoires($repertoires) {
 		$this->calculer_chemin_repertoires();
-		$this->debug("Demande de suppression du fichier dans $repertoire");
-		$this->supprimer_repertoire_fichier($this->dir_final . DIRECTORY_SEPARATOR . $repertoire, 'tout');
+		if (!is_array($repertoires)) {
+			$repertoires = [$repertoires];
+		}
+		foreach ($repertoires as $repertoire) {
+			$this->debug("Demande de suppression du fichier dans : $repertoire");
+			$this->supprimer_repertoire_fichier($this->dir_final . DIRECTORY_SEPARATOR . $repertoire, 'tout');
+		}
 		return true;
 	}
 
 	/**
-	 * Efface tous les fichiers envoyés pour ce formulaire par un auteur.
+	 * Efface tous ou des fichiers envoyés pour ce formulaire par un auteur.
+	 *
+	 * @param array|string $identifiants
+	 *     Identifiant de fichier ou liste des identifiants concernés, le cas échéant.
+	 *     Efface tous les fichiers sinon.
 	 */
-	public function effacer_fichiers() {
+	public function effacer_fichiers($identifiants = []) {
 		$this->calculer_chemin_repertoires();
 		$this->debug("Suppression des fichiers restants");
-		$this->supprimer_repertoire_fichier($this->dir_final, 'tout');
+		if (!$identifiants) {
+			$this->supprimer_repertoire_fichier($this->dir_final, 'tout');
+		} else {
+			$this->enlever_fichier_depuis_identifiants($identifiants, 'tout');
+			// les fichiers avec ces identifiants n'étant possiblement plus là
+			// ie: ils ont été déplacés lors du traitement du formulaire
+			// on nettoie les répertoires vides complètement
+			$this->supprimer_repertoires_vides($this->dir_final, true, true);
+		}
 		return true;
 	}
 
@@ -361,17 +383,80 @@ class Bigup {
 	 * Supprimer les répertoires intermédiaires jusqu'au chemin indiqué si leurs contenus sont vides.
 	 *
 	 * S'il n'y avait qu'un seul fichier dans tmp/bigupload, tout sera nettoyé, jusqu'au répertoire bigupload.
-	 *
+	 **
 	 * @param string $chemin Chemin du fichier dont on veut nettoyer le répertoire de stockage de ce fichier
+	 * @param bool $parents True pour nettoyer les répertoires vides parents
+	 * @param bool $enfants True pour nettoyer les répertoires vides enfants
 	 * @return bool
 	 */
-	function supprimer_repertoires_vides($chemin) {
+	function supprimer_repertoires_vides($chemin, $parents = true, $enfants = false)
+	{
 		// on se restreint au répertoire cache de bigup tout de même.
 		if (strpos($chemin, _DIR_TMP . $this->cache_dir) !== 0) {
 			return false;
 		}
 
+		$chemin = rtrim($chemin, DIRECTORY_SEPARATOR);
+
+		// Se nettoyer soi et les répertoires enfants vides
+		if ($enfants) {
+			$this->supprimer_repertoires_vides_enfants($chemin);
+		}
+		// Se nettoyer soi et nettoyer les répertoires parents vides
+		if ($parents) {
+			$this->supprimer_repertoires_vides_parents($chemin);
+		}
+		return true;
+	}
+
+	/**
+	 * Supprimer les répertoires enfants vides et moi même si vide.
+	 *
+	 * @param string $chemin
+	 *      Chemin du répertoire à nettoyer, dans _DIR_TMP
+	 * @return bool
+	 */
+	function supprimer_repertoires_vides_enfants($chemin) {
+
 		$chemin = substr($chemin, strlen(_DIR_TMP));
+
+		if (is_dir(_DIR_TMP . $chemin)) {
+			$fichiers = scandir(_DIR_TMP . $chemin);
+			if ($fichiers !== false) {
+				$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+				if ($fichiers) {
+					foreach ($fichiers as $fichier) {
+						if (is_dir(_DIR_TMP . $chemin . DIRECTORY_SEPARATOR . $fichier)) {
+							$this->supprimer_repertoires_vides(_DIR_TMP . $chemin . DIRECTORY_SEPARATOR . $fichier);
+						}
+					}
+				} else {
+					supprimer_repertoire(_DIR_TMP . $chemin);
+				}
+			}
+			if ($fichiers and is_dir(_DIR_TMP . $chemin)) {
+				$fichiers = scandir(_DIR_TMP . $chemin);
+				if ($fichiers !== false) {
+					$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+					if (!$fichiers) {
+						supprimer_repertoire(_DIR_TMP . $chemin);
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Supprimer ce répertoire si vide et ses parents s'ils deviennent vides
+	 *
+	 * @param string $chemin
+	 *      Chemin du répertoire à nettoyer, dans _DIR_TMP
+	 * @return bool
+	 */
+	function supprimer_repertoires_vides_parents($chemin) {
+		$chemin = substr($chemin, strlen(_DIR_TMP));
+
 		while ($chemin and ($chemin !== '.')) {
 			if (!is_dir(_DIR_TMP . $chemin)) {
 				$chemin = dirname($chemin);
