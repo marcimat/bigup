@@ -4,8 +4,9 @@
 			// trouver les input qui envoient des fichiers
 			$(".formulaire_joindre_document form .editer_fichier_upload")
 				.find("label").hide().end()
-				.find("input[type=file].bigup_documents")
-				.bigup()
+				.find("input[type=file].bigup")
+				.not('.bigup_document')
+				.addClass('bigup_document')
 				.on('bigup.fileSuccess', function(event, file, description) {
 					var bigup = file.bigup;
 					var input = file.emplacement;

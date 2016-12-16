@@ -640,6 +640,8 @@ Bigup.prototype = {
 	 * Peut être utile pour faire un hit ajax, sans modifier le formulaire.
 	 * Code en partie repris de dropzone.js
 	 *
+	 * On ne récupère pas les type file, ni sumbit.
+	 *
 	 * @return object
 	 */
 	getFormData: function () {
@@ -656,16 +658,15 @@ Bigup.prototype = {
 							data[inputName] = option.value;
 						}
 					});
-				} else if (!inputType || (inputType !== "checkbox" && inputType !== "radio") || this.checked) {
-					if ($(this).is("[type='submit']:hidden")) {
-						// pas de submit invisible.
-					} else {
-						data[inputName] = this.value;
-					}
+				} else if (
+					!inputType
+					|| ($.inArray(inputType, ["file", "checkbox", "radio", "submit"]) == -1)
+					|| this.checked
+				) {
+					data[inputName] = this.value;
 				}
 			}
 		});
-
 		return data;
 	}
 };

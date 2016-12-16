@@ -187,34 +187,42 @@ function bigup_formulaire_traiter($flux) {
 
 
 /**
- * Ajouter bigup sur le formulaire de documents du plugin Medias
+ * Ajouter bigup sur certains formulaires
+ *
+ * - le documents du plugin Medias
+ * - le formulaire de logo de SPIP
  *
  * @param array $flux
  * @return array
  **/
 function bigup_medias_formulaire_charger($flux) {
-	if (in_array($flux['args']['form'], ['joindre_document'])) {
+	if (in_array($flux['args']['form'], ['joindre_document', 'editer_logo'])) {
 		$flux['data']['_rechercher_uploads'] = true;
 	}
 	return $flux;
 }
 
 /**
- * Utiliser Bigup sur le formulaire d'ajout de documents du plugin Medias
+ * Utiliser Bigup sur certains formulaires
+ *
+ * - le documents du plugin Medias
+ * - le formulaire de logo de SPIP
  *
  * @param array $flux
  * @return array
  **/
 function bigup_medias_formulaire_fond($flux) {
 	if (!empty($flux['args']['contexte']['_rechercher_uploads'])) {
-		if (in_array($flux['args']['form'], ['joindre_document'])) {
-			$flux['data'] = bigup_preparer_input_file(
-				$flux['data'],
-				'fichier_upload',
-				$flux['args']['contexte'],
-				['input_class' => 'bigup_documents']
-			);
-			$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.documents.js') . '"></script>' . "\n";
+		$contexte = $flux['args']['contexte'];
+		switch ($flux['args']['form']) {
+			case 'joindre_document':
+				$flux['data'] = bigup_preparer_input_file($flux['data'], 'fichier_upload', $contexte);
+				$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.documents.js') . '"></script>' . "\n";
+				break;
+			case 'editer_logo':
+				$flux['data'] = bigup_preparer_input_file($flux['data'], ['logo_on', 'logo_off'], $contexte);
+				$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.logos.js') . '"></script>' . "\n";
+				break;
 		}
 	}
 	return $flux;

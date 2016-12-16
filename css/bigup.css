@@ -113,3 +113,9 @@
 	padding: 50px 15px;
 	text-align:center;
 }
+.formulaire_editer_logo .dropfile {
+	padding: 25px 15px 15px;
+	text-align:center;
+}
+.formulaire_editer_logo .dropfileor { display:block; }
+.formulaire_editer_logo .bigup_fichiers .fichier .infos { clear:both; }
