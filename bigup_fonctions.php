@@ -149,6 +149,20 @@ function calculer_balise_BIGUP_TOKEN($champ, $multiple, $form, $form_args) {
 }
 
 
+/**
+ * Passe un `array_filter` sur un tableau.
+ *
+ * Retourne un tableau vide si l'entrée reçue n'est pas un tableau
+ *
+ * @param array $tableau
+ * @return array
+ */
+function bigup_array_filter($tableau) {
+	if (!is_array($tableau)) {
+		return [];
+	}
+	return array_filter($tableau);
+}
 
 /**
  * Vérifier et préparer l'arborescence jusqu'au répertoire parent

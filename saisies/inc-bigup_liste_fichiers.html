@@ -8,7 +8,7 @@
 
 ]<B_fichiers>
 	<div class='bigup_fichiers fichiers_[(#ENV{nom}|concat{#ENV{multiple}|=={oui}|?{\[\]}}|saisie_nom2classe)]'>
-		<BOUCLE_fichiers(DATA){source tableau, #FICHIERS}>
+		<BOUCLE_fichiers(DATA){source tableau, #FICHIERS|bigup_array_filter}>
 		<div class='fichier'>
 			<div class='actions'>
 				<button class='submit' type='submit'
