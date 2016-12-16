@@ -387,6 +387,13 @@ Bigup.prototype = {
 			$zone_depot = this.form.find(".dropfile_" + this.class_name);
 		}
 
+		$zone_depot.on('dragenter', function(){
+			$(this).addClass('drag-over');
+		});
+		$zone_depot.on('dragleave drop', function(){
+			$(this).removeClass('drag-over');
+		});
+
 		this.zones.depot = $zone_depot;
 	},
 

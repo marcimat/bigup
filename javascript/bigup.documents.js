@@ -2,7 +2,9 @@
 	$(document).ready(function () {
 		var formulaires_documents_avec_bigup = function () {
 			// trouver les input qui envoient des fichiers
-			$(".formulaire_joindre_document form input[type=file].bigup_documents")
+			$(".formulaire_joindre_document form .editer_fichier_upload")
+				.find("label").hide().end()
+				.find("input[type=file].bigup_documents")
 				.bigup()
 				.on('bigup.fileSuccess', function(event, file, description) {
 					var bigup = file.bigup;

@@ -63,6 +63,10 @@
 	line-height: 34px;
 	padding: 15px;
 	background:rgba(255,255,255,.95);
+	transition : border 200ms ease-out;
+}
+.dropfile.drag-over {
+	border-color:#bbb;
 }
 .dropfileor {
 	font-weight:bold;
@@ -100,4 +104,12 @@
 	background-color: #ebebeb;
 	border-color: #adadad;
 	color: #333;
+}
+
+
+
+/* Spécificités sur des formulaires */
+.formulaire_joindre_document .editer_fichier_upload .dropfile {
+	padding: 50px 15px;
+	text-align:center;
 }
