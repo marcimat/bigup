@@ -22,6 +22,12 @@
 .bigup_fichiers .fichier .message_erreur {
 	color: #D31603;
 }
+.bigup_fichiers .fichier.succes {
+	border-left: 2px solid #88c924;
+}
+.bigup_fichiers .fichier .message_ok {
+	color: #54a509;
+}
 .bigup_fichiers .actions {
 	float:right;
 	margin-top:1em;

@@ -521,11 +521,7 @@ Bigup.prototype = {
 			}
 		}
 
-		$.post(this.target, {
-			action: "bigup",
-			formulaire_action: this.formulaire_action,
-			formulaire_action_args: this.formulaire_action_args,
-			bigup_token: this.token,
+		this.post({
 			bigup_action: 'effacer',
 			identifiant: identifiant
 		})
@@ -541,6 +537,24 @@ Bigup.prototype = {
 	},
 
 	/**
+	 * Poster une requête ajax, en transmettant des paramètres par défaut
+	 * tel que le nom du formulaire, les actions, le token…
+	 *
+	 * @example
+	 *     bigup.post({ action:bigup_document }).done(function(){ ... });
+	 * @return jqXHR
+	 */
+	post: function(data) {
+		data = $.extend({
+			action: "bigup",
+			formulaire_action: this.formulaire_action,
+			formulaire_action_args: this.formulaire_action_args,
+			bigup_token: this.token,
+		}, data);
+		return $.post(this.target, data);
+	},
+
+	/**
 	 * Afficher une erreur sur un fichier
 	 * @param string emplacement
 	 *     Emplacement du fichier dans la liste des fichiers
@@ -552,6 +566,21 @@ Bigup.prototype = {
 			.addClass('erreur')
 			.find('.infos')
 			.append("<span class='message_erreur'>" + message + "</span>");
+		return this;
+	},
+
+	/**
+	 * Afficher un message gentil sur un fichier
+	 * @param string emplacement
+	 *     Emplacement du fichier dans la liste des fichiers
+	 * @param string message
+	 *     Message
+	 */
+	presenter_succes: function(emplacement, message) {
+		emplacement
+			.addClass('succes')
+			.find('.infos')
+			.append("<span class='message_ok'>" + message + "</span>");
 		return this;
 	},
 

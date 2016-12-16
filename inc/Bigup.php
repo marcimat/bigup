@@ -148,14 +148,16 @@ class Bigup {
 		$this->calculer_chemin_repertoires();
 
 		if ($this->action) {
-			switch ($this->action) {
-				case "effacer":
-					return $this->repondre_effacer();
-					break;
-				default:
-					return $this->send(403);
-					break;
+			$repondre_action = 'repondre_' . $this->action;
+			if (method_exists($this, $repondre_action)) {
+				return $this->$repondre_action();
 			}
+			$action_externe = charger_fonction('bigup_' . $repondre_action, 'action', true);
+			if ($action_externe = charger_fonction('bigup_' . $repondre_action, 'action', true)) {
+				return $action_externe($this);
+			}
+			// Action inconnue.
+			return $this->send(403);
 		}
 
 		return $this->repondre_flow();
