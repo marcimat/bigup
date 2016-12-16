@@ -13,6 +13,7 @@ namespace Spip\Bigup;
  */
 
 include_spip('inc/Bigup/LogTrait');
+include_spip('inc/flock');
 
 /**
  * Gère la création ou le nettoyages de répertoires
@@ -23,6 +24,9 @@ include_spip('inc/Bigup/LogTrait');
 class GestionRepertoires {
 
 	use LogTrait;
+
+	private $dir_final = '';
+	private $dir_parts = '';
 
 	/**
 	 * Vérifier et préparer l'arborescence jusqu'au répertoire parent
@@ -35,7 +39,7 @@ class GestionRepertoires {
 	 *     false en cas d'échec
 	 *     Chemin du répertoire sinon
 	 */
-	public static function creer_sous_repertoires($dest){
+	public static function creer_sous_repertoire($dest){
 		$dest = rtrim($dest, "/");
 		$final = basename($dest);
 		$base = dirname($dest);
@@ -51,7 +55,7 @@ class GestionRepertoires {
 			if (!is_writable($base)) {
 				return false;
 			}
-			$base = self::creer_sous_repertoire($base, array_pop($create));
+			$base = sous_repertoire($base, array_pop($create));
 			if (!$base) {
 				return false;
 			}
@@ -61,10 +65,8 @@ class GestionRepertoires {
 			return false;
 		}
 
-		return self::creer_sous_repertoire($base, $final);
+		return sous_repertoire($base, $final);
 	}
-
-
 
 	/**
 	 * Nettoyer un répertoire suivant l'age et le nombre de ses fichiers
@@ -83,7 +85,6 @@ class GestionRepertoires {
 	 *     - true : action réalisée.
 	 **/
 	public static function nettoyer_repertoire_recursif($repertoire, $age_max = 24*3600) {
-		include_spip('inc/flock');
 
 		$repertoire = rtrim($repertoire, '/');
 		if (!is_dir($repertoire)) {
@@ -126,4 +127,113 @@ class GestionRepertoires {
 		return true;
 	}
 
+
+	/**
+	 * Supprimer le contenu d'un répertoire et nettoie les répertoires parents s'ils sont vides
+	 *
+	 * @param string $chemin Chemin du répertoire à supprimer
+	 * @return bool
+	 */
+	public static function supprimer_repertoire($chemin) {
+		if (!$chemin) {
+			return false;
+		}
+		supprimer_repertoire($chemin);
+		GestionRepertoires::supprimer_repertoires_vides_parents($chemin);
+		return true;
+	}
+
+	/**
+	 * Supprimer les répertoires vides enfants et parents (jusqu'à _DIR_TMP) d'un répertoire.
+	 *
+	 * @param string $chemin Chemin du repertoire à nettoyer, dans _DIR_TMP
+	 * @param bool $parents True pour nettoyer les répertoires vides parents
+	 * @param bool $enfants True pour nettoyer les répertoires vides enfants
+	 * @return bool
+	 */
+	public static function supprimer_repertoires_vides($chemin, $parents = true, $enfants = true) {
+		// Se nettoyer soi et les répertoires enfants vides
+		if ($enfants) {
+			self::supprimer_repertoires_vides_enfants($chemin);
+		}
+		// Se nettoyer soi et nettoyer les répertoires parents vides
+		if ($parents) {
+			self::supprimer_repertoires_vides_parents($chemin);
+		}
+		return true;
+	}
+
+	/**
+	 * Supprimer les répertoires enfants vides et moi même si vide.
+	 *
+	 * @param string $chemin
+	 *      Chemin du répertoire à nettoyer, dans _DIR_TMP
+	 * @return bool
+	 */
+	public static function supprimer_repertoires_vides_enfants($chemin) {
+		$chemin = rtrim($chemin, DIRECTORY_SEPARATOR);
+		$chemin = substr($chemin, strlen(_DIR_TMP));
+
+		if (is_dir(_DIR_TMP . $chemin)) {
+			$fichiers = scandir(_DIR_TMP . $chemin);
+			if ($fichiers !== false) {
+				$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+				if ($fichiers) {
+					foreach ($fichiers as $fichier) {
+						$fichier = _DIR_TMP . $chemin . DIRECTORY_SEPARATOR . $fichier;
+						if (is_dir($fichier)) {
+							self::supprimer_repertoires_vides_enfants($fichier);
+						}
+					}
+				} else {
+					supprimer_repertoire(_DIR_TMP . $chemin);
+				}
+			}
+			if ($fichiers and is_dir(_DIR_TMP . $chemin)) {
+				$fichiers = scandir(_DIR_TMP . $chemin);
+				if ($fichiers !== false) {
+					$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+					if (!$fichiers) {
+						supprimer_repertoire(_DIR_TMP . $chemin);
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Supprimer ce répertoire si vide et ses parents s'ils deviennent vides
+	 *
+	 * @param string $chemin
+	 *      Chemin du répertoire à nettoyer, dans _DIR_TMP
+	 * @return bool
+	 */
+	public static function supprimer_repertoires_vides_parents($chemin) {
+		$chemin = rtrim($chemin, DIRECTORY_SEPARATOR);
+		$chemin = substr($chemin, strlen(_DIR_TMP));
+
+		while ($chemin and ($chemin !== '.')) {
+			if (!is_dir(_DIR_TMP . $chemin)) {
+				$chemin = dirname($chemin);
+				continue;
+			}
+
+			$fichiers = scandir(_DIR_TMP . $chemin);
+			if ($fichiers === false) {
+				$chemin = dirname($chemin);
+				continue;
+			}
+
+			$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+			if (!$fichiers) {
+				supprimer_repertoire(_DIR_TMP . $chemin);
+				$chemin = dirname($chemin);
+				continue;
+			}
+
+			return true;
+		}
+		return true;
+	}
 }

@@ -14,6 +14,7 @@ namespace Spip\Bigup;
 
 include_spip('inc/Bigup/LogTrait');
 include_spip('inc/Bigup/Flow');
+include_spip('inc/Bigup/GestionRepertoires');
 
 /**
  * Gère la validité des requêtes et appelle Flow
@@ -197,23 +198,15 @@ class Bigup {
 		// le fichier est complet
 		if (is_string($res)) {
 			// remettre le fichier dans $FILES
-			# $this->integrer_fichier($this->champ, $res);
-
-			// on demande à nettoyer le répertoire des fichiers dans la foulée
-			job_queue_add(
-				'bigup_nettoyer_repertoire_upload',
-				'Nettoyer répertoires et fichiers de Big Upload',
-				array(0),
-				'genie/'
-			);
+			# $this->integrer_fichier($res);
 
 			// envoyer quelques infos sur le fichier reçu
 			$desc = $this->decrire_fichier($res);
 			// ne pas permettre de connaître le chemin complet
 			unset($desc['pathname'], $desc['tmp_name']);
 
-			// nettoyer le chemin des répertoires temporaires du coup.
-			$this->supprimer_repertoire_fichier(dirname($res), 'parts');
+			// nettoyer le chemin du répertoire de stockage des morceaux du fichiers
+			GestionRepertoires::supprimer_repertoire($this->obtenir_chemin(dirname($res), false));
 
 			$this->send(200, $desc);
 		}
@@ -273,11 +266,9 @@ class Bigup {
 	 *
 	 * @param string|array $identifiants
 	 *     Identifiant ou liste d'identifiants de fichier
-	 * @param string $quoi
-	 *      Quels répertoires nettoyer (final, parts, tout)
 	 * @return bool True si le fichier est trouvé (et donc enlevé)
 	**/
-	public function enlever_fichier_depuis_identifiants($identifiants, $quoi = 'final') {
+	public function enlever_fichier_depuis_identifiants($identifiants) {
 		$this->calculer_chemin_repertoires();
 		$liste = $this->trouver_fichiers_complets();
 		if (!is_array($identifiants)) {
@@ -289,7 +280,7 @@ class Bigup {
 			foreach ($fichiers as $description) {
 				if (in_array($description['identifiant'], $identifiants)) {
 					// en théorie, le chemin 'parts' a déjà été nettoyé
-					$this->supprimer_repertoire_fichier(dirname($description['pathname']), $quoi);
+					$this->supprimer_repertoire_fichier(dirname($description['pathname']));
 					return true;
 				}
 			}
@@ -314,7 +305,7 @@ class Bigup {
 		}
 		foreach ($repertoires as $repertoire) {
 			$this->debug("Demande de suppression du fichier dans : $repertoire");
-			$this->supprimer_repertoire_fichier($this->dir_final . DIRECTORY_SEPARATOR . $repertoire, 'tout');
+			$this->supprimer_repertoire_fichier($this->dir_final . DIRECTORY_SEPARATOR . $repertoire);
 		}
 		return true;
 	}
@@ -330,29 +321,27 @@ class Bigup {
 		$this->calculer_chemin_repertoires();
 		$this->debug("Suppression des fichiers restants");
 		if (!$identifiants) {
-			$this->supprimer_repertoire_fichier($this->dir_final, 'tout');
+			$this->supprimer_repertoire_fichier($this->dir_final);
 		} else {
-			$this->enlever_fichier_depuis_identifiants($identifiants, 'tout');
+			$this->enlever_fichier_depuis_identifiants($identifiants);
 			// les fichiers avec ces identifiants n'étant possiblement plus là
 			// ie: ils ont été déplacés lors du traitement du formulaire
 			// on nettoie les répertoires vides complètement
-			$this->supprimer_repertoires_vides($this->dir_final, true, true);
+			GestionRepertoires::supprimer_repertoires_vides($this->dir_final);
 		}
 		return true;
 	}
 
 	/**
-	 * Supprimer le répertoire indiqué et les répertoires parents éventuellement.
-	 *
+	 * À partir d'un chemin de stockage final ou partiel d'un fichier dans bigup,
+	 * retrouver le chemin final ou partiel correspondant
 	 *
 	 * @param string $chemin
-	 *     Chemin du répertoire stockant un fichier bigup
-	 * @param string $quoi
-	 *     Quelle partie supprimer : 'final', 'parts' ou 'tout' (les 2)
+	 * @param bool $final
+	 *     Retourne le chemin final, sinon le chemin partiel
 	 * @return bool
 	 */
-	function supprimer_repertoire_fichier($chemin, $quoi = 'tout') {
-
+	function obtenir_chemin($chemin, $final = true) {
 		// on vérifie que ce chemin concerne bigup uniquement
 		if (strpos($chemin, $this->dir_final) === 0) {
 			$path = substr($chemin, strlen($this->dir_final));
@@ -361,122 +350,26 @@ class Bigup {
 		} else {
 			return false;
 		}
+		return ($final ? $this->dir_final : $this->dir_parts) . $path;
+	}
 
-		include_spip('inc/flock');
-
+	/**
+	 * Supprimer le répertoire indiqué et les répertoires parents éventuellement.
+	 *
+	 * @param string $chemin
+	 *     Chemin du répertoire stockant un fichier bigup
+	 * @param string $quoi
+	 *     Quelle partie supprimer : 'final', 'parts' ou 'tout' (les 2)
+	 * @return bool
+	 */
+	function supprimer_repertoire_fichier($chemin, $quoi = 'tout') {
 		// Suppression du contenu du fichier final
-		if (in_array($quoi, ['tout', 'final'])) {
-			supprimer_repertoire($this->dir_final . $path);
-			$this->supprimer_repertoires_vides($this->dir_final);
+		if (in_array($quoi, ['tout', 'final']) and $dir = $this->obtenir_chemin($chemin, true)) {
+			GestionRepertoires::supprimer_repertoire($dir);
 		}
-
-		// Suppression du contenu des morcaux du fichier
-		if (in_array($quoi, ['tout', 'parts'])) {
-			supprimer_repertoire($this->dir_parts . $path);
-			$this->supprimer_repertoires_vides($this->dir_parts);
-		}
-
-		return true;
-	}
-
-	/**
-	 * Supprimer les répertoires intermédiaires jusqu'au chemin indiqué si leurs contenus sont vides.
-	 *
-	 * S'il n'y avait qu'un seul fichier dans tmp/bigupload, tout sera nettoyé, jusqu'au répertoire bigupload.
-	 **
-	 * @param string $chemin Chemin du fichier dont on veut nettoyer le répertoire de stockage de ce fichier
-	 * @param bool $parents True pour nettoyer les répertoires vides parents
-	 * @param bool $enfants True pour nettoyer les répertoires vides enfants
-	 * @return bool
-	 */
-	function supprimer_repertoires_vides($chemin, $parents = true, $enfants = false)
-	{
-		// on se restreint au répertoire cache de bigup tout de même.
-		if (strpos($chemin, _DIR_TMP . $this->cache_dir) !== 0) {
-			return false;
-		}
-
-		$chemin = rtrim($chemin, DIRECTORY_SEPARATOR);
-
-		// Se nettoyer soi et les répertoires enfants vides
-		if ($enfants) {
-			$this->supprimer_repertoires_vides_enfants($chemin);
-		}
-		// Se nettoyer soi et nettoyer les répertoires parents vides
-		if ($parents) {
-			$this->supprimer_repertoires_vides_parents($chemin);
-		}
-		return true;
-	}
-
-	/**
-	 * Supprimer les répertoires enfants vides et moi même si vide.
-	 *
-	 * @param string $chemin
-	 *      Chemin du répertoire à nettoyer, dans _DIR_TMP
-	 * @return bool
-	 */
-	function supprimer_repertoires_vides_enfants($chemin) {
-
-		$chemin = substr($chemin, strlen(_DIR_TMP));
-
-		if (is_dir(_DIR_TMP . $chemin)) {
-			$fichiers = scandir(_DIR_TMP . $chemin);
-			if ($fichiers !== false) {
-				$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
-				if ($fichiers) {
-					foreach ($fichiers as $fichier) {
-						if (is_dir(_DIR_TMP . $chemin . DIRECTORY_SEPARATOR . $fichier)) {
-							$this->supprimer_repertoires_vides(_DIR_TMP . $chemin . DIRECTORY_SEPARATOR . $fichier);
-						}
-					}
-				} else {
-					supprimer_repertoire(_DIR_TMP . $chemin);
-				}
-			}
-			if ($fichiers and is_dir(_DIR_TMP . $chemin)) {
-				$fichiers = scandir(_DIR_TMP . $chemin);
-				if ($fichiers !== false) {
-					$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
-					if (!$fichiers) {
-						supprimer_repertoire(_DIR_TMP . $chemin);
-					}
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Supprimer ce répertoire si vide et ses parents s'ils deviennent vides
-	 *
-	 * @param string $chemin
-	 *      Chemin du répertoire à nettoyer, dans _DIR_TMP
-	 * @return bool
-	 */
-	function supprimer_repertoires_vides_parents($chemin) {
-		$chemin = substr($chemin, strlen(_DIR_TMP));
-
-		while ($chemin and ($chemin !== '.')) {
-			if (!is_dir(_DIR_TMP . $chemin)) {
-				$chemin = dirname($chemin);
-				continue;
-			}
-
-			$fichiers = scandir(_DIR_TMP . $chemin);
-			if ($fichiers === false) {
-				$chemin = dirname($chemin);
-				continue;
-			}
-
-			$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
-			if (!$fichiers) {
-				supprimer_repertoire(_DIR_TMP . $chemin);
-				$chemin = dirname($chemin);
-				continue;
-			}
-
-			return true;
+		// Suppression du contenu des morceaux du fichier
+		if (in_array($quoi, ['tout', 'parts']) and $dir = $this->obtenir_chemin($chemin, false)) {
+			GestionRepertoires::supprimer_repertoire($dir);
 		}
 		return true;
 	}

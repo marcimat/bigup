@@ -248,7 +248,7 @@ class Flow {
 		}
 
 		include_spip('bigup_fonctions');
-		if (!bigup_sous_repertoires($dir)) {
+		if (!GestionRepertoires::creer_sous_repertoire($dir)) {
 			return false;
 		}
 
