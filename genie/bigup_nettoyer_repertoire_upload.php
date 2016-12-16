@@ -19,8 +19,8 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
 **/
 function genie_bigup_nettoyer_repertoire_upload_dist($last) {
 
-	include_spip('bigup_fonctions');
-	bigup_nettoyer_repertoire_recursif(_DIR_TMP . 'bigupload');
+	include_spip('inc/Bigup/GestionRepertoires');
+	\Spip\Bigup\GestionRepertoires::nettoyer_repertoire_recursif(_DIR_TMP . 'bigupload');
 
 	return 1;
 }
