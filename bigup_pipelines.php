@@ -136,7 +136,7 @@ function bigup_formulaire_charger($flux) {
 function bigup_formulaire_pre_verifier($flux) {
 	if (_request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
-		$bigup->reinserer_fichiers();
+		$bigup->reinserer_fichiers(_request('bigup_reinjecter_uniquement'));
 	}
 	return $flux;
 }

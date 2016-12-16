@@ -242,14 +242,26 @@ class Bigup {
 	 * Retrouve les fichiers qui ont été téléchargés et sont en attente pour ce formulaire
 	 * et les réaffecte à `$_FILES` au passage.
 	 *
+	 * @param string|array $uniquement
+	 *      Identifant ou liste d'identifiant de fichiers que l'on souhaite
+	 *      uniquement réinsérer, le cas échéant.
 	 * @return array
 	**/
-	public function reinserer_fichiers() {
+	public function reinserer_fichiers($uniquement = []) {
+
+		if (!$uniquement) {
+			$uniquement = [];
+		} elseif (!is_array($uniquement)) {
+			$uniquement = [$uniquement];
+		}
+
 		$this->calculer_chemin_repertoires();
 		$liste = $this->trouver_fichiers_complets();
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $description) {
-				$this->integrer_fichier($description);
+				if (!$uniquement or in_array($description['identifiant'], $uniquement)) {
+					$this->integrer_fichier($description);
+				}
 			}
 		}
 		return $liste;
