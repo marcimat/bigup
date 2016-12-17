@@ -25,9 +25,6 @@ class GestionRepertoires {
 
 	use LogTrait;
 
-	private $dir_final = '';
-	private $dir_parts = '';
-
 	/**
 	 * Vérifier et préparer l'arborescence jusqu'au répertoire parent
 	 *
