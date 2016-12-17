@@ -42,8 +42,11 @@ class Cache {
 	 * @var string */
 	private $dir_final = '';
 
-
-	public function construct(Identifier $identifier) {
+	/**
+	 * Constructeur
+	 * @param Identifier $identifier
+	 */
+	public function __construct(Identifier $identifier) {
 		$this->identifier = $identifier;
 		$this->dir_parts = $this->calculer_chemin_repertoire('parts');
 		$this->dir_final = $this->calculer_chemin_repertoire('final');
@@ -63,6 +66,22 @@ class Cache {
 			. DIRECTORY_SEPARATOR . $this->identifier->formulaire
 			. DIRECTORY_SEPARATOR . $this->identifier->formulaire_identifiant
 			. DIRECTORY_SEPARATOR . $this->identifier->champ;
+	}
+
+	/**
+	 * Retourne le chemin du répertoire stockant les morceaux de fichiers
+	 * @return string
+	 */
+	public function dir_parts() {
+		return $this->dir_parts;
+	}
+
+	/**
+	 * Retourne le chemin du répertoire stockant les fichiers complets
+	 * @return string
+	 */
+	public function dir_final() {
+		return $this->dir_final;
 	}
 
 	/**
@@ -91,7 +110,7 @@ class Cache {
 		if (strpos($chemin, $this->dir_final) === 0) {
 			$path = substr($chemin, strlen($this->dir_final));
 		} elseif (strpos($chemin, $this->dir_parts) === 0) {
-			$path = substr($chemin, strlen($this->dir_final));
+			$path = substr($chemin, strlen($this->dir_parts));
 		} else {
 			return false;
 		}
@@ -166,6 +185,25 @@ class Cache {
 		return $desc;
 	}
 
+	/**
+	 * Enlève un fichier complet
+	 *
+	 * @param string $identifiant_ou_repertoire
+	 *     Identifiant ou chemin de répertoire
+	 * @return bool
+	 *    True si le fichier est trouvé (et donc enlevé)
+	 **/
+	public function enlever_fichier($identifiant_ou_repertoire) {
+		if (!$identifiant_ou_repertoire) {
+			return false;
+		}
+		// si c'est un md5, c'est l'identifiant
+		if (strlen($identifiant_ou_repertoire) == 32 and ctype_xdigit($identifiant_ou_repertoire)) {
+			return $this->enlever_fichier_depuis_identifiants($identifiant_ou_repertoire);
+		}
+		// sinon c'est un répertoire
+		return $this->enlever_fichier_depuis_repertoires($identifiant_ou_repertoire);
+	}
 
 	/**
 	 * Enlève un fichier complet dont l'identifiant est indiqué

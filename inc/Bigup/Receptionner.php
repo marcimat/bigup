@@ -56,6 +56,11 @@ class Receptionner {
 	 **/
 	private $identifiant = '';
 
+	/**
+	 * Gestion du cache Bigup
+	 * @var Identifier
+	 */
+	private $cache = null;
 
 	/**
 	 * Constructeur
@@ -64,6 +69,7 @@ class Receptionner {
 	 **/
 	public function __construct(Identifier $identifier) {
 		$this->identifier = $identifier;
+		$this->cache = new Cache($identifier);
 	}
 
 	/**
@@ -93,8 +99,6 @@ class Receptionner {
 			return $this->send(403);
 		}
 
-		$this->calculer_chemin_repertoires();
-
 		if ($this->action) {
 			$repondre_action = 'repondre_' . $this->action;
 			if (method_exists($this, $repondre_action)) {
@@ -118,11 +122,7 @@ class Receptionner {
 			return $this->send(404);
 		}
 		// si c'est un md5, c'est l'identifiant
-		if (strlen($this->identifiant) == 32 and ctype_xdigit($this->identifiant)) {
-			if ($this->enlever_fichier_depuis_identifiants($this->identifiant)) {
-				return $this->send(201);
-			}
-		} elseif ($this->enlever_fichier_depuis_repertoires($this->identifiant)) {
+		if ($this->cache->enlever_fichier($this->identifiant)) {
 			return $this->send(201);
 		}
 		return $this->send(404);
@@ -135,8 +135,8 @@ class Receptionner {
 	public function repondre_flow() {
 
 		$flow = new Flow();
-		$flow->definir_repertoire('parts', $this->dir_parts);
-		$flow->definir_repertoire('final', $this->dir_final);
+		$flow->definir_repertoire('parts', $this->cache->dir_parts());
+		$flow->definir_repertoire('final', $this->cache->dir_final());
 		$res = $flow->run();
 
 		// le fichier est complet
@@ -145,12 +145,12 @@ class Receptionner {
 			# $this->integrer_fichier($res);
 
 			// envoyer quelques infos sur le fichier reçu
-			$desc = $this->decrire_fichier($res);
+			$desc = $this->cache->decrire_fichier($res);
 			// ne pas permettre de connaître le chemin complet
 			unset($desc['pathname'], $desc['tmp_name']);
 
 			// nettoyer le chemin du répertoire de stockage des morceaux du fichiers
-			GestionRepertoires::supprimer_repertoire($this->obtenir_chemin(dirname($res), false));
+			GestionRepertoires::supprimer_repertoire($this->cache->obtenir_chemin(dirname($res), false));
 
 			$this->send(200, $desc);
 		}

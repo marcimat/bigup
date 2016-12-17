@@ -33,6 +33,12 @@ class Bigup {
 	private $identifier = null;
 
 	/**
+	 * Gestion du cache Bigup
+	 * @var Identifier
+	 */
+	private $cache = null;
+
+	/**
 	 * Constructeur
 	 *
 	 * @param Identifier $identifier
@@ -84,22 +90,23 @@ class Bigup {
 
 
 	/**
-	 * Efface tous ou des fichiers envoyés pour ce formulaire par un auteur.
+	 * Efface tous ou certains fichiers envoyés pour ce formulaire par un auteur.
 	 *
 	 * @param array|string $identifiants
 	 *     Identifiant de fichier ou liste des identifiants concernés, le cas échéant.
 	 *     Efface tous les fichiers sinon.
+	 * @return true
 	 */
 	public function effacer_fichiers($identifiants = []) {
 		$this->debug("Suppression des fichiers restants");
 		if (!$identifiants) {
-			$this->cache->supprimer_repertoire($this->dir_final);
+			$this->cache->supprimer_repertoire($this->cache->dir_final());
 		} else {
 			$this->cache->enlever_fichier_depuis_identifiants($identifiants);
 			// les fichiers avec ces identifiants n'étant possiblement plus là
 			// ie: ils ont été déplacés lors du traitement du formulaire
 			// on nettoie les répertoires vides complètement
-			GestionRepertoires::supprimer_repertoires_vides($this->dir_final);
+			GestionRepertoires::supprimer_repertoires_vides($this->cache->dir_final());
 		}
 		return true;
 	}
