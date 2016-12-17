@@ -93,9 +93,9 @@ function bigup_get_bigup($flux) {
  * dans l'environnement.
  *
  * Ajoute également un hidden, qui s'il est posté, demandera à recréer $_FILES
- * juste avant la fonction verifier(). Voir `bigup_formulaire_pre_verifier()`
+ * juste avant la fonction verifier(). Voir `bigup_formulaire_receptionner()`
  *
- * @see bigup_formulaire_pre_verifier():
+ * @see bigup_formulaire_receptionner():
  * @param array $flux
  * @return array
 **/
@@ -124,16 +124,17 @@ function bigup_formulaire_charger($flux) {
 }
 
 /**
- * Branchement avant vérifications
+ * Branchement sur la réception d'un formulaire (avant verifier())
  *
  * On remet `$_FILES` avec les fichiers présents pour ce formulaire,
  * et avant que la fonction verifier native du formulaire soit utilisée,
  * de sorte qu'elle ait accès à $_FILES rempli.
  *
+ * @pipeline formulaire_receptionner
  * @param array $flux
  * @return array
  */
-function bigup_formulaire_pre_verifier($flux) {
+function bigup_formulaire_receptionner($flux) {
 	if (_request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
 		$bigup->reinserer_fichiers(_request('bigup_reinjecter_uniquement'));
