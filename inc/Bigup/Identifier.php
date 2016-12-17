@@ -77,6 +77,9 @@ class Identifier {
 		$this->formulaire_args = $formulaire_args;
 		$this->identifier_auteur();
 		$this->identifier_formulaire();
+		if ($token) {
+			$this->obtenir_champ_token();
+		}
 	}
 
 	/**
@@ -134,6 +137,9 @@ class Identifier {
 		$this->formulaire      = _request('formulaire_action');
 		$this->formulaire_args = _request('formulaire_action_args');
 		$this->identifier_formulaire();
+		if ($this->token) {
+			$this->obtenir_champ_token();
+		}
 	}
 
 	/**
@@ -173,6 +179,26 @@ class Identifier {
 	 **/
 	public function identifier_formulaire() {
 		return $this->formulaire_identifiant = substr(md5($this->formulaire_args), 0, 6);
+	}
+
+	/**
+	 * Récupère le champ du token
+	 *
+	 * @note
+	 *     On permet de le calculer dès la construction de la classe,
+	 *     avant même vérifier la validité du token.
+	 *     Ça permet au constructeur du Cache d'avoir cette info directement,
+	 *     sans utiliser de méthode supplémentaire après la vérification du token.
+	 *
+	 * @return bool True si le champ est trouvé.
+	 */
+	function obtenir_champ_token() {
+		$_token = explode(':', $this->token, 2);
+		if (count($_token) == 2) {
+			$this->champ = reset($_token);
+			return true;
+		}
+		return false;
 	}
 
 	/**
