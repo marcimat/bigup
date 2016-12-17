@@ -72,11 +72,6 @@ $.fn.bigup = function(options, callbacks) {
 					accept: $input.prop('accept'),
 					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
 					maxFileSize: sinon($input.data('maxFileSize'), conf.maxFileSize),
-				},
-				options: {
-					preview: {
-						active: $input.is(".bigup_with_preview")
-					}
 				}
 			},
 			callbacks
@@ -137,6 +132,13 @@ function Bigup(params, opts, callbacks) {
 			accept: '',
 			maxFiles: 1,
 			maxFileSize: 0
+		},
+		options: {
+			// previsualisation des images
+			previsualisation: {
+				activer: this.input.data("previsualiser") ? true : false,
+				fileSizeMax: 10, // 10 Mib
+			}
 		},
 		templates: {
 			zones: {
@@ -245,6 +247,15 @@ Bigup.prototype = {
 	 */
 	nom2classe: function(nom) {
 		return nom.replace(/\/|\\[|&#91/g, '_').replace(/\]|&#93/g, '');
+	},
+
+	/**
+	 * Redéfinir des options
+	 * @param object options Options à modifier
+	 */
+	setOptions: function(options) {
+		options = options || {};
+		this.opts.options = $.extend(true, this.opts.options, options);
 	},
 
 	/**
@@ -515,6 +526,10 @@ Bigup.prototype = {
 		// Conserver en mémoire l'objet sur la vue du fichier, et inversement.
 		var fichier = this.zones.fichiers.find(".fichier:last-child");
 		file.emplacement = fichier;
+
+		// Calculer la preview
+		this.presenter_previsualisation(file);
+
 		fichier
 			.animateAppend()
 			.data('file', file)
@@ -607,6 +622,69 @@ Bigup.prototype = {
 			.find('.infos')
 			.append("<span class='message_ok'>" + message + "</span>");
 		return this;
+	},
+
+	/**
+	 * Présenter une vignette de l'image qui vient d'être déposée,
+	 * à la place du logo de la vignette.
+	 *
+	 * @param FileObj file
+	 */
+	presenter_previsualisation: function(file) {
+		if (!this.opts.options.previsualisation.activer) {
+			return false;
+		}
+		if (this.opts.options.previsualisation.fileSizeMax) {
+			var taille = this.opts.options.previsualisation.fileSizeMax * 1024 * 1024;
+			if (file.file.size > taille) {
+				return false;
+			}
+		}
+		this.readURL(file.file, function() {
+			// source base64 de l'image dans this.result
+			if (this.result) {
+				file.emplacement
+					.find('.vignette_extension')
+					.removeClass('vignette_extension')
+					.addClass('previsualisation')
+					.css('background-image', 'url(' + this.result + ')');
+			}
+		});
+	},
+
+	/**
+	 * Calculer une URL (base64) à partir d'un fichier
+	 * d'image déposé.
+	 *
+	 * @link http://stackoverflow.com/questions/4459379/preview-an-image-before-it-is-uploaded
+	 * @lunk https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsDataURL
+	 *
+	 * @param File file
+	 * @param function callback
+	 *      Sera appelé dès que le fichier aura été lu
+	 *      this.result contiendra l'image en base64
+	 * @return bool true si fichier d'image correct, false sinon
+	 */
+	readURL: function(file, callback) {
+		if (file) {
+			var reader = new FileReader();
+			// trop simple ?
+			// var imageType = /^image.*/i;
+			// exemple de mozilla raccourci (image/ en tête de regexp plutôt que dans chaque élément)
+			var imageType = /^image\/(?:bmp|cis\-cod|gif|ief|jpeg|jpeg|jpeg|pipeg|png|svg\+xml|tiff|x\-cmu\-raster|x\-cmx|x\-icon|x\-portable\-anymap|x\-portable\-bitmap|x\-portable\-graymap|x\-portable\-pixmap|x\-rgb|x\-xbitmap|x\-xpixmap|x\-xwindowdump)$/i;
+
+			if (!file.type.match(imageType)) {
+				return false;
+			}
+
+			if (typeof callback == 'function') {
+				reader.addEventListener("load", callback);
+			}
+
+			reader.readAsDataURL(file);
+			return true;
+		}
+		return false;
 	},
 
 	progress: {

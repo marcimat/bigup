@@ -216,11 +216,11 @@ function bigup_medias_formulaire_fond($flux) {
 		$contexte = $flux['args']['contexte'];
 		switch ($flux['args']['form']) {
 			case 'joindre_document':
-				$flux['data'] = bigup_preparer_input_file($flux['data'], 'fichier_upload', $contexte, ['preview' => true]);
+				$flux['data'] = bigup_preparer_input_file($flux['data'], 'fichier_upload', $contexte, ['previsualiser' => true]);
 				$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.documents.js') . '"></script>' . "\n";
 				break;
 			case 'editer_logo':
-				$flux['data'] = bigup_preparer_input_file($flux['data'], ['logo_on', 'logo_off'], $contexte, ['input_class' => 'bigup_logo', 'preview' => true]);
+				$flux['data'] = bigup_preparer_input_file($flux['data'], ['logo_on', 'logo_off'], $contexte, ['input_class' => 'bigup_logo', 'previsualiser' => true]);
 				$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.logos.js') . '"></script>' . "\n";
 				break;
 		}
@@ -278,7 +278,7 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 	$options = $options + [
 		'input_class' => 'bigup',
 		'editer_class' => 'pleine_largeur',
-		'preview' => false,
+		'previsualiser' => false,
 	];
 
 	include_spip('bigup_fonctions');
@@ -302,10 +302,9 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 			$multiple = !empty($regs['multiple']);
 
 			// Ajouter la classe CSS demandée
-			$input_class = trim($options['input_class'] . ' ' . ($options['preview'] ? 'bigup_with_preview' : ''));
-			if ($input_class) {
-				$new = str_replace('class="', 'class="' . $input_class . ' ', $new);
-				$new = str_replace('class=\'', 'class=\'' . $input_class . ' ', $new);
+			if ($options['input_class']) {
+				$new = str_replace('class="', 'class="' . $options['input_class'] . ' ', $new);
+				$new = str_replace('class=\'', 'class=\'' . $options['input_class'] . ' ', $new);
 			}
 
 			// Ajouter multiple si le name possède []
@@ -322,6 +321,10 @@ function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = [
 			);
 			$new = str_replace('/>', ' data-token="' . $token . '" />', $new);
 
+			// Ajouter l'option de previsualisation
+			if ($options['previsualiser']) {
+				$new = str_replace('/>', ' data-previsualiser="oui" />', $new);
+			}
 
 			// Ajouter les fichiers déjà présents
 			$fichiers = '';

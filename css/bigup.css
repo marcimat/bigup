@@ -42,11 +42,18 @@
 	clear:both; width:100%;
 	height:10px;
 }
-.bigup_fichiers .vignette_extension {
+.bigup_fichiers .vignette_extension,
+.bigup_fichiers .previsualisation {
 	float:left;
 	width:52px;
 	height:52px; /* laisser de l'espace à l'icone */
 	margin-right:.5em;
+}
+.bigup_fichiers .previsualisation {
+	background-repeat:no-repeat;
+	background-position: center center;
+	background-size:cover;
+	border-radius: 3px;
 }
 .bigup_fichiers .infos {
 	display:block;
