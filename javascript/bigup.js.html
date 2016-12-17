@@ -54,6 +54,11 @@ $.fn.bigup = function(options, callbacks) {
 			return valeur ? valeur : defaut;
 		}
 
+		// config globale de bigup.
+		var conf = {
+			maxFileSize: [(#CONFIG{bigup/max_file_size, 0})]
+		}
+
 		var bigup = new Bigup(
 			{
 				form: $form,
@@ -66,7 +71,12 @@ $.fn.bigup = function(options, callbacks) {
 				contraintes: {
 					accept: $input.prop('accept'),
 					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
-					maxFileSize: sinon($input.data('maxFileSize'), 0),
+					maxFileSize: sinon($input.data('maxFileSize'), conf.maxFileSize),
+				},
+				options: {
+					preview: {
+						active: $input.is(".bigup_with_preview")
+					}
 				}
 			},
 			callbacks
@@ -289,7 +299,7 @@ Bigup.prototype = {
 			me.ajouter_fichier(file);
 			me.adapter_visibilite_zone_depot();
 			if (!me.accepter_fichier(file)) {
-				me.presenter_erreur(file.emplacement, "Type de fichier incorrect !"); // TODO: traduction
+				me.presenter_erreur(file.emplacement, file.erreur);
 				return false;
 			}
 		});
@@ -432,9 +442,17 @@ Bigup.prototype = {
 	 * @return true si OK.
 	 */
 	accepter_fichier: function(file) {
+		if (this.opts.contraintes.maxFileSize) {
+			var taille = this.opts.contraintes.maxFileSize * 1024 * 1024;
+			if (file.size > taille) {
+				file.erreur = "Le fichier ne doit pas dépasser " + $.taille_en_octets(taille); // Todo: traductions
+				return false;
+			}
+		}
 		if (this.opts.contraintes.accept) {
 			var accept = this.opts.contraintes.accept;
 			if (accept && !this.valider_fichier(file.file, accept)) {
+				file.erreur = "Type de fichier incorrect !"; // TODO: traductions
 				return false;
 			}
 		}
@@ -635,14 +653,14 @@ Bigup.prototype = {
 
 
 	/**
-	 * Récupère tous les champs que le formulaire poste habituellement
+	 * Récupère les champs que le formulaire poste habituellement
 	 *
 	 * Peut être utile pour faire un hit ajax, sans modifier le formulaire.
 	 * Code en partie repris de dropzone.js
 	 *
 	 * On ne récupère pas les type file, ni sumbit.
 	 *
-	 * @return object
+	 * @return object Couples [nom du champ => valeur]
 	 */
 	getFormData: function () {
 		var inputName, inputType;
