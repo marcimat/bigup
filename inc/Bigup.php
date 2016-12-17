@@ -154,10 +154,16 @@ class Bigup {
 	 * Cette info doit se trouver dans le tableau reçu
 	 * dans la clé 'champ'.
 	 *
+	 * Avec `i` le nième fichier posté dans le champ,
+	 * voici un exemple de ce qu'on peut obtenir.
+	 * Noter la position de l'incrément `i` qui se trouve dans le
+	 * premier crochet vide du name.
+	 *
 	 * - name='a' : FILES[a][name] = 'x'
-	 * - name='a[]' : FILES[a][name][0] = 'x'
+	 * - name='a[]' : FILES[a][name][i] = 'x'
 	 * - name='a[b]' : FILES[a][name][b] = 'x'
-	 * - name='a[b][]' : FILES[a][name][b][0] = 'x'
+	 * - name='a[b][]' : FILES[a][name][b][i] = 'x'
+	 * - name='a[][b][]' : FILES[a][i][name][b][0] = 'x'
 	 *
 	 * @param array $description
 	 *     Description d'un fichier
@@ -177,17 +183,24 @@ class Bigup {
 			if (!array_key_exists($racine, $_FILES)) {
 				$_FILES[$racine] = [];
 			}
+			$dernier = array_pop($arborescence);
 			foreach ($description as $cle => $valeur) {
 				if (!array_key_exists($cle, $_FILES[$racine])) {
 					$_FILES[$racine][$cle] = [];
 				}
 				$me = &$_FILES[$racine][$cle];
-				$dernier = array_pop($arborescence);
+
 				foreach ($arborescence as $a) {
-					if (!array_key_exists($a, $me)) {
-						$me[$a] = [];
+					if (strlen($a)) {
+						if (!array_key_exists($a, $me)) {
+							$me[$a] = [];
+						}
+						$me = &$me[$a];
+					} else {
+						$i = count($me);
+						$me[$i] = [];
+						$me = &$me[$i];
 					}
-					$me = &$me[$a];
 				}
 				if (strlen($dernier)) {
 					$me[$dernier] = $valeur;
