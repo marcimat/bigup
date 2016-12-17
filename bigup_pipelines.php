@@ -64,18 +64,11 @@ function bigup_header_prive($flux) {
 **/
 function bigup_get_bigup($flux) {
 
-	// il nous faut le nom du formulaire et son hash
-	// et pas de bol, le hash est pas envoyé dans le pipeline.
-	// (il est calculé après charger). Alors on se recrée un hash pour nous.
-	$form = $flux['args']['form'];
-	$args = $flux['args']['args'];
-	#$post = $flux['args']['je_suis_poste'];
-
-	array_unshift($args, $GLOBALS['spip_lang']);
-	$formulaire_args = encoder_contexte_ajax($args, $form);
-
 	include_spip('inc/Bigup');
-	$bigup = new \Spip\Bigup\Bigup($form, $formulaire_args);
+
+	$bigup = new \Spip\Bigup\Bigup(
+		\Spip\Bigup\Identifier::depuisArgumentsPipeline($flux['args'])
+	);
 
 	return $bigup;
 }
@@ -137,6 +130,7 @@ function bigup_formulaire_charger($flux) {
 function bigup_formulaire_receptionner($flux) {
 	if (_request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
+		$bigup->gerer_fichiers_postes(); // les fichiers postés sans JS
 		$bigup->reinserer_fichiers(_request('bigup_reinjecter_uniquement'));
 	}
 	return $flux;

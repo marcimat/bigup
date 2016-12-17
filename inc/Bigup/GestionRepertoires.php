@@ -25,9 +25,6 @@ class GestionRepertoires {
 
 	use LogTrait;
 
-	private $dir_final = '';
-	private $dir_parts = '';
-
 	/**
 	 * Vérifier et préparer l'arborescence jusqu'au répertoire parent
 	 *
@@ -105,7 +102,7 @@ class GestionRepertoires {
 		foreach ($fichiers as $fichier) {
 			$chemin = $repertoire . DIRECTORY_SEPARATOR . $fichier;
 			if (is_dir($chemin)) {
-				bigup_nettoyer_repertoire_recursif($chemin, $age_max);
+				self::nettoyer_repertoire_recursif($chemin, $age_max);
 			}
 			elseif (is_file($chemin) and !jeune_fichier($chemin, $age_max)) {
 				supprimer_fichier($chemin);
