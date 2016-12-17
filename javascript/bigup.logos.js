@@ -6,9 +6,11 @@
 			$(".formulaire_editer_logo form")
 				.find(".editer_logo_on, .editer_logo_off")
 				.find("label").hide().end()
-				.find("input[type=file].bigup")
-				.not('.bigup_logo')
-				.addClass('bigup_logo')
+				.find("input[type=file].bigup_logo")
+				.not('.bigup_done')
+				// indiquer l'accept avant de charger bigup.
+				.attr('accept', 'image/jpeg,image/gif,image/png')
+				.bigup()
 				.on('bigup.fileSuccess', function(event, file, description) {
 					var bigup = file.bigup;
 					var input = file.emplacement;
