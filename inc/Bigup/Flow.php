@@ -29,58 +29,22 @@ class Flow {
 	use LogTrait;
 
 	/**
-	 * Chemins des répertoires de travail (dans _DIR_TMP)
-	 * Peut contenir la clé :
-	 * - 'parts' pour les morceaux de fichiers
-	 * - 'final' pour les fichiers complétés
-	 * 
-	 * @var array */
-	private $dir = [];
-
-	/**
-	 * ?
-	 * @var array */
-	private $params = [];
+	 * Gestion du cache Bigup
+	 * @var Identifier
+	 */
+	private $cache = null;
 
 	/**
 	 * Préfixe utilisé par la librairie JS lors d'une requête
 	 * @var string */
 	private $prefixe = 'flow';
 
-	/**
-	 * Nom du répertoire, dans _DIR_TMP, qui va stocker les fichiers et morceaux de fichiers
-	 * @var string */
-	private $cache_dir = 'bigupload';
-
-	/**
-	 * Nom du formulaire qui utilise flow
-	 * @var string */
-	private $formulaire = '';
-
-	/**
-	 * Identifie un formulaire par rapport à un autre identique sur la même page ayant un appel différent.
-	 * @var string */
-	private $formulaire_identifiant = '';
-
-	/**
-	 * Nom du champ dans le formulaire qui utilise flow
-	 * @var string */
-	private $champ = '';
 
 	/**
 	 * Constructeur
 	**/
-	public function __construct() {}
-
-
-	/**
-	 * Définir les répertoires de travail
-	 *
-	 * @param string $type
-	 * @param string $dir
-	**/
-	public function definir_repertoire($type, $chemin) {
-		$this->dir[$type] = $chemin;
+	public function __construct(Cache $cache) {
+		$this->cache = $cache;
 	}
 
 	/**
@@ -186,7 +150,10 @@ class Flow {
 		$key = key($_FILES);
 
 		if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-			if (!$this->deplacer_fichier_upload($file['tmp_name'], $this->tmpChunkPathFile($identifier, $filename, $chunkNumber))) {
+			if (!$this->cache->deplacer_fichier_upload(
+				$file['tmp_name'],
+				$this->tmpChunkPathFile($identifier, $filename, $chunkNumber))
+			) {
 				return $this->send(415);
 			}
 		}
@@ -227,31 +194,22 @@ class Flow {
 	}
 
 	/**
-	 * Trouver le chemin d'un répertoire temporaire 
+	 * Construire le chemin d'un répertoire temporaire
 	 *
 	 * @param string $identifier
-	 * @param string $subdir Type de répertoire
+	 * @param string $racine Chemin racine à compléter
 	 * @param bool $nocreate true pour ne pas créer le répertoire s'il manque.
 	 * @return string|false
 	 *     - string : chemin du répertoire
 	 *     - false : échec.
 	**/
-	public function determine_upload($identifier, $subdir, $nocreate = false) {
-		if (empty($this->dir[$subdir])) {
-			return false;
+	public function determine_upload($identifier, $racine, $nocreate = false) {
+		$dir = $racine . DIRECTORY_SEPARATOR . $identifier;
+		if (!$nocreate) {
+			if (!GestionRepertoires::creer_sous_repertoire($dir)) {
+				return false;
+			}
 		}
-
-		$dir = $this->dir[$subdir] . DIRECTORY_SEPARATOR . $identifier;
-
-		if ($nocreate) {
-			return $dir;
-		}
-
-		include_spip('bigup_fonctions');
-		if (!GestionRepertoires::creer_sous_repertoire($dir)) {
-			return false;
-		}
-
 		return $dir;
 	}
 
@@ -264,9 +222,8 @@ class Flow {
 	 * @return string chemin du répertoire
 	**/
 	public function determine_upload_parts($identifier = null, $nocreate = false) {
-		return $this->determine_upload($identifier, 'parts', $nocreate);
+		return $this->determine_upload($identifier, $this->cache->dir_parts(), $nocreate);
 	}
-
 
 	/**
 	 * Trouver le répertoire temporaire pour stocker les fichiers complets reconstitués
@@ -276,49 +233,7 @@ class Flow {
 	 * @return string chemin du répertoire
 	**/
 	public function determine_upload_final($identifier = null) {
-		return $this->determine_upload($identifier, 'final');
-	}
-
-	/**
-	 * Déplacer ou copier un fichier
-	 *
-	 * @note
-	 *     Proche de inc/documents: deplacer_fichier_upload()
-	 *     mais sans l'affichage d'erreur éventuelle.
-	 * 
-	 * @uses _DIR_RACINE
-	 * @uses spip_unlink()
-	 * 
-	 * @param string $source
-	 *     Fichier source à copier
-	 * @param string $dest
-	 *     Fichier de destination
-	 * @param bool $move
-	 *     - `true` : on déplace le fichier source vers le fichier de destination
-	 *     - `false` : valeur par défaut. On ne fait que copier le fichier source vers la destination.
-	 * @return bool|mixed|string
-	 */
-	function deplacer_fichier_upload($source, $dest, $move=false) {
-		// Securite
-		if (substr($dest, 0, strlen(_DIR_RACINE)) == _DIR_RACINE) {
-			$dest = _DIR_RACINE . preg_replace(',\.\.+,', '.', substr($dest, strlen(_DIR_RACINE)));
-		} else {
-			$dest = preg_replace(',\.\.+,', '.', $dest);
-		}
-
-		if ($move) {
-			$ok = @rename($source, $dest);
-		} else {
-			$ok = @copy($source, $dest);
-		}
-		if (!$ok) {
-			$ok = @move_uploaded_file($source, $dest);
-		}
-		if ($ok) {
-			@chmod($dest, _SPIP_CHMOD & ~0111);
-		}
-
-		return $ok ? $dest : false;
+		return $this->determine_upload($identifier, $this->cache->dir_final());
 	}
 
 	/**

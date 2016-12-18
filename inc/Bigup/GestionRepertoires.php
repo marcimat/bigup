@@ -37,6 +37,10 @@ class GestionRepertoires {
 	 *     Chemin du répertoire sinon
 	 */
 	public static function creer_sous_repertoire($dest){
+		if (!$dest) {
+			return false;
+		}
+
 		$dest = rtrim($dest, "/");
 		$final = basename($dest);
 		$base = dirname($dest);

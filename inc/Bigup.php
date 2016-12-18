@@ -98,8 +98,8 @@ class Bigup {
 	 * @return true
 	 */
 	public function effacer_fichiers($identifiants = []) {
-		$this->debug("Suppression des fichiers restants");
 		if (!$identifiants) {
+			$this->debug("Suppression des fichiers");
 			$this->cache->supprimer_repertoire($this->cache->dir_final());
 		} else {
 			$this->cache->enlever_fichier_depuis_identifiants($identifiants);
@@ -217,11 +217,115 @@ class Bigup {
 	/**
 	 * Chaque fichier présent dans `$_FILES` n'étant pas en erreur
 	 * est géré par Bigup
-	 *
-	 * @todo
 	 */
 	public function gerer_fichiers_postes() {
-
+		$liste = $this->extraire_fichiers_valides();
+		foreach ($liste as $champ => $description) {
+			$this->cache->stocker_fichier($champ, $description);
+		}
 	}
 
+	/**
+	 * Extrait et enlève de `$_FILES` les fichiers reçus sans erreur
+	 * et crée un tableau avec pour clé le champ d'origine du fichier
+	 *
+	 * @return array Tableau (champ => description)
+	 */
+	public function extraire_fichiers_valides() {
+		$liste = [];
+		if (!count($_FILES)) {
+			return $liste;
+		}
+
+		$infos = []; // name, pathname, error …
+		foreach ($_FILES as $racine => $descriptions) {
+			$infos = array_keys($descriptions);
+			break;
+		}
+
+		foreach ($_FILES as $racine => $descriptions) {
+			$error = $descriptions['error'];
+
+			// cas le plus simple : name="champ", on s'embête pas
+			if (!is_array($error)) {
+				if ($error == 0) {
+					$liste[$racine] = $descriptions;
+					unset($_FILES[$racine]);
+				}
+				continue;
+			}
+
+			// cas plus compliqués :
+			// name="champ[tons][][sous][la][pluie][]"
+			// $_FILES[champ][error][tons][0][sous][la][pluie][0]
+			else {
+				$chemins = $this->extraire_sous_chemins_fichiers($error);
+				foreach ($chemins['phps'] as $k => $chemin) {
+					$description = [];
+					foreach ($infos as $info) {
+						$complet = '$_FILES[\'' . $racine . '\'][\'' . $info . '\']' . $chemin;
+						eval("\$x = $complet; unset($complet);");
+						$description[$info] = $x;
+					}
+					$liste[$racine . $chemins['names'][$k]] = $description;
+				}
+			}
+		}
+		return $liste;
+	}
+
+
+	/**
+	 * Retourne l'écriture plate de l'arborescence d'un tableau
+	 *
+	 * - Phps a toutes les arborescences en conservant les index numériques autoincrémentés
+	 *   et en mettant les autres index entre guillements
+	 * - Reels a toutes les arborescences en conservant les index numériques autoincrémentés
+	 * - Names a les arborescences sans les index numériques
+	 *
+	 * @param $tableau
+	 * @return array Tableau [ phps => [], reels => [], names => []]
+	 */
+	public function extraire_sous_chemins_fichiers($tableau) {
+		$listes = [
+			'phps' => [],   // ['tons'][0]['sous']['la']['pluie'][0]
+			'reels' => [],  // [tons][0][sous][la][pluie][0]
+			'names' => [],  // [tons][][sous][la][pluie][]
+		];
+
+		// si le name était [], PHP ordonnera les entrées dans l'ordre, forcément.
+		// si quelqu'un avait mis name="truc[8][]", ça devrait trouver la bonne écriture.
+		$i = 0;
+
+		foreach ($tableau as $cle => $valeur) {
+			$reel = '[' . $cle . ']';
+			$php = is_int($cle) ? $reel : '[\'' . $cle . '\']';
+
+			if ($cle === $i) {
+				$name = '[]';
+			} else {
+				$name = '[' . $cle . ']';
+			}
+
+			if (is_array($valeur)) {
+				$ls = $this->extraire_sous_chemins_fichiers($valeur);
+				foreach ($ls['phps'] as $l) {
+					$listes['phps'][] = $php . $l;
+				}
+				foreach ($ls['reels'] as $l) {
+					$listes['reels'][] = $reel . $l;
+				}
+				foreach ($ls['names'] as $l) {
+					$listes['names'][] = $name . $l;
+				}
+			} else {
+				$listes['phps'][] = $php;
+				$listes['reels'][] = $reel;
+				$listes['names'][] = $name;
+			}
+			$i++;
+		}
+
+		return $listes;
+	}
 }

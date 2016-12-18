@@ -186,6 +186,32 @@ class Cache {
 	}
 
 	/**
+	 * Pour un champ donné (attribut name) et une description
+	 * de fichier issue des données de `$_FILES`, déplace le fichier
+	 * dans le cache de bigup
+	 *
+	 * @param string $champ
+	 * @param array $description
+	 */
+	public function stocker_fichier($champ, $description) {
+		$nom = $description['name'];
+		$chemin = $description['tmp_name'];
+		$nouveau_chemin =
+			$this->dir_final
+			. $champ . DIRECTORY_SEPARATOR
+			. substr(md5($description['size'] . $nom), 10) . DIRECTORY_SEPARATOR
+			. $nom;
+
+		if (GestionRepertoires::creer_sous_repertoire(dirname($nouveau_chemin))) {
+			if ($this->deplacer_fichier_upload($chemin, $nouveau_chemin)) {
+				return $this->decrire_fichier($nouveau_chemin);
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Enlève un fichier complet
 	 *
 	 * @param string $identifiant_ou_repertoire
@@ -274,4 +300,48 @@ class Cache {
 		}
 		return true;
 	}
+
+
+	/**
+	 * Déplacer ou copier un fichier
+	 *
+	 * @note
+	 *     Proche de inc/documents: deplacer_fichier_upload()
+	 *     mais sans l'affichage d'erreur éventuelle.
+	 *
+	 * @uses _DIR_RACINE
+	 * @uses spip_unlink()
+	 *
+	 * @param string $source
+	 *     Fichier source à copier
+	 * @param string $dest
+	 *     Fichier de destination
+	 * @param bool $move
+	 *     - `true` : on déplace le fichier source vers le fichier de destination
+	 *     - `false` : valeur par défaut. On ne fait que copier le fichier source vers la destination.
+	 * @return bool|mixed|string
+	 */
+	function deplacer_fichier_upload($source, $dest, $move=false) {
+		// Securite
+		if (substr($dest, 0, strlen(_DIR_RACINE)) == _DIR_RACINE) {
+			$dest = _DIR_RACINE . preg_replace(',\.\.+,', '.', substr($dest, strlen(_DIR_RACINE)));
+		} else {
+			$dest = preg_replace(',\.\.+,', '.', $dest);
+		}
+
+		if ($move) {
+			$ok = @rename($source, $dest);
+		} else {
+			$ok = @copy($source, $dest);
+		}
+		if (!$ok) {
+			$ok = @move_uploaded_file($source, $dest);
+		}
+		if ($ok) {
+			@chmod($dest, _SPIP_CHMOD & ~0111);
+		}
+
+		return $ok ? $dest : false;
+	}
+
 }

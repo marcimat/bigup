@@ -134,9 +134,7 @@ class Receptionner {
 	 **/
 	public function repondre_flow() {
 
-		$flow = new Flow();
-		$flow->definir_repertoire('parts', $this->cache->dir_parts());
-		$flow->definir_repertoire('final', $this->cache->dir_final());
+		$flow = new Flow($this->cache);
 		$res = $flow->run();
 
 		// le fichier est complet
