@@ -121,7 +121,7 @@ class Receptionner {
 		if (!$this->identifiant) {
 			return $this->send(404);
 		}
-		// si c'est un md5, c'est l'identifiant
+		// si c'est un md5, c'est l'identifiant bigup, sinon celui de flow.
 		if ($this->cache->enlever_fichier($this->identifiant)) {
 			return $this->send(201);
 		}

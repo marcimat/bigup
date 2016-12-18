@@ -163,13 +163,11 @@ class Flow {
 			$this->info("Chunks complets de $identifier");
 
 			// recomposer le fichier
-			$fullFile = $this->createFileFromChunks(
-				$this->getChunkFiles($identifier),
-				$this->tmpPathFile($identifier, $filename)
-			);
+			$chemin_final = $this->cache->dir_final($identifier, $filename);
+			$fullFile = $this->createFileFromChunks($this->getChunkFiles($identifier), $chemin_final);
 			if (!$fullFile) {
 				// on ne devrait jamais arriver là ! 
-				$this->error("! Création du fichier complet en échec (" . $this->tmpPathFile($identifier, $filename) . ").");
+				$this->error("! Création du fichier complet en échec (" . $chemin_final . ").");
 				return $this->send(415);
 			}
 
@@ -194,74 +192,15 @@ class Flow {
 	}
 
 	/**
-	 * Construire le chemin d'un répertoire temporaire
-	 *
-	 * @param string $identifier
-	 * @param string $racine Chemin racine à compléter
-	 * @param bool $nocreate true pour ne pas créer le répertoire s'il manque.
-	 * @return string|false
-	 *     - string : chemin du répertoire
-	 *     - false : échec.
-	**/
-	public function determine_upload($identifier, $racine, $nocreate = false) {
-		$dir = $racine . DIRECTORY_SEPARATOR . $identifier;
-		if (!$nocreate) {
-			if (!GestionRepertoires::creer_sous_repertoire($dir)) {
-				return false;
-			}
-		}
-		return $dir;
-	}
-
-	/**
-	 * Trouver le répertoire temporaire pour charger les morceaux de fichiers
-	 *
-	 * @uses determine_upload()
-	 * @param string $identifier
-	 * @param bool $nocreate
-	 * @return string chemin du répertoire
-	**/
-	public function determine_upload_parts($identifier = null, $nocreate = false) {
-		return $this->determine_upload($identifier, $this->cache->dir_parts(), $nocreate);
-	}
-
-	/**
-	 * Trouver le répertoire temporaire pour stocker les fichiers complets reconstitués
-	 *
-	 * @uses determine_upload()
-	 * @param string $identifier
-	 * @return string chemin du répertoire
-	**/
-	public function determine_upload_final($identifier = null) {
-		return $this->determine_upload($identifier, $this->cache->dir_final());
-	}
-
-	/**
 	 * Retourne le nom du fichier qui enregistre un des morceaux
 	 *
 	 * @param string $identifier
 	 * @param string $filename
 	 * @param int $chunkNumber
-	 * @param bool $nocreate
-	 *     - true pour ne pas créer le répertoire s'il manque.
 	 * @return string Nom de fichier
 	**/
-	public function tmpChunkPathFile($identifier, $filename, $chunkNumber, $nocreate = false) {
-		return $this->determine_upload_parts($identifier, $nocreate) . DIRECTORY_SEPARATOR . $filename . '.part' . $chunkNumber;
-	}
-
-	/**
-	 * Retourne le chemin du fichier final
-	 *
-	 * Note, ce n'est pas l'emplacement définitif après traitements,
-	 * Juste l'emplacement qui concatène tous les morceaux.
-	 *
-	 * @param string $filename
-	 * @param int $chunkNumber
-	 * @return string Nom de fichier
-	**/
-	public function tmpPathFile($identifier, $filename) {
-		return $this->determine_upload_final($identifier) . DIRECTORY_SEPARATOR . $filename;
+	public function tmpChunkPathFile($identifier, $filename, $chunkNumber) {
+		return $this->cache->dir_parts($identifier, $filename) . '.part' . $chunkNumber;
 	}
 
 	/**
@@ -273,7 +212,7 @@ class Flow {
 	 * @return bool True si présent
 	**/
 	public function isChunkUploaded($identifier, $filename, $chunkNumber) {
-		return file_exists($this->tmpChunkPathFile($identifier, $filename, $chunkNumber, true));
+		return file_exists($this->tmpChunkPathFile($identifier, $filename, $chunkNumber));
 	}
 
 	/**
@@ -306,13 +245,14 @@ class Flow {
 	**/
 	public function getChunkFiles($identifier) {
 		// Trouver tous les fichiers du répertoire
-		$chunkFiles = array_diff(scandir($this->determine_upload_parts($identifier, true)), ['..', '.', '.ok']);
+		$dir_parts = $this->cache->dir_parts($identifier);
+		$chunkFiles = array_diff(scandir($dir_parts), ['..', '.', '.ok']);
 
 		// Utiliser un chemin complet, et aucun fichier caché.
 		$chunkFiles = array_map(
-			function ($f) use ($identifier) {
+			function ($f) use ($dir_parts) {
 				if ($f and $f[0] != '.') {
-					return $this->determine_upload_parts($identifier, true) . DIRECTORY_SEPARATOR . $f;
+					return $dir_parts . DIRECTORY_SEPARATOR . $f;
 				}
 				return '';
 			},
@@ -340,6 +280,10 @@ class Flow {
 		// au cas où le fichier complet serait déjà là…
 		if (file_exists($destFile)) {
 			@unlink($destFile);
+		}
+
+		if (!GestionRepertoires::creer_sous_repertoire(dirname($destFile))) {
+			return false;
 		}
 
 		// Si un seul morceau c'est qu'il est complet.

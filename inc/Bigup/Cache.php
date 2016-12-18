@@ -70,18 +70,95 @@ class Cache {
 
 	/**
 	 * Retourne le chemin du répertoire stockant les morceaux de fichiers
-	 * @return string
+	 *
+	 * Si un identifiant décrivant un fichier est fourni, retourne le chemin
+	 * correspondant à cet identifiant de fichier.
+	 *
+	 * 	Si un fichier est fourni, en plus de l'identifiant, retourne le chemin
+	 * correspondant au fichier
+	 *
+	 * @param string|null $identifiant
+	 *     Chaîne identifiant un fichier
+	 * @param string|null $fichier
+	 *     Nom du fichier
+	 * @return string|false
 	 */
-	public function dir_parts() {
-		return $this->dir_parts;
+	public function dir_parts($identifiant = null, $fichier = null) {
+		return $this->dir($this->dir_parts, $identifiant, $fichier);
 	}
 
 	/**
 	 * Retourne le chemin du répertoire stockant les fichiers complets
+	 *
+	 * Si un identifiant décrivant un fichier est fourni, retourne le chemin
+	 * correspondant à cet identifiant de fichier.
+	 *
+	 * Si un fichier est fourni, en plus de l'identifiant, retourne le chemin
+	 * correspondant au fichier
+	 *
+	 * @param string|null $identifiant
+	 *     Chaîne identifiant un fichier
+	 * @param string|null $fichier
+	 *     Nom du fichier
+	 * @return string|false
+	 */
+	public function dir_final($identifiant = null, $fichier = null) {
+		return $this->dir($this->dir_final, $identifiant, $fichier);
+	}
+
+	/**
+	 * Retourne un chemin de répertoire cache
+	 * @param string $racine
+	 * @param string $identifiant
+	 * @param string $fichier
+	 * @return string|false
+	 */
+	private function dir($racine, $identifiant = null, $fichier = null) {
+		if (is_null($identifiant) and is_null($fichier)) {
+			return $racine;
+		} elseif ($fichier and $identifiant) {
+			return $racine
+				. DIRECTORY_SEPARATOR
+				. $this->hash_identifiant($identifiant)
+				. DIRECTORY_SEPARATOR
+				. $this->nommer_fichier($fichier);
+		} elseif ($identifiant and !$fichier) {
+			return $racine
+				. DIRECTORY_SEPARATOR
+				. $this->hash_identifiant($identifiant);
+		}
+		return false;
+	}
+
+	/**
+	 * Retourne le nom du répertoire / hash relatif à l'identifiant de fichier indiqué.
+	 * @param string $identifiant
 	 * @return string
 	 */
-	public function dir_final() {
-		return $this->dir_final;
+	public function hash_identifiant($identifiant) {
+		return substr(md5($identifiant), 0, 6);
+	}
+
+	/**
+	 * Reformater le nom du fichier pour l'écrire sur le serveur
+	 *
+	 * @see copier_document() dans SPIP
+	 * @param string $filename
+	 * @return string Nom du fichier corrigé
+	 */
+	function nommer_fichier($filename) {
+		$extension = pathinfo($filename, PATHINFO_EXTENSION);
+		include_spip('action/ajouter_documents');
+		$extension = corriger_extension($extension);
+		$nom = preg_replace(
+			"/[^.=\w-]+/", "_",
+			translitteration(
+				preg_replace("/\.([^.]+)$/", "",
+					preg_replace("/<[^>]*>/", '', basename($filename))
+				)
+			)
+		);
+		return $nom . '.' . $extension;
 	}
 
 	/**
@@ -215,7 +292,7 @@ class Cache {
 	 * Enlève un fichier complet
 	 *
 	 * @param string $identifiant_ou_repertoire
-	 *     Identifiant ou chemin de répertoire
+	 *     Identifiant bigup ou identifiant du répertoire
 	 * @return bool
 	 *    True si le fichier est trouvé (et donc enlevé)
 	 **/
@@ -223,11 +300,11 @@ class Cache {
 		if (!$identifiant_ou_repertoire) {
 			return false;
 		}
-		// si c'est un md5, c'est l'identifiant
+		// si c'est un md5, c'est l'identifiant bigup, sinon celui qui a servi à créer le stockage
 		if (strlen($identifiant_ou_repertoire) == 32 and ctype_xdigit($identifiant_ou_repertoire)) {
 			return $this->enlever_fichier_depuis_identifiants($identifiant_ou_repertoire);
 		}
-		// sinon c'est un répertoire
+		// sinon c'est un identifant du répertoire
 		return $this->enlever_fichier_depuis_repertoires($identifiant_ou_repertoire);
 	}
 
@@ -260,7 +337,9 @@ class Cache {
 
 
 	/**
-	 * Enlève un fichier (probablement partiel) dont le nom est indiqué
+	 * Enlève un fichier (probablement partiel) dont l'identifiant de répertoire est indiqué
+	 *
+	 * @see hash_identifiant() qui a servi à calculer le nom du répertoire de stockage
 	 *
 	 * @param string|array $repertoires
 	 *     Un repertoire ou liste de répertoires de stockage du fichier.
@@ -273,7 +352,7 @@ class Cache {
 		}
 		foreach ($repertoires as $repertoire) {
 			$this->debug("Demande de suppression du fichier dans : $repertoire");
-			$this->supprimer_repertoire($this->dir_final . DIRECTORY_SEPARATOR . $repertoire);
+			$this->supprimer_repertoire($this->dir_final($repertoire));
 		}
 		return true;
 	}
@@ -329,6 +408,10 @@ class Cache {
 			$dest = preg_replace(',\.\.+,', '.', $dest);
 		}
 
+		if (!GestionRepertoires::creer_sous_repertoire(dirname($dest))) {
+			return false;
+		}
+
 		if ($move) {
 			$ok = @rename($source, $dest);
 		} else {
@@ -343,5 +426,6 @@ class Cache {
 
 		return $ok ? $dest : false;
 	}
+
 
 }
