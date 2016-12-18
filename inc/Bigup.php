@@ -3,7 +3,7 @@
 namespace Spip\Bigup;
 
 /**
- * Mappage entre Bigup et Flow
+ * Gère les intéractions entre les pipelines SPIP et Bigup.
  *
  * @plugin     Bigup
  * @copyright  2015
@@ -101,7 +101,7 @@ class Bigup {
 	 *     Efface tous les fichiers sinon.
 	 * @return true
 	 */
-	public function effacer_fichiers($identifiants = []) {
+	public function supprimer_fichiers($identifiants = []) {
 		if (!$identifiants) {
 			$this->debug("Suppression des fichiers");
 			$this->cache->supprimer_repertoires();
@@ -148,8 +148,6 @@ class Bigup {
 		}
 		return $tries;
 	}
-
-
 
 
 	/**

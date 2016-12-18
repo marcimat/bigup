@@ -139,6 +139,7 @@ class CacheRepertoire {
 	 *
 	 * @param string $identifiant_ou_repertoire
 	 *     Identifiant du fichier, tel que créé avec CacheFichiers::hash_identifiant()
+	 *     Ou identifiant avant création du hash
 	 * @return bool
 	 *     True si le fichier est trouvé (et donc enlevé)
 	 **/
@@ -156,6 +157,7 @@ class CacheRepertoire {
 	 *
 	 * @param string|array $identifiants
 	 *     Identifiant ou liste d'identifiants de fichier
+	 *     Ou identifiant(s) avant création du hash
 	 **/
 	public function supprimer_fichiers($identifiants) {
 		$liste = $this->trouver_fichiers();
@@ -163,6 +165,8 @@ class CacheRepertoire {
 			$identifiants = [$identifiants];
 		}
 		$identifiants = array_filter($identifiants);
+		// appliquer la fonction de hash si ce qu'on reçoit n'en est pas un.
+		$identifiants = array_map(CacheFichiers::class . '::hash_identifiant', $identifiants);
 
 		$this->debug("Demande de suppression de fichiers : " . implode(', ', $identifiants));
 		foreach ($liste as $champ => $fichiers) {

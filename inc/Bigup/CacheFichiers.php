@@ -102,13 +102,23 @@ class CacheFichiers {
 
 	/**
 	 * Retourne le nom du répertoire / hash relatif à l'identifiant de fichier indiqué.
+	 *
+	 * Si l'identifiant transmis est déjà un hash, le retourne directement
+	 *
 	 * @param string $identifiant
 	 * @return string
 	 */
-	public function hash_identifiant($identifiant) {
-		return substr(md5($identifiant), 0, 8);
+	public static function hash_identifiant($identifiant) {
+		if (
+			strlen($identifiant) == 10
+			and $identifiant[0] == '@'
+			and $identifiant[9] == '@'
+			and ctype_xdigit(substr($identifiant, 1, -1))
+		) {
+			return $identifiant;
+		}
+		return '@' . substr(md5($identifiant), 0, 8) . '@';
 	}
-
 
 	/**
 	 * Reformater le nom du fichier pour l'écrire sur le serveur
@@ -117,7 +127,7 @@ class CacheFichiers {
 	 * @param string $filename
 	 * @return string Nom du fichier corrigé
 	 */
-	function nommer_fichier($filename) {
+	public static function nommer_fichier($filename) {
 		$extension = pathinfo($filename, PATHINFO_EXTENSION);
 		include_spip('action/ajouter_documents');
 		$extension = corriger_extension($extension);

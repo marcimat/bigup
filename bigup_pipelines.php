@@ -148,7 +148,7 @@ function bigup_formulaire_verifier($flux) {
 	// enlever un fichier dont on demande sa suppression
 	if ($identifiant = _request('bigup_enlever_fichier')) {
 		$bigup = bigup_get_bigup($flux);
-		if ($bigup->effacer_fichiers($identifiant)) {
+		if ($bigup->supprimer_fichiers($identifiant)) {
 			// on n'affiche pas les autres erreurs
 			$flux['data'] = [];
 			$flux['data']['message_erreur'] = '';
@@ -175,7 +175,7 @@ function bigup_formulaire_traiter($flux) {
 	// ou uniquement lorsqu'on a demander à recuperer les fichiers
 	if (empty($flux['data']['message_erreur']) and _request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
-		$bigup->effacer_fichiers(_request('bigup_reinjecter_uniquement'));
+		$bigup->supprimer_fichiers(_request('bigup_reinjecter_uniquement'));
 	}
 	return $flux;
 }
