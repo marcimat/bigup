@@ -10,7 +10,7 @@
 function action_bigup_dist() {
 
 	include_spip('inc/Bigup');
-	$bigup = \Spip\Bigup\Receptionner::depuisRequest();
+	$bigup = \Spip\Bigup\Repondre::depuisRequest();
 	$bigup->repondre();
 	exit;
 

@@ -237,4 +237,52 @@ class GestionRepertoires {
 		}
 		return true;
 	}
+
+
+	/**
+	 * Déplacer ou copier un fichier
+	 *
+	 * @note
+	 *     Proche de inc/documents: deplacer_fichier_upload()
+	 *     mais sans l'affichage d'erreur éventuelle.
+	 *
+	 * @uses _DIR_RACINE
+	 * @uses spip_unlink()
+	 *
+	 * @param string $source
+	 *     Fichier source à copier
+	 * @param string $dest
+	 *     Fichier de destination
+	 * @param bool $move
+	 *     - `true` : on déplace le fichier source vers le fichier de destination
+	 *     - `false` : valeur par défaut. On ne fait que copier le fichier source vers la destination.
+	 * @return bool|mixed|string
+	 */
+	public static function deplacer_fichier_upload($source, $dest, $move=false) {
+		// Securite
+		if (substr($dest, 0, strlen(_DIR_RACINE)) == _DIR_RACINE) {
+			$dest = _DIR_RACINE . preg_replace(',\.\.+,', '.', substr($dest, strlen(_DIR_RACINE)));
+		} else {
+			$dest = preg_replace(',\.\.+,', '.', $dest);
+		}
+
+		if (!GestionRepertoires::creer_sous_repertoire(dirname($dest))) {
+			return false;
+		}
+
+		if ($move) {
+			$ok = @rename($source, $dest);
+		} else {
+			$ok = @copy($source, $dest);
+		}
+		if (!$ok) {
+			$ok = @move_uploaded_file($source, $dest);
+		}
+		if ($ok) {
+			@chmod($dest, _SPIP_CHMOD & ~0111);
+		}
+
+		return $ok ? $dest : false;
+	}
+
 }

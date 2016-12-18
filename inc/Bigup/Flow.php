@@ -30,7 +30,7 @@ class Flow {
 
 	/**
 	 * Gestion du cache Bigup
-	 * @var Identifier
+	 * @var Cache
 	 */
 	private $cache = null;
 
@@ -150,7 +150,7 @@ class Flow {
 		$key = key($_FILES);
 
 		if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-			if (!$this->cache->deplacer_fichier_upload(
+			if (!GestionRepertoires::deplacer_fichier_upload(
 				$file['tmp_name'],
 				$this->tmpChunkPathFile($identifier, $filename, $chunkNumber))
 			) {
@@ -163,13 +163,17 @@ class Flow {
 			$this->info("Chunks complets de $identifier");
 
 			// recomposer le fichier
-			$chemin_final = $this->cache->dir_final($identifier, $filename);
-			$fullFile = $this->createFileFromChunks($this->getChunkFiles($identifier), $chemin_final);
+			$chemin_parts = $this->cache->parts->fichiers->dir_identifiant($identifier);
+			$chemin_final = $this->cache->final->fichiers->dir_fichier($identifier, $filename);
+			$fullFile = $this->createFileFromChunks($this->getChunkFiles($chemin_parts), $chemin_final);
 			if (!$fullFile) {
 				// on ne devrait jamais arriver là ! 
 				$this->error("! Création du fichier complet en échec (" . $chemin_final . ").");
 				return $this->send(415);
 			}
+
+			// nettoyer le chemin du répertoire de stockage des morceaux du fichiers
+			GestionRepertoires::supprimer_repertoire($chemin_parts);
 
 			return $fullFile;
 		} else {
@@ -200,7 +204,7 @@ class Flow {
 	 * @return string Nom de fichier
 	**/
 	public function tmpChunkPathFile($identifier, $filename, $chunkNumber) {
-		return $this->cache->dir_parts($identifier, $filename) . '.part' . $chunkNumber;
+		return $this->cache->parts->fichiers->dir_fichier($identifier, $filename) . '.part' . $chunkNumber;
 	}
 
 	/**
@@ -240,19 +244,20 @@ class Flow {
 	/**
 	 * Retrouve les morceaux d'un fichier, dans l'ordre !
 	 *
-	 * @param string $identifier
-	 * @return array Liste de chemins de fichiers
+	 * @param string $chemin
+	 *     Chemin du répertoire contenant les morceaux de fichiers
+	 * @return array
+	 *     Liste de chemins de fichiers
 	**/
-	public function getChunkFiles($identifier) {
+	public function getChunkFiles($chemin) {
 		// Trouver tous les fichiers du répertoire
-		$dir_parts = $this->cache->dir_parts($identifier);
-		$chunkFiles = array_diff(scandir($dir_parts), ['..', '.', '.ok']);
+		$chunkFiles = array_diff(scandir($chemin), ['..', '.', '.ok']);
 
 		// Utiliser un chemin complet, et aucun fichier caché.
 		$chunkFiles = array_map(
-			function ($f) use ($dir_parts) {
+			function ($f) use ($chemin) {
 				if ($f and $f[0] != '.') {
-					return $dir_parts . DIRECTORY_SEPARATOR . $f;
+					return $chemin . DIRECTORY_SEPARATOR . $f;
 				}
 				return '';
 			},
@@ -270,7 +275,8 @@ class Flow {
 	 *
 	 * Supprime les morceaux si l'opération réussie.
 	 * 
-	 * @param array $crunkFiles Chemin des morceaux de fichiers à concaténer (dans l'ordre)
+	 * @param array $chunkFiles
+	 *     Chemin des morceaux de fichiers à concaténer (dans l'ordre)
 	 * @param string $destFile Chemin du fichier à créer avec les morceaux
 	 * @return false|string
 	 *     - false : erreur

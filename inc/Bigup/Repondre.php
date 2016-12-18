@@ -12,7 +12,6 @@ namespace Spip\Bigup;
  * @package    SPIP\Bigup\Fonctions
  */
 
-include_spip('inc/Bigup/LogTrait');
 
 /**
  * Gère la réception d'actions ajax
@@ -22,7 +21,7 @@ include_spip('inc/Bigup/LogTrait');
  * - Supprime les fichiers demandés.
  *
  **/
-class Receptionner {
+class Repondre {
 
 	use LogTrait;
 
@@ -77,10 +76,10 @@ class Receptionner {
 	 * @return Receptionner
 	 */
 	public static function depuisRequest() {
-		$receptionner = new self(Identifier::depuisRequest());
-		$receptionner->action = _request('bigup_action');
-		$receptionner->identifiant = _request('identifiant');
-		return $receptionner;
+		$repondre = new self(Identifier::depuisRequest());
+		$repondre->action = _request('bigup_action');
+		$repondre->identifiant = _request('identifiant');
+		return $repondre;
 	}
 
 	/**
@@ -121,8 +120,9 @@ class Receptionner {
 		if (!$this->identifiant) {
 			return $this->send(404);
 		}
-		// si c'est un md5, c'est l'identifiant bigup, sinon celui de flow.
-		if ($this->cache->enlever_fichier($this->identifiant)) {
+		// Soit c'est l'identifiant d'origine de Flow,
+		// Soit c'est l'identifiant du répertoire de ce fichier dans le cache
+		if ($this->cache->supprimer_fichier($this->identifiant)) {
 			return $this->send(201);
 		}
 		return $this->send(404);
@@ -140,15 +140,12 @@ class Receptionner {
 		// le fichier est complet
 		if (is_string($res)) {
 			// remettre le fichier dans $FILES
-			# $this->integrer_fichier($res);
+			# Files::integrer_fichier($res);
 
 			// envoyer quelques infos sur le fichier reçu
 			$desc = $this->cache->decrire_fichier($res);
 			// ne pas permettre de connaître le chemin complet
 			unset($desc['pathname'], $desc['tmp_name']);
-
-			// nettoyer le chemin du répertoire de stockage des morceaux du fichiers
-			GestionRepertoires::supprimer_repertoire($this->cache->obtenir_chemin(dirname($res), false));
 
 			$this->send(200, $desc);
 		}
