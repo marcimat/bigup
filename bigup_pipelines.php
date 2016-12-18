@@ -148,7 +148,7 @@ function bigup_formulaire_verifier($flux) {
 	// enlever un fichier dont on demande sa suppression
 	if ($identifiant = _request('bigup_enlever_fichier')) {
 		$bigup = bigup_get_bigup($flux);
-		if ($bigup->enlever_fichier_depuis_identifiants($identifiant)) {
+		if ($bigup->effacer_fichiers($identifiant)) {
 			// on n'affiche pas les autres erreurs
 			$flux['data'] = [];
 			$flux['data']['message_erreur'] = '';
