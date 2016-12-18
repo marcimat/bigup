@@ -220,8 +220,10 @@ class Bigup {
 	 */
 	public function gerer_fichiers_postes() {
 		$liste = $this->extraire_fichiers_valides();
-		foreach ($liste as $champ => $description) {
-			$this->cache->stocker_fichier($champ, $description);
+		foreach ($liste as $champ => $fichiers) {
+			foreach ($fichiers as $description) {
+				$this->cache->stocker_fichier($champ, $description);
+			}
 		}
 	}
 
@@ -229,7 +231,7 @@ class Bigup {
 	 * Extrait et enlève de `$_FILES` les fichiers reçus sans erreur
 	 * et crée un tableau avec pour clé le champ d'origine du fichier
 	 *
-	 * @return array Tableau (champ => description)
+	 * @return array Tableau (champ => [description])
 	 */
 	public function extraire_fichiers_valides() {
 		$liste = [];
@@ -249,7 +251,7 @@ class Bigup {
 			// cas le plus simple : name="champ", on s'embête pas
 			if (!is_array($error)) {
 				if ($error == 0) {
-					$liste[$racine] = $descriptions;
+					$liste[$racine] = [$descriptions];
 					unset($_FILES[$racine]);
 				}
 				continue;
@@ -260,6 +262,7 @@ class Bigup {
 			// $_FILES[champ][error][tons][0][sous][la][pluie][0]
 			else {
 				$chemins = $this->extraire_sous_chemins_fichiers($error);
+
 				foreach ($chemins['phps'] as $k => $chemin) {
 					$description = [];
 					foreach ($infos as $info) {
@@ -267,7 +270,12 @@ class Bigup {
 						eval("\$x = $complet; unset($complet);");
 						$description[$info] = $x;
 					}
-					$liste[$racine . $chemins['names'][$k]] = $description;
+
+					$complet = $racine . $chemins['names'][$k];
+					if (empty($liste[$complet])) {
+						$liste[$complet] = [];
+					}
+					$liste[$complet][] = $description;
 				}
 			}
 		}
