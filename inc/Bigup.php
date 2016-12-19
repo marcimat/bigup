@@ -110,7 +110,7 @@ class Bigup {
 			// les fichiers avec ces identifiants n'étant possiblement plus là
 			// ie: ils ont été déplacés lors du traitement du formulaire
 			// on nettoie les répertoires vides complètement
-			GestionRepertoires::supprimer_repertoires_vides($this->cache->dir_final());
+			GestionRepertoires::supprimer_repertoires_vides($this->cache->final->dir);
 		}
 		return true;
 	}
