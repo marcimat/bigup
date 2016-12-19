@@ -173,12 +173,13 @@ class Identifier {
 	}
 
 	/**
-	 * Calcule un identifiant de formulaire en fonction de ses arguments
+	 * Calcule un identifiant de formulaire en fonction de ses arguments et du secret du site
 	 *
 	 * @return string l'identifiant
 	 **/
 	public function identifier_formulaire() {
-		return $this->formulaire_identifiant = substr(md5($this->formulaire_args), 0, 6);
+		include_spip('inc/securiser_action');
+		return $this->formulaire_identifiant = substr(md5(secret_du_site() . $this->formulaire_args), 0, 6);
 	}
 
 	/**
