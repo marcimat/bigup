@@ -99,14 +99,24 @@ class Flow {
 
 
 	/**
+	 * Retrouve un paramètre de flow
+	 *
+	 * @param string $nom
+	 * @return mixed
+	 **/
+	public function _request($nom) {
+		return _request($this->prefixe . ucfirst($nom));
+	}
+
+	/**
 	 * Envoie le code header indiqué… et arrête tout.
 	 *
 	 * @param int $code
+	 * @param array|null $data
 	 * @return void
 	**/
-	public function send($code) {
-		$this->debug("> send $code");
-		http_response_code($code);
+	public function send($code, $data = null) {
+		Repondre::send($code, $data);
 		exit;
 	}
 
@@ -162,9 +172,10 @@ class Flow {
 		if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
 			$this->info("Chunks complets de $identifier");
 
-			// recomposer le fichier
 			$chemin_parts = $this->cache->parts->fichiers->dir_identifiant($identifier);
 			$chemin_final = $this->cache->final->fichiers->dir_fichier($identifier, $filename);
+
+			// recomposer le fichier
 			$fullFile = $this->createFileFromChunks($this->getChunkFiles($chemin_parts), $chemin_final);
 			if (!$fullFile) {
 				// on ne devrait jamais arriver là ! 
@@ -183,16 +194,6 @@ class Flow {
 
 		// pas de morceaux recu, pas de fichier complété
 		return false;
-	}
-
-	/**
-	 * Retrouve un paramètre de flow
-	 *
-	 * @param string $nom
-	 * @return mixed
-	**/
-	public function _request($nom) {
-		return _request($this->prefixe . ucfirst($nom));
 	}
 
 	/**

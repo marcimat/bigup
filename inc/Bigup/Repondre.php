@@ -143,7 +143,8 @@ class Repondre {
 			# Files::integrer_fichier($res);
 
 			// envoyer quelques infos sur le fichier reçu
-			$desc = $this->cache->decrire_fichier($res);
+			$desc = Cache::decrire_fichier($res);
+
 			// ne pas permettre de connaître le chemin complet
 			unset($desc['pathname'], $desc['tmp_name']);
 
@@ -164,8 +165,8 @@ class Repondre {
 	 * @param array|null $data Données à faire envoyer en json
 	 * @return void
 	 **/
-	public function send($code, $data = null) {
-		$this->debug("> send $code");
+	public static function send($code, $data = null) {
+		self::debug("> send $code");
 		http_response_code($code);
 		if ($data) {
 			header("Content-Type: application/json; charset=" . $GLOBALS['meta']['charset']);
