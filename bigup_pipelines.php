@@ -63,13 +63,10 @@ function bigup_header_prive($flux) {
  * @return \SPIP\Bigup\Bigup()
 **/
 function bigup_get_bigup($flux) {
-
 	include_spip('inc/Bigup');
-
 	$bigup = new \Spip\Bigup\Bigup(
 		\Spip\Bigup\Identifier::depuisArgumentsPipeline($flux['args'])
 	);
-
 	return $bigup;
 }
 
@@ -207,257 +204,41 @@ function bigup_medias_formulaire_charger($flux) {
  * @return array
  **/
 function bigup_medias_formulaire_fond($flux) {
-	if (!empty($flux['args']['contexte']['_rechercher_uploads'])) {
-		$contexte = $flux['args']['contexte'];
+	if (
+		!empty($flux['args']['contexte']['_rechercher_uploads'])
+		and in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])
+	) {
+		$bigup = bigup_get_bigup(['args' => $flux['args']['contexte']]);
+		$formulaire = $bigup->formulaire($flux['data'], $flux['args']['contexte']);
+
 		switch ($flux['args']['form']) {
 
 			case 'joindre_document':
-				$flux['data'] = bigup_preparer_input_file($flux['data'], 'fichier_upload', $contexte, ['previsualiser' => true]);
-				$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.documents.js') . '"></script>' . "\n";
+				$formulaire->preparer_input(
+					'fichier_upload[]',
+					['previsualiser' => true]
+				);
+				$formulaire->inserer_js('bigup.documents.js');
 				break;
 
 			case 'editer_logo':
-				$flux['data'] = bigup_preparer_input_file($flux['data'], ['logo_on', 'logo_off'], $contexte, ['input_class' => 'bigup_logo', 'previsualiser' => true]);
-				$flux['data'] .= "\n" . '<script type="text/javascript" src="' . find_in_path('javascript/bigup.logos.js') . '"></script>' . "\n";
+				$formulaire->preparer_input(
+					['logo_on', 'logo_off'],
+					['input_class' => 'bigup_logo', 'previsualiser' => true]
+				);
+				$formulaire->inserer_js('bigup.logos.js');
 				break;
 
 			case 'formidable':
-				$flux['data'] = bigup_preparer_input_file_bigup($flux['data'], $contexte, ['previsualiser' => true]);
+				$formulaire->preparer_input_class(
+					'bigup',
+					['previsualiser' => true]
+				);
 				break;
 		}
+
+		$flux['data'] = $formulaire->get();
 	}
 
 	return $flux;
-}
-
-/**
- * Cherche les inputs de type file avec la classe bigup et ajoute le token (et autres infos dessus)
- *
- *
- * @uses bigup_preparer_input_file()
- * @param string $formulaire
- * @param array $contexte
- * @param array $options
- * @return string
- */
-function bigup_preparer_input_file_bigup($formulaire, $contexte, $options = []) {
-	if (empty($contexte['form']) or empty($contexte['formulaire_args'])) {
-		return $formulaire;
-	}
-
-	if (!is_array($options)) {
-		$options = [];
-	}
-
-	$options = $options + [
-		'input_class' => '', // l'input a déjà la classe bigup !
-	];
-
-	// On cherche à retrouver le name des champs input file de classe bigup
-	// chercher <input ... [type="file"] ... [class="... bigup ..."] ... />
-	// chercher <input ... [class="... bigup ..." ...] [type="file" ...] />
-
-	$exp_non_fin_balise = '(?:[^>]*)'; // du contenu sans >
-	$exp_type = 'type\s*=\s*[\"\']{1}\s*file\s*[\"\']{1}'; // type='file' ou type="file"
-
-	$exp_class =
-		'class\s*=\s*[\"\']{1}\s*' // class=" ou class='
-		. '(?:[^\"\']+\s+)?'       // (du contenu sans " ou ' avec un espace après)?
-		. 'bigup'
-		. '(?:\s+[^\"\']+)?'       // (du contenu sans " ou ' avec un espace avant)?
-		. '\s*[\"\']{1}';          // fin de l'attribut class
-
-	$exp_champ =
-		'name\s*=\s*[\"\']{1}\s*' // name=" ou name='
-		. '(?<champ>[^\"\']+)'    // notre champ !
-		. '(?<multiple>\[\])?'    // le nom de champ a [] ? => multiple
-		. '\s*[\"\']{1}';         // fin de l'attribut name
-
-	$regexp1 =
-		'#<input'
-		. $exp_non_fin_balise
-		. $exp_type
-		. $exp_non_fin_balise
-		. $exp_class
-		. $exp_non_fin_balise
-		. '/>#Uims';
-
-	$regexp2 =
-		'#<input'
-		. $exp_non_fin_balise
-		. $exp_class
-		. $exp_non_fin_balise
-		. $exp_type
-		. $exp_non_fin_balise
-		. '/>#Uims';
-
-	$regexp_champ =
-		'#<input'
-		. $exp_non_fin_balise
-		. $exp_champ
-		. $exp_non_fin_balise
-		. '/>#Uims';
-
-	$champs = [];
-
-	if (preg_match_all($regexp1, $formulaire, $matches)) {
-		foreach ($matches as $m) {
-			if (preg_match($regexp_champ, $m[0], $regs)) {
-				$champs[] = $regs['champ'];
-			}
-		}
-	}
-	if (preg_match_all($regexp2, $formulaire, $matches)) {
-		foreach ($matches as $m) {
-			if (preg_match($regexp_champ, $m[0], $regs)) {
-				$champs[] = $regs['champ'];
-			}
-		}
-	}
-
-	if ($champs) {
-		return bigup_preparer_input_file($formulaire, $champs, $contexte, $options);
-	} else {
-		return $formulaire;
-	}
-}
-/**
- * Préparer les champs input d'un formulaire déjà existant
- *
- * Permet d'ajouter à un ou plusieurs champs de type 'file' d'un formulaire
- * dont on reçoit le code HTML et le contexte les éléments nécessaires
- * pour utiliser Bigup dessus.
- *
- * Pour les noms de champs indiqués, on ajoute :
- *
- * - la classe CSS 'bigup'
- * - le token
- * - l'attribut multiple, si le name se termine par `[]`
- * - la liste des fichiers déjà uploadés pour ce formulaire
- * - la classe CSS 'pleine_largeur' sur le conteneur .editer.
- *
- * Le tableau d'option permet de modifier certains comportements.
- *
- * @param string $formulaire
- *     Contenu du formulaire
- * @param string|string[] $champs
- *     Nom du ou des champs concernés
- * @param array $contexte
- *     Le contexte doit fournir au moins 'form' et 'formulaire_args'
- * @param array $options {
- *     @var string $input_class
- *         Classe CSS à ajouter aux input file concernés.
- *         Par défaut 'bigup'
- *     @var string $editer_class
- *         Classe CSS à ajouter au conteneur .editer
- *         Par défaut 'pleine_largeur'
- * }
- * @return string
- *     Contenu du formulaire modifié
- */
-function bigup_preparer_input_file($formulaire, $champs, $contexte, $options = []) {
-	if (!$champs) {
-		return $formulaire;
-	}
-	if (!is_array($champs)) {
-		$champs = [$champs];
-	}
-
-	if (empty($contexte['form']) or empty($contexte['formulaire_args'])) {
-		return $formulaire;
-	}
-
-	// Intégrer les options par défaut.
-	$options = $options + [
-		'input_class' => 'bigup',
-		'editer_class' => 'pleine_largeur',
-		'previsualiser' => false,
-	];
-
-	include_spip('bigup_fonctions');
-	include_spip('saisies_fonctions');
-
-	foreach ($champs as $champ) {
-
-		$regexp =
-			'#<input'
-			. '(?:[^>]*)'            // du contenu sans >
-			. 'name\s*=\s*[\"\']{1}' // name=" ou name='
-			. preg_quote($champ)     // notre nom de champ
-			. '(?<multiple>\[\])?'   // le nom de champ a [] ? => multiple
-			. '[\"\']{1}'            // fin du name
-			. '(?:[^>]*)'            // du contenu sans >
-			. '/>#Uims';
-
-
-		if (preg_match($regexp, $formulaire, $regs)) {
-			$input = $new = $regs[0];
-			$multiple = !empty($regs['multiple']);
-
-			// Ajouter la classe CSS demandée
-			if ($options['input_class']) {
-				$new = str_replace('class="', 'class="' . $options['input_class'] . ' ', $new);
-				$new = str_replace('class=\'', 'class=\'' . $options['input_class'] . ' ', $new);
-			}
-
-			// Ajouter multiple si le name possède []
-			if ($multiple) {
-				$new = str_replace('/>', ' multiple />', $new);
-			}
-
-			// Ajouter le token
-			$token = calculer_balise_BIGUP_TOKEN(
-				$champ,
-				$multiple,
-				$contexte['form'],
-				$contexte['formulaire_args']
-			);
-			$new = str_replace('/>', ' data-token="' . $token . '" />', $new);
-
-			// Ajouter l'option de previsualisation
-			if ($options['previsualiser']) {
-				$new = str_replace('/>', ' data-previsualiser="oui" />', $new);
-			}
-
-			// Ajouter les fichiers déjà présents
-			$fichiers = '';
-			$liste_fichiers = table_valeur($contexte, saisie_name2nom($champ));
-			if ($liste_fichiers) {
-				$fichiers = recuperer_fond(
-					'saisies/inc-bigup_liste_fichiers',
-					array(
-						'nom' => $champ,
-						'multiple' => $multiple,
-						'fichiers' => ($multiple ? $liste_fichiers : array($liste_fichiers))
-					)
-				);
-			}
-			$formulaire = str_replace($input, $fichiers . $new, $formulaire);
-
-			// Ajouter une classe sur le conteneur
-			if ($options['editer_class']) {
-				// <div class="editer editer_{champ}" mais pas "editer editer_{champ}_qqc"
-				$regexp =
-					'#<div '
-					. '(?:[^>]*)'                  // du contenu sans >
-					. 'class\s*=\s*[\"\']{1}'      // class=" ou class='
-					. '(?:[^\"\']*)'               // pas de ' ou "
-					. 'editer editer_' . $champ
-					. '(?:(\s+[^\"\']*)?)'         // (espace suivi de pas de ' ou ")
-					. '[\"\']{1}'                  // " ou '
-					. '#Uims';
-
-				if (preg_match($regexp, $formulaire, $regs)) {
-					$div = $new = $regs[0];
-					$new = str_replace(
-						'editer editer_' . $champ,
-						'editer editer_' . $champ . ' ' . $options['editer_class'],
-						$new
-					);
-					$formulaire = str_replace($div, $new, $formulaire);
-				}
-			}
-		}
-	}
-	return $formulaire;
 }

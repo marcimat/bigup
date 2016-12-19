@@ -93,15 +93,18 @@ class Identifier {
 	 */
 	public static function depuisArgumentsPipeline($args) {
 		// il nous faut le nom du formulaire et son hash
-		// et pas de bol, le hash est pas envoyé dans le pipeline.
+		// et pas de bol, le hash est pas envoyé dans les pipelines 'formulaires_xx'.
 		// (il est calculé après charger). Alors on se recrée un hash pour nous.
 		#$post = $args['je_suis_poste'];
 		$form = $args['form'];
-		$args = $args['args'];
-
-		array_unshift($args, $GLOBALS['spip_lang']);
-		$formulaire_args = encoder_contexte_ajax($args, $form);
-
+		// sauf dans le cas du pipeline `formulaire_fond`
+		if (!empty($args['formulaire_args'])) {
+			$formulaire_args = $args['formulaire_args'];
+		} else {
+			$args = $args['args'];
+			array_unshift($args, $GLOBALS['spip_lang']);
+			$formulaire_args = encoder_contexte_ajax($args, $form);
+		}
 		$identifier = new self($form, $formulaire_args);
 		return $identifier;
 	}
@@ -126,6 +129,17 @@ class Identifier {
 		}
 		$this->debug("Propriété `$property` demandée mais inexistante.");
 		return null;
+	}
+
+	/**
+	 * Pouvoir obtenir les propriétés privées sans les modifier.
+	 * @param string $property
+	 */
+	public function __isset($property) {
+		if (property_exists($this, $property)) {
+			return isset($this->$property);
+		}
+		return false;
 	}
 
 	/**

@@ -70,6 +70,17 @@ class CacheRepertoire {
 	}
 
 	/**
+	 * Pouvoir obtenir les propriétés privées sans les modifier.
+	 * @param string $property
+	 */
+	public function __isset($property) {
+		if (property_exists($this, $property)) {
+			return isset($this->$property);
+		}
+		return false;
+	}
+
+	/**
 	 * Retourne la liste des fichiers de ce cache,
 	 * classés par champ
 	 *

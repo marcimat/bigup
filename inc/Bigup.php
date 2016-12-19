@@ -19,6 +19,7 @@ include_spip('inc/Bigup/CacheFichiers');
 include_spip('inc/Bigup/CacheRepertoire');
 include_spip('inc/Bigup/Files');
 include_spip('inc/Bigup/Flow');
+include_spip('inc/Bigup/Formulaire');
 include_spip('inc/Bigup/GestionRepertoires');
 include_spip('inc/Bigup/Identifier');
 include_spip('inc/Bigup/Repondre');
@@ -163,5 +164,16 @@ class Bigup {
 		}
 	}
 
-
+	/**
+	 * Retourne une classe pour effectuer des modifications sur le code html de ce formulaire SPIP
+	 *
+	 * @param string $formulaire
+	 *     Code HTML du formulaire
+	 * @param array $contexte
+	 *     Environnement du formulaire
+	 * @return Formulaire
+	 */
+	public function formulaire($formulaire, $contexte) {
+		return new Formulaire($this->identifier, $formulaire, $contexte);
+	}
 }

@@ -64,6 +64,17 @@ class Cache {
 	}
 
 	/**
+	 * Pouvoir obtenir les propriétés privées sans les modifier.
+	 * @param string $property
+	 */
+	public function __isset($property) {
+		if (property_exists($this, $property)) {
+			return isset($this->$property);
+		}
+		return false;
+	}
+
+	/**
 	 * À partir d'un chemin de stockage final ou partiel d'un fichier
 	 * dans le cache bigup, retrouver le chemin final ou partiel correspondant
 	 *
