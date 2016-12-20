@@ -103,6 +103,25 @@ class GestionRepertoires {
 	}
 
 	/**
+	 * Enlever d'une liste des fichiers ce qui est inutile
+	 *
+	 * Enlève les fichiers .. et . ainsi que des fichiers à
+	 * ne pas considérer comme importants pour tester qu'un
+	 * répertoire a du contenu.
+	 * Particulièrement .ok et file.bigup.json
+	 *
+	 * @todo
+	 *     Trouver un mécanisme pour transmettre l'info file.bigup.json
+	 *     qui ne devrait pas être en dur ici.
+	 *
+	 * @param array $fichiers
+	 * @return array
+	 */
+	public static function filtrer_fichiers($fichiers) {
+		return array_diff($fichiers, ['..', '.', '.ok', 'file.bigup.json']);
+	}
+
+	/**
 	 * Nettoyer un répertoire suivant l'age et le nombre de ses fichiers
 	 *
 	 * Nettoie aussi les sous répertoires.
@@ -130,7 +149,7 @@ class GestionRepertoires {
 			return false;
 		}
 
-		$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+		$fichiers = self::filtrer_fichiers($fichiers);
 		if (!$fichiers) {
 			supprimer_repertoire($repertoire);
 			return true;
@@ -153,7 +172,7 @@ class GestionRepertoires {
 			return false;
 		}
 
-		$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+		$fichiers = self::filtrer_fichiers($fichiers);
 		if (!$fichiers) {
 			supprimer_repertoire($repertoire);
 		}
@@ -211,7 +230,7 @@ class GestionRepertoires {
 		if (is_dir(_DIR_TMP . $chemin)) {
 			$fichiers = scandir(_DIR_TMP . $chemin);
 			if ($fichiers !== false) {
-				$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+				$fichiers = self::filtrer_fichiers($fichiers);
 				if ($fichiers) {
 					foreach ($fichiers as $fichier) {
 						$fichier = _DIR_TMP . $chemin . DIRECTORY_SEPARATOR . $fichier;
@@ -226,7 +245,7 @@ class GestionRepertoires {
 			if ($fichiers and is_dir(_DIR_TMP . $chemin)) {
 				$fichiers = scandir(_DIR_TMP . $chemin);
 				if ($fichiers !== false) {
-					$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+					$fichiers = self::filtrer_fichiers($fichiers);
 					if (!$fichiers) {
 						supprimer_repertoire(_DIR_TMP . $chemin);
 					}
@@ -259,7 +278,7 @@ class GestionRepertoires {
 				continue;
 			}
 
-			$fichiers = array_diff($fichiers, ['..', '.', '.ok']);
+			$fichiers = self::filtrer_fichiers($fichiers);
 			if (!$fichiers) {
 				supprimer_repertoire(_DIR_TMP . $chemin);
 				$chemin = dirname($chemin);
