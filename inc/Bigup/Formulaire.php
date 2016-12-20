@@ -155,15 +155,22 @@ class Formulaire
 					$new = self::inserer_attribut($new, 'data-previsualiser', 'oui');
 				}
 
+				// Dans l'environnement, la liste des fichiers est la clé sans [], si [] est présent à la fin du champ
+				// De même le champ sans [] final est à saisie pour calculer les classes CSS
+				if ($multiple and substr($champ, -2) == '[]') {
+					$champ_env = substr($champ, 0, -2);
+				} else {
+					$champ_env = $champ;
+				}
+
 				// Ajouter les fichiers déjà présents
 				$fichiers = '';
-				$liste_fichiers = table_valeur($this->contexte, saisie_name2nom($champ));
+				$liste_fichiers = table_valeur($this->contexte, saisie_name2nom($champ_env));
 				if ($liste_fichiers) {
 					$fichiers = recuperer_fond(
 						'saisies/inc-bigup_liste_fichiers',
 						array(
 							'nom' => $champ,
-							'multiple' => $multiple,
 							'fichiers' => ($multiple ? $liste_fichiers : array($liste_fichiers))
 						)
 					);
@@ -173,18 +180,11 @@ class Formulaire
 
 				// Ajouter une classe sur le conteneur
 				if ($options['editer_class']) {
-					$c = [$champ];
-					// peut être que la classe editer ne vient pas de Saisies et n'a pas de _ final (traduction des [])
-					if ($multiple and substr($champ, -2) == '[]') {
-						$c[] = substr($champ, 0, -2);
-					}
-					foreach ($c as $_champ) {
-						$regexp = self::regexp_balise_attribut_contenant_valeur('div', 'class', 'editer editer_' . saisie_nom2classe($_champ));
-						if (preg_match($regexp, $this->formulaire, $regs)) {
-							$new = self::completer_attribut($regs[0], 'class', $options['editer_class']);
-							$this->formulaire = str_replace($regs[0], $new, $this->formulaire);
-							break;
-						}
+					$regexp = self::regexp_balise_attribut_contenant_valeur('div', 'class', 'editer editer_' . saisie_nom2classe($champ_env));
+					if (preg_match($regexp, $this->formulaire, $regs)) {
+						$new = self::completer_attribut($regs[0], 'class', $options['editer_class']);
+						$this->formulaire = str_replace($regs[0], $new, $this->formulaire);
+						break;
 					}
 				}
 			}
