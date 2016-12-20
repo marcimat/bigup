@@ -16,7 +16,7 @@
 						joindre_upload: true,
 						joindre_zip: true, // les zips sont conservés zippés systématiquement.
 						formulaire_action_verifier_json: true,
-						bigup_reinjecter_uniquement: [description.identifiant],
+						bigup_reinjecter_uniquement: [description.bigup.identifiant],
 					});
 
 					// verifier les champs

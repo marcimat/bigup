@@ -75,27 +75,6 @@ class Cache {
 	}
 
 	/**
-	 * À partir d'un chemin de stockage final ou partiel d'un fichier
-	 * dans le cache bigup, retrouver le chemin final ou partiel correspondant
-	 *
-	 * @param string $chemin
-	 * @param bool $final
-	 *     Retourne le chemin final, sinon le chemin partiel
-	 * @return bool
-	 */
-	public function obtenir_chemin($chemin, $final = true) {
-		// on vérifie que ce chemin concerne bigup uniquement
-		if (strpos($chemin, $this->final->dir) === 0) {
-			$path = substr($chemin, strlen($this->final->dir));
-		} elseif (strpos($chemin, $this->parts->dir) === 0) {
-			$path = substr($chemin, strlen($this->parts->dir));
-		} else {
-			return false;
-		}
-		return ($final ? $this->final->dir : $this->parts->dir) . $path;
-	}
-
-	/**
 	 * Supprimer les répertoires caches relatifs à ce formulaire / auteur
 	 *
 	 * Tous les fichiers partiels ou complets seront effacés,
@@ -117,60 +96,5 @@ class Cache {
 		$this->final->supprimer_fichier($identifiant);
 		$this->parts->supprimer_fichier($identifiant);
 		return true;
-	}
-
-	/**
-	 * Décrire un fichier (comme dans `$_FILES`)
-	 *
-	 * @uses retrouver_champ_depuis_chemin()
-	 * @param string $chemin
-	 *     Chemin du fichier dans le cache de bigup.
-	 * @return array
-	 **/
-	public static function decrire_fichier($chemin) {
-		$filename = basename($chemin);
-		$extension = pathinfo($chemin, PATHINFO_EXTENSION);
-		$champ = self::retrouver_champ_depuis_chemin($chemin);
-		$identifiant = self::retrouver_identifiant_depuis_chemin($chemin);
-		include_spip('action/ajouter_documents');
-		$finfo = finfo_open(FILEINFO_MIME_TYPE);
-		$desc = [
-			// présent dans $_FILES
-			'name' => $filename,
-			'tmp_name' => $chemin,
-			'size' => filesize($chemin),
-			'type' => finfo_file($finfo, $chemin),
-			'error' => 0, // hum
-			// informations supplémentaires (pas dans $_FILES habituellement)
-			'pathname' => $chemin,
-			'identifiant' => $identifiant,
-			'extension' => corriger_extension(strtolower($extension)),
-			'champ' => $champ,
-		];
-		return $desc;
-	}
-
-	/**
-	 * Retrouve un nom de champ depuis un chemin de cache de fichier
-	 *
-	 * @param string $chemin
-	 *     Chemin de stockage du fichier dans le cache de bigupload
-	 * @return string
-	 *     Nom du champ (valeur de l'attribut name de l'input d'origine)
-	 */
-	public static function retrouver_champ_depuis_chemin($chemin) {
-		return basename(dirname(dirname($chemin)));
-	}
-
-	/**
-	 * Retrouve un nom de champ depuis un chemin de cache de fichier
-	 *
-	 * @param string $chemin
-	 *     Chemin de stockage du fichier dans le cache de bigupload
-	 * @return string
-	 *     Identifiant du fichier
-	 */
-	public static function retrouver_identifiant_depuis_chemin($chemin) {
-		return basename(dirname($chemin));
 	}
 }

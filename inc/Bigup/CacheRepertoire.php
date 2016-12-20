@@ -103,22 +103,26 @@ class CacheRepertoire {
 		);
 
 		foreach ($files as $filename) {
-			if ($filename->isDir()) continue; // . ..
-			if ($filename->getFilename()[0] == '.') continue; // .ok
+			if (
+				$filename->isDir()
+				or $filename->getFilename()[0] == '.' // .ok
+				or CacheFichiers::est_fichier_description($filename)
+			) {
+				continue;
+			}
 
 			$chemin = $filename->getPathname();
-			$champ = Cache::retrouver_champ_depuis_chemin($chemin);
+			$description = CacheFichiers::obtenir_description_fichier($chemin);
+			$champ = $description['bigup']['champ'];
 
 			if (empty($liste[$champ])) {
 				$liste[$champ] = [];
 			}
-			$liste[$champ][] = Cache::decrire_fichier($chemin);
-			$this->debug("Fichier retrouvé : $chemin");
+			$liste[$champ][] = $description;
 		}
 
 		return $liste;
 	}
-
 
 	/**
 	 * Pour un champ donné (attribut name) et une description
@@ -131,19 +135,20 @@ class CacheRepertoire {
 	public function stocker_fichier($champ, $description) {
 		$nom = $description['name'];
 		$chemin = $description['tmp_name'];
-		$nouveau = new CacheFichiers($this, $champ);
-		$nouveau_chemin = $nouveau->dir_fichier($description['size'] . $nom, $nom);
+
+		$fichier = new CacheFichiers($this, $champ);
+		$identifiant = $description['size'] . $nom;
+		$nouveau_chemin = $fichier->path_fichier($identifiant, $nom);
 
 		if (GestionRepertoires::creer_sous_repertoire(dirname($nouveau_chemin))) {
 			if (GestionRepertoires::deplacer_fichier_upload($chemin, $nouveau_chemin)) {
-				return Cache::decrire_fichier($nouveau_chemin);
+				$description['tmp_name'] = $nouveau_chemin;
+				return $fichier->decrire_fichier($identifiant, $description);
 			}
 		}
 
 		return false;
 	}
-
-
 
 	/**
 	 * Enlève un fichier
@@ -182,8 +187,8 @@ class CacheRepertoire {
 		$this->debug("Demande de suppression de fichiers : " . implode(', ', $identifiants));
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $description) {
-				if (in_array($description['identifiant'], $identifiants)) {
-					GestionRepertoires::supprimer_repertoire(dirname($description['pathname']));
+				if (in_array($description['bigup']['identifiant'], $identifiants)) {
+					GestionRepertoires::supprimer_repertoire(dirname($description['tmp_name']));
 				}
 			}
 		}

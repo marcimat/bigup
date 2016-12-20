@@ -85,8 +85,8 @@ class Bigup {
 		$liste = $this->cache->final->trouver_fichiers();
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $description) {
-				if (!$uniquement or in_array($description['identifiant'], $uniquement)) {
-					Files::integrer_fichier($description['champ'], $description);
+				if (!$uniquement or in_array($description['bigup']['identifiant'], $uniquement)) {
+					Files::integrer_fichier($description['bigup']['champ'], $description);
 				}
 			}
 		}

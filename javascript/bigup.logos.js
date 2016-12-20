@@ -18,7 +18,7 @@
 					var data =  bigup.getFormData();
 					var data = $.extend(data, {
 						formulaire_action_verifier_json: true,
-						bigup_reinjecter_uniquement: [description.identifiant],
+						bigup_reinjecter_uniquement: [description.bigup.identifiant],
 					});
 
 					// verifier les champs

@@ -36,9 +36,26 @@ class GestionRepertoires {
 	public static function nommer_repertoire($nom) {
 		// éviter les accents
 		$nom = translitteration($nom);
+		// éviter les balises
+		$nom = preg_replace("/<[^>]*>/", '', $nom);
 		// éviter * . " / \ [ ] : ; | = , et bien d'autres
 		$nom = preg_replace('/\W/u', '_', $nom);
 		return $nom;
+	}
+
+	/**
+	 * Reformater le nom du fichier pour l'écrire sur le serveur
+	 *
+	 * @see copier_document() dans SPIP
+	 * @param string $filename
+	 * @return string Nom du fichier corrigé
+	 */
+	public static function nommer_fichier($filename) {
+		$infos = pathinfo($filename);
+		include_spip('action/ajouter_documents');
+		$extension = corriger_extension($infos['extension']);
+		$nom = self::nommer_repertoire($infos['filename']);
+		return $nom . '.' . $extension;
 	}
 
 	/**

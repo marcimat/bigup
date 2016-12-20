@@ -143,10 +143,8 @@ class Repondre {
 			# Files::integrer_fichier($res);
 
 			// envoyer quelques infos sur le fichier reçu
-			$desc = Cache::decrire_fichier($res);
-
-			// ne pas permettre de connaître le chemin complet
-			unset($desc['pathname'], $desc['tmp_name']);
+			$desc = CacheFichiers::obtenir_description_fichier($res);
+			$desc = self::nettoyer_description_fichier_retour_ajax($desc);
 
 			$this->send(200, $desc);
 		}
@@ -173,5 +171,29 @@ class Repondre {
 			echo json_encode($data);
 		}
 		exit;
+	}
+
+
+	/**
+	 * Retourne la description d'un fichier dont le chemin est indiqué,
+	 * moins les infos inutiles ou qu'on ne veut pas dévoiler en JS
+	 *
+	 * @uses obtenir_description_fichier()
+	 * @param array $description
+	 *     Description de fichier à nettoyer
+	 * @return array|false
+	 *     Description nettoyée, sinon false
+	 **/
+	public static function nettoyer_description_fichier_retour_ajax($description) {
+		if (!$description) {
+			return false;
+		}
+		// ne pas permettre de connaître le chemin complet
+		unset(
+			$description['tmp_name'],
+			$description['bigup']['pathname'],
+			$description['biup']['vignette']
+		);
+		return $description;
 	}
 }

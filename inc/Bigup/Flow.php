@@ -157,7 +157,6 @@ class Flow {
 		$this->info("Réception chunk $identifier n°$chunkNumber");
 
 		$file = reset($_FILES);
-		$key = key($_FILES);
 
 		if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
 			if (!GestionRepertoires::deplacer_fichier_upload(
@@ -172,8 +171,8 @@ class Flow {
 		if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
 			$this->info("Chunks complets de $identifier");
 
-			$chemin_parts = $this->cache->parts->fichiers->dir_identifiant($identifier);
-			$chemin_final = $this->cache->final->fichiers->dir_fichier($identifier, $filename);
+			$chemin_parts = $this->cache->parts->fichiers->dir_fichier($identifier, $filename);
+			$chemin_final = $this->cache->final->fichiers->path_fichier($identifier, $filename);
 
 			// recomposer le fichier
 			$fullFile = $this->createFileFromChunks($this->getChunkFiles($chemin_parts), $chemin_final);
@@ -182,6 +181,15 @@ class Flow {
 				$this->error("! Création du fichier complet en échec (" . $chemin_final . ").");
 				return $this->send(415);
 			}
+
+			// créer les infos du fichiers
+			$this->cache->final->fichiers->decrire_fichier($identifier, [
+				'name' => $filename,
+				'tmp_name' => $fullFile,
+				'size' => $totalSize,
+				'type' => $file['type'],
+				'error' => 0, // hum
+			]);
 
 			// nettoyer le chemin du répertoire de stockage des morceaux du fichiers
 			GestionRepertoires::supprimer_repertoire($chemin_parts);
@@ -205,7 +213,7 @@ class Flow {
 	 * @return string Nom de fichier
 	**/
 	public function tmpChunkPathFile($identifier, $filename, $chunkNumber) {
-		return $this->cache->parts->fichiers->dir_fichier($identifier, $filename) . '.part' . $chunkNumber;
+		return $this->cache->parts->fichiers->path_fichier($identifier, $filename) . '.part' . $chunkNumber;
 	}
 
 	/**
