@@ -26,6 +26,22 @@ class GestionRepertoires {
 	use LogTrait;
 
 	/**
+	 * Pour un nom donné, propose un nom de répertoire valide sur la plupart des systèmes de fichiers
+	 *
+	 * @param string $nom
+	 *     Nom d'origine
+	 * @return mixed string
+	 *     Nom possible pour un répertoire
+	 */
+	public static function nommer_repertoire($nom) {
+		// éviter les accents
+		$nom = translitteration($nom);
+		// éviter * . " / \ [ ] : ; | = , et bien d'autres
+		$nom = preg_replace('/\W/u', '_', $nom);
+		return $nom;
+	}
+
+	/**
 	 * Vérifier et préparer l'arborescence jusqu'au répertoire parent
 	 *
 	 * @note

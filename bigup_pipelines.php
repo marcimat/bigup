@@ -113,6 +113,7 @@ function bigup_formulaire_charger($flux) {
 	return $flux;
 }
 
+
 /**
  * Branchement sur la réception d'un formulaire (avant verifier())
  *

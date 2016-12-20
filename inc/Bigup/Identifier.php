@@ -174,16 +174,17 @@ class Identifier {
 		// un nom d'identifiant humain si possible
 		include_spip('inc/session');
 		$identifiant = session_get('id_auteur');
+		$complement = '';
 		// visiteur anonyme ? on prend un identifiant de session PHP.
 		if (!$identifiant) {
 			if (session_status() == PHP_SESSION_NONE) {
 				session_start();
 			}
-			$identifiant .= "." . session_id();
+			$complement = '_' . session_id();
 		} elseif ($login = session_get('login')) {
-			$identifiant .= "." . $login;
+			$complement = '_' . GestionRepertoires::nommer_repertoire($login);
 		}
-		return $this->auteur = $identifiant;
+		return $this->auteur = $identifiant . strtolower($complement);
 	}
 
 	/**
