@@ -217,7 +217,7 @@ class Formulaire
 			$classes = [$classes];
 		}
 
-		if (empty($this->identifier->form) or empty($this->identifier->formulaire_args)) {
+		if (empty($this->identifier->formulaire) or empty($this->identifier->formulaire_args)) {
 			return false;
 		}
 
@@ -226,7 +226,7 @@ class Formulaire
 		}
 
 		$options = $options + [
-			'input_class' => '', // l'input a déjà la classe bigup !
+			'input_class' => 'bigup',
 		];
 
 		// On cherche à retrouver le name des champs input file de classe bigup
@@ -348,7 +348,7 @@ class Formulaire
 		return
 			'#<input'
 			. self::exp_non_fin_balise()
-			. '(?:('
+			. '(?:'
 			. self::exp_attribut_est_valeur('type', 'file')
 			. self::exp_non_fin_balise()
 			. self::exp_attribut_possede_valeur('class', $exp_classes, false)

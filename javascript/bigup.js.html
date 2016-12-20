@@ -343,8 +343,8 @@ Bigup.prototype = {
 			file.emplacement.find(".cancel").fadeOut("normal", function(){
 				$(this).remove();
 				// et mettre un bouton enlever !
-				if (desc.identifiant) {
-					file.emplacement.data('identifiant', desc.identifiant);
+				if (desc.bigup.identifiant) {
+					file.emplacement.data('identifiant', desc.bigup.identifiant);
 					me.ajouter_bouton_enlever(file.emplacement);
 				}
 			});
