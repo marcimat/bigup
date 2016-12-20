@@ -114,15 +114,21 @@
 }
 
 
-
 /* Spécificités sur des formulaires */
 .formulaire_joindre_document .editer_fichier_upload .dropfile {
 	padding: 50px 15px;
 	text-align:center;
 }
+#navigation .formulaire_joindre_document .editer_fichier_upload .dropfile,
 .formulaire_editer_logo .dropfile {
 	padding: 25px 15px 15px;
 	text-align:center;
 }
-.formulaire_editer_logo .dropfileor { display:block; }
-.formulaire_editer_logo .bigup_fichiers .fichier .infos { clear:both; }
+#navigation .formulaire_joindre_document .editer_fichier_upload .dropfileor,
+.formulaire_editer_logo .dropfileor {
+	display:block;
+}
+#navigation .formulaire_joindre_document .bigup_fichiers .fichier .infos,
+.formulaire_editer_logo .bigup_fichiers .fichier .infos {
+	clear:both;
+}
