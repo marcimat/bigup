@@ -86,7 +86,8 @@ class Bigup {
 		foreach ($liste as $champ => $fichiers) {
 			foreach ($fichiers as $description) {
 				if (!$uniquement or in_array($description['bigup']['identifiant'], $uniquement)) {
-					Files::integrer_fichier($description['bigup']['champ'], $description);
+					unset($description['bigup']);
+					Files::integrer_fichier($champ, $description);
 				}
 			}
 		}
