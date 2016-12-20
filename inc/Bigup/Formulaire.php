@@ -237,8 +237,8 @@ class Formulaire
 		$champs = [];
 
 		if (preg_match_all($regexp_classes, $this->formulaire, $matches)) {
-			foreach ($matches as $m) {
-				if (preg_match($regexp_champ, $m[0], $regs)) {
+			foreach ($matches[0] as $m) {
+				if (preg_match($regexp_champ, $m, $regs)) {
 					$champs[] = $regs['champ'];
 				}
 			}
