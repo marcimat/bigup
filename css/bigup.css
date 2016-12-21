@@ -55,6 +55,7 @@
 	background-size:cover;
 	border-radius: 3px;
 }
+
 .bigup_fichiers .infos {
 	display:block;
 	word-break: break-all;
@@ -62,7 +63,6 @@
 .bigup_fichiers .infos span {
 	display:block;
 }
-
 
 .dropfile {
 	border: 2px dashed #eee;
@@ -113,22 +113,34 @@
 	color: #333;
 }
 
+/* Spécificités lorsqu'utilisé dans la colonne #navigation du privé */
+#page #navigation .bigup_fichiers .previsualisation {
+	float:none;
+	width:100%;
+	height:0;
+	padding-bottom:100%;
+	margin:.5em 0;
+}
+#page #navigation .bigup_fichiers .actions {
+	float:none;
+	text-align:center;
+	margin:0 auto;
+}
+
+#page #navigation .dropfile {
+	padding: 25px 15px 15px;
+	text-align:center;
+}
+#page #navigation .dropfileor {
+	display:block;
+}
+#page #navigation .bigup_fichiers .fichier .infos {
+	clear:both;
+}
+
 
 /* Spécificités sur des formulaires */
 .formulaire_joindre_document .editer_fichier_upload .dropfile {
 	padding: 50px 15px;
 	text-align:center;
-}
-#navigation .formulaire_joindre_document .editer_fichier_upload .dropfile,
-.formulaire_editer_logo .dropfile {
-	padding: 25px 15px 15px;
-	text-align:center;
-}
-#navigation .formulaire_joindre_document .editer_fichier_upload .dropfileor,
-.formulaire_editer_logo .dropfileor {
-	display:block;
-}
-#navigation .formulaire_joindre_document .bigup_fichiers .fichier .infos,
-.formulaire_editer_logo .bigup_fichiers .fichier .infos {
-	clear:both;
 }
