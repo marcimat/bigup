@@ -23,7 +23,6 @@
 function formulaires_tester_bigup_charger_dist($id = 0) {
 	$valeurs = [
 		'titre' => '',
-		'texte' => '',
 	];
 
 	// demander la gestion de fichiers d'upload
