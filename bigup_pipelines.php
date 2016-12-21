@@ -246,7 +246,7 @@ function bigup_medias_formulaire_fond($flux) {
 
 			case 'formidable':
 				$formulaire->preparer_input_class(
-					'bigup',
+					'bigup', // 'file' pour rendre automatique.
 					['previsualiser' => true]
 				);
 				break;
