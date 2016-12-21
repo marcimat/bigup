@@ -94,6 +94,62 @@ class Bigup {
 		return $liste;
 	}
 
+	/**
+	 * Pour une liste (champ => description de fichier) donné, déclenche
+	 * un mécanisme qui permettra de vérifier que ces fichiers sont toujours présents
+	 * dans $_FILES au moment des vérifications et des traitements.
+	 * Le cas échéant, les enlèvera de $_FILES.
+	 *
+	 * @param array $liste
+	 *     Liste de descriptions de fichiers
+	 * @return bool
+	 *     True si des fichiers ont été mis en surveillance, false sinon.
+	 */
+	public function surveiller_fichiers($liste) {
+		if (!$liste) {
+			return false;
+		}
+		$surveiller = [];
+		foreach ($liste as $champ => $descriptions) {
+			$surveiller[$champ] = array_column($descriptions, 'tmp_name');
+		}
+		// Théoriquement on ne passe pas plusieurs fois ici lors d'un hit
+		// seulement lorsqu'on poste 1 formulaire. Pas besoin de gérér
+		// plusieurs variables.
+		set_request('bigup_surveiller_fichiers', $surveiller);
+		return true;
+	}
+
+	/**
+	 * Enlève les fichiers surveillés par bigup qui ont été enlevés de `$_FILES`
+	 *
+	 * Cela signifie probablement que le fichier ne convenait pas au formulaire
+	 * qui le demandait. En tout cas c'est comme cela que fait Formidable
+	 * avec les fichiers qu'il reçoit qui ne lui conviennent pas.
+	 *
+	 * @param array $liste
+	 *     Liste de descriptions de fichiers
+	 */
+	public function verifier_fichiers_surveilles() {
+		$surveiller = _request('bigup_surveiller_fichiers');
+		if (!$surveiller) {
+			return true;
+		}
+		foreach ($surveiller as $champ => $fichiers) {
+			foreach ($fichiers as $i => $fichier) {
+				if (!Files::contient($champ, $fichier)) {
+					GestionRepertoires::supprimer_repertoire(dirname($fichier));
+					unset($surveiller[$champ][$i]);
+				}
+			}
+			if (!count($surveiller[$champ])) {
+				unset($surveiller[$champ]);
+			}
+		}
+		set_request('bigup_surveiller_fichiers', $surveiller);
+
+		return true;
+	}
 
 	/**
 	 * Efface tous ou certains fichiers envoyés pour ce formulaire par un auteur.

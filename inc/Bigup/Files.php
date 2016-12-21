@@ -20,6 +20,83 @@ class Files {
 
 	use LogTrait;
 
+	/**
+	 * Indique si ce chemin de fichier est présent pour ce champ dans $_FILES
+	 * @param string $champ
+	 *     Valeur de l'attribut name du champ.
+	 * @param stsring $chemin
+	 *     Chemin du fichier dans le cache
+	 * @return bool
+	 *     true si le fichier est présent, false sinon.
+	 */
+	public static function contient($champ, $chemin) {
+		if (!$champ or !$chemin) {
+			return false;
+		}
+		$arborescence = explode('[', str_replace(']', '', $champ));
+		$racine = array_shift($arborescence);
+
+		// si la racine n'existe pas déjà… partir.
+		if (empty($_FILES[$racine]['tmp_name'])) {
+			return false;
+		}
+
+		$debut = $_FILES[$racine]['tmp_name'];
+		return self::contient_arborescence($arborescence, $debut, $chemin);
+	}
+
+	/**
+	 * Recherche dans une arborescence de tableau (si elle existe) la valeur indiquée.
+	 *
+	 * Notamment peut servir à rechercher un chemin de fichier dans une
+	 * sous clé de `$_FILES` lorsque `[]` était présent dans le nom du champ.
+	 *
+	 * Les chaines vides dans le tableau d'arborescence transmis sont considérées
+	 * comme pouvant être n'importe quel entier dans le tableau.
+	 * Ie: si on a '', on recherchera dans `$tableau[0]` ou `$tableau[1]`, etc.
+	 * s'ils existent.
+	 *
+	 * @param array $arborescence
+	 *     Tableau ['', 'truc'] si recherche du champ '[][truc]'
+	 * @param string $tableau
+	 *     Le tableau de recherche
+	 * @param string $valeur
+	 *     La valeur cherchée
+	 */
+	public static function contient_arborescence($arborescence, $tableau, $valeur) {
+		$a = array_shift($arborescence);
+		if ($a === null) {
+			return $tableau == $valeur;
+		}
+
+		// champ[truc][0]
+		if (strlen($a)) {
+			if (empty($tableau[$a])) {
+				return false;
+			}
+			return self::contient_arborescence($arborescence, $tableau[$a], $valeur);
+		}
+
+		// sinon champ avec [] vides
+		if (!is_array($tableau)) {
+			return false;
+		}
+		// si c'était le dernier []
+		if (!count($arborescence)) {
+			return (false !== array_search($valeur, $tableau));
+		} else {
+			// champ[][truc]
+			foreach ($tableau as $k => $t) {
+				if (is_int($k)) {
+					$ok = self::contient_arborescence($arborescence, $tableau[$k], $valeur);
+					if ($ok) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+	}
 
 	/**
 	 * Intégrer le fichier indiqué dans `$FILES`

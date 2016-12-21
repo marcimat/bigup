@@ -129,7 +129,8 @@ function bigup_formulaire_receptionner($flux) {
 	if (_request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
 		$bigup->gerer_fichiers_postes(); // les fichiers postés sans JS
-		$bigup->reinserer_fichiers(_request('bigup_reinjecter_uniquement'));
+		$liste = $bigup->reinserer_fichiers(_request('bigup_reinjecter_uniquement'));
+		$bigup->surveiller_fichiers($liste);
 	}
 	return $flux;
 }
@@ -137,21 +138,28 @@ function bigup_formulaire_receptionner($flux) {
 /**
  * Branchement sur verifier
  * 
- * Si on a demandé la suppression d'un fichier, le faire
+ * - Si on a demandé la suppression d'un fichier, le faire
+ * - Nettoyer les fichiers injectés effacés de $_FILES.
  *
  * @param array $flux
  * @return array
 **/
 function bigup_formulaire_verifier($flux) {
-	// enlever un fichier dont on demande sa suppression
-	if ($identifiant = _request('bigup_enlever_fichier')) {
+	$identifiant = _request('bigup_enlever_fichier');
+	if ($identifiant or _request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
-		if ($bigup->supprimer_fichiers($identifiant)) {
-			// on n'affiche pas les autres erreurs
-			$flux['data'] = [];
-			$flux['data']['message_erreur'] = '';
-			$flux['data']['message_ok'] = 'Fichier effacé';
-			$flux['data']['_erreur'] = true;
+		// enlever un fichier dont on demande sa suppression
+		if ($identifiant) {
+			if ($bigup->supprimer_fichiers($identifiant)) {
+				// on n'affiche pas les autres erreurs
+				$flux['data'] = [];
+				$flux['data']['message_erreur'] = '';
+				$flux['data']['message_ok'] = 'Fichier effacé';
+				$flux['data']['_erreur'] = true;
+			}
+		} else {
+			// nettoyer nos fichiers réinsérés s'ils ont été enlevés de $_FILES
+			$bigup->verifier_fichiers_surveilles();
 		}
 	}
 	return $flux;
@@ -161,19 +169,25 @@ function bigup_formulaire_verifier($flux) {
 /**
  * Branchement sur traiter
  *
- * Si on a effectué les traitements sans erreur,
+ * - Si on a effectué les traitements sans erreur,
  * tous les fichiers restants doivent disparaître
  * du cache.
+ * - Nettoyer les fichiers injectés effacés de $_FILES.
  *
  * @param array $flux
  * @return array
  **/
 function bigup_formulaire_traiter($flux) {
-	// à voir si on cherche systématiquement
-	// ou uniquement lorsqu'on a demander à recuperer les fichiers
-	if (empty($flux['data']['message_erreur']) and _request('bigup_retrouver_fichiers')) {
+	if (_request('bigup_retrouver_fichiers')) {
 		$bigup = bigup_get_bigup($flux);
-		$bigup->supprimer_fichiers(_request('bigup_reinjecter_uniquement'));
+		// à voir si on cherche systématiquement
+		// ou uniquement lorsqu'on a demandé à recuperer les fichiers
+		if (empty($flux['data']['message_erreur'])) {
+			$bigup->supprimer_fichiers(_request('bigup_reinjecter_uniquement'));
+		} else {
+			// nettoyer nos fichiers réinsérés s'ils ont été enlevés de $_FILES
+			$bigup->verifier_fichiers_surveilles();
+		}
 	}
 	return $flux;
 }
