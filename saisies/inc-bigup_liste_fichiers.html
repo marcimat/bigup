@@ -10,18 +10,18 @@
 	<div class='bigup_fichiers fichiers_[(#ENV{nom}|concat{#ENV{multiple}|=={oui}|?{\[\]}}|saisie_nom2classe)]'>
 		<BOUCLE_fichiers(DATA){source tableau, #FICHIERS|bigup_array_filter}>
 		<div class='fichier'>
-			<div class='actions'>
-				<button class='submit' type='submit'
-						name='bigup_enlever_fichier' value="#VALEUR{bigup/identifiant}"
-						onclick="jQuery(this).parents('form').find('input,textarea,select').filter('[required]').prop('required', false); return true;">
-					<:bigup:bouton_enlever:>
-				</button>
-			</div>
 			<div class='description'>
-				<div class="vignette_extension #VALEUR{bigup/extension}" title="[(#TYPE|attribut_html)]"></div>
+				<div class="vignette_extension #VALEUR{bigup/extension}" title="[(#TYPE|attribut_html)]"><span></span></div>
 				<div class='infos'>
 					<span class='name'><strong>#NAME</strong></span>
 					<span class='size'>[(#SIZE|taille_en_octets)]</span>
+				</div>
+				<div class='actions'>
+					<button class='submit' type='submit'
+							name='bigup_enlever_fichier' value="#VALEUR{bigup/identifiant}"
+							onclick="jQuery(this).parents('form').find('input,textarea,select').filter('[required]').prop('required', false); return true;">
+						<:bigup:bouton_enlever:>
+					</button>
 				</div>
 			</div>
 		</div>

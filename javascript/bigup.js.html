@@ -170,14 +170,14 @@ function Bigup(params, opts, callbacks) {
 
 				var template =
 					'\n<div class="fichier">'
-					+ '\n\t<div class="actions">'
-					+ '\n\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_enlever_fichier(this); return false;">' + t_annuler + '</span>'
-					+ '\n\t</div>'
 					+ '\n\t<div class="description">'
-					+ '\n\t\t<div class="vignette_extension ' + extension + '" title="' + file.type + '"></div>'
+					+ '\n\t\t<div class="vignette_extension ' + extension + '" title="' + file.type + '"><span></span></div>'
 					+ '\n\t\t<div class="infos">'
 					+ '\n\t\t\t<span class="name"><strong>' + file.name + '</strong></span>'
 					+ '\n\t\t\t<span class="size">' + $.taille_en_octets(file.size) + '</span>'
+					+ '\n\t\t</div>'
+					+ '\n\t\t<div class="actions">'
+					+ '\n\t\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_enlever_fichier(this); return false;">' + t_annuler + '</span>'
 					+ '\n\t\t</div>'
 					+ '\n\t</div>'
 					+ '\n</div>\n';
@@ -647,6 +647,7 @@ Bigup.prototype = {
 					.find('.vignette_extension')
 					.removeClass('vignette_extension')
 					.addClass('previsualisation')
+					.find('> span')
 					.css('background-image', 'url(' + this.result + ')');
 			}
 		});

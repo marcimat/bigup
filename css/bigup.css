@@ -28,40 +28,68 @@
 .bigup_fichiers .fichier .message_ok {
 	color: #54a509;
 }
+
+.bigup_fichiers progress {
+	margin-top:10px;
+	clear:both; width:100%;
+	height:10px;
+}
+
+.bigup_fichiers .description {
+	display: flex;
+	width:100%;
+	justify-content: center;
+}
+
+.bigup_fichiers .vignette_extension,
+.bigup_fichiers .previsualisation {
+	width:52px;
+	min-height:52px; /* laisser de l'espace à l'icone */
+	margin-right:.5em;
+}
+/**
+ * Centrage de l'image de fond carrée, responsive.
+ * @see : http://www.mademyday.de/css-height-equals-width-with-pure-css.html
+ */
+.bigup_fichiers .previsualisation {
+	width: 52px;
+	position:relative;
+}
+.bigup_fichiers .previsualisation:before{
+	content: "";
+	display: block;
+	padding-top: 100%; 	/* initial ratio of 1:1*/
+}
+.bigup_fichiers .previsualisation > span {
+	background-repeat:no-repeat;
+	background-position: center center;
+	background-size:cover;
+	border-radius: 3px;
+	position:  absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+}
+
+.bigup_fichiers .infos {
+	word-break: break-all;
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+}
+.bigup_fichiers .infos span {
+	display:block;
+}
+
 .bigup_fichiers .actions {
-	float:right;
 	margin-top:1em;
 	margin-left:1em;
 	text-align:right;
 }
 .bigup_fichiers .actions .bigup-btn.btn {
 	padding: 3px 8px;
-}
-.bigup_fichiers progress {
-	margin-top:10px;
-	clear:both; width:100%;
-	height:10px;
-}
-.bigup_fichiers .vignette_extension,
-.bigup_fichiers .previsualisation {
-	float:left;
-	width:52px;
-	height:52px; /* laisser de l'espace à l'icone */
-	margin-right:.5em;
-}
-.bigup_fichiers .previsualisation {
-	background-repeat:no-repeat;
-	background-position: center center;
-	background-size:cover;
-	border-radius: 3px;
-}
-
-.bigup_fichiers .infos {
-	display:block;
-	word-break: break-all;
-}
-.bigup_fichiers .infos span {
-	display:block;
 }
 
 .dropfile {
@@ -114,18 +142,23 @@
 }
 
 /* Spécificités lorsqu'utilisé dans la colonne #navigation du privé */
-#page #navigation .bigup_fichiers .previsualisation {
-	float:none;
-	width:100%;
-	height:0;
-	padding-bottom:100%;
-	margin:.5em 0;
+#page #navigation .bigup_fichiers .description {
+	flex-wrap:wrap;
+	align-items: center;
 }
 #page #navigation .bigup_fichiers .actions {
-	float:none;
 	text-align:center;
-	margin:0 auto;
+	margin:.5em 0 0;
+	width:100%;
 }
+#page #navigation .bigup_fichiers .previsualisation {
+	width:100%;
+	margin:0 0 .5em;
+}
+#page #navigation .bigup_fichiers .previsualisation + .infos {
+	text-align:center;
+}
+
 
 #page #navigation .dropfile {
 	padding: 25px 15px 15px;
