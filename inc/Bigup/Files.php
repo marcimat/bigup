@@ -89,6 +89,59 @@ class Files {
 		return $description;
 	}
 
+	/**
+	 * Retourne un tableau avec pour clé le champ d'origine du fichier
+	 * à partir des éléments présents dans $_FILES
+	 *
+	 * @return array Tableau (champ => [description])
+	 */
+	public static function lister_fichiers_par_champs() {
+		$liste = [];
+		if (!count($_FILES)) {
+			return $liste;
+		}
+
+		$infos = []; // name, pathname, error …
+		foreach ($_FILES as $racine => $descriptions) {
+			$infos = array_keys($descriptions);
+			break;
+		}
+
+		foreach ($_FILES as $racine => $descriptions) {
+			$error = $descriptions['error'];
+
+			// cas le plus simple : name="champ", on s'embête pas
+			if (!is_array($error)) {
+				$liste[$racine] = [$descriptions];
+				continue;
+			}
+
+			// cas plus compliqués :
+			// name="champ[tons][][sous][la][pluie][]"
+			// $_FILES[champ][error][tons][0][sous][la][pluie][0]
+			else {
+				$chemins = Files::extraire_sous_chemins_fichiers($error);
+
+				foreach ($chemins['phps'] as $k => $chemin) {
+					$description = [];
+					foreach ($infos as $info) {
+						$var = '$_FILES[\'' . $racine . '\'][\'' . $info . '\']' . $chemin;
+						eval("\$x = $var;");
+						$description[$info] = $x;
+					}
+
+					$complet = $racine . $chemins['names'][$k];
+					if (empty($liste[$complet])) {
+						$liste[$complet] = [];
+					}
+					$liste[$complet][] = $description;
+				}
+			}
+
+		}
+		return $liste;
+	}
+
 
 	/**
 	 * Extrait et enlève de `$_FILES` les fichiers reçus sans erreur
@@ -127,18 +180,23 @@ class Files {
 				$chemins = Files::extraire_sous_chemins_fichiers($error);
 
 				foreach ($chemins['phps'] as $k => $chemin) {
-					$description = [];
-					foreach ($infos as $info) {
-						$complet = '$_FILES[\'' . $racine . '\'][\'' . $info . '\']' . $chemin;
-						eval("\$x = $complet; unset($complet);");
-						$description[$info] = $x;
-					}
+					$var = '$_FILES[\'' . $racine . '\'][\'error\']' . $chemin;
+					eval("\$error = $var;");
 
-					$complet = $racine . $chemins['names'][$k];
-					if (empty($liste[$complet])) {
-						$liste[$complet] = [];
+					if ($error == 0) {
+						$description = [];
+						foreach ($infos as $info) {
+							$var = '$_FILES[\'' . $racine . '\'][\'' . $info . '\']' . $chemin;
+							eval("\$x = $var; unset($var);");
+							$description[$info] = $x;
+						}
+
+						$complet = $racine . $chemins['names'][$k];
+						if (empty($liste[$complet])) {
+							$liste[$complet] = [];
+						}
+						$liste[$complet][] = $description;
 					}
-					$liste[$complet][] = $description;
 				}
 			}
 		}
