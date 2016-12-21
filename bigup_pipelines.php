@@ -35,8 +35,8 @@ function bigup_jquery_plugins($scripts) {
 **/
 function bigup_insert_head_css($flux) {
 	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
-		$flux .= '<link rel="stylesheet" href="'.produire_fond_statique('css/vignettes.css').'" type="text/css" media="screen" />' . "\n";
-		$flux .= '<link rel="stylesheet" href="'.find_in_path('css/bigup.css').'" type="text/css" media="screen" />' . "\n";
+		$flux .= '<link rel="stylesheet" href="'.produire_fond_statique('css/vignettes.css').'" type="text/css" />' . "\n";
+		$flux .= '<link rel="stylesheet" href="'.find_in_path('css/bigup.css').'" type="text/css" />' . "\n";
 	}
 	return $flux;
 }
@@ -49,8 +49,8 @@ function bigup_insert_head_css($flux) {
  * @return string Code html complété
 **/
 function bigup_header_prive($flux) {
-	$flux .= '<link rel="stylesheet" href="'.produire_fond_statique('css/vignettes.css').'" type="text/css" media="screen" />' . "\n";
-	$flux .= '<link rel="stylesheet" href="'.find_in_path('css/bigup.css').'" type="text/css" media="screen" />' . "\n";
+	$flux .= '<link rel="stylesheet" href="'.produire_fond_statique('css/vignettes.css').'" type="text/css" />' . "\n";
+	$flux .= '<link rel="stylesheet" href="'.find_in_path('css/bigup.css').'" type="text/css" />' . "\n";
 	return $flux;
 }
 
