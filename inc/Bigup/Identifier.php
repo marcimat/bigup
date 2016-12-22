@@ -58,7 +58,7 @@ class Identifier {
 	 * @todo À définir en configuration
 	 * @var int
 	 **/
-	private $token_expiration = 3600 * 24;
+	private $token_expiration = 86400;
 
 
 	/**

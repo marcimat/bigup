@@ -130,14 +130,14 @@ class GestionRepertoires {
 	 * @param string $repertoire
 	 *     Répertoire à nettoyer
 	 * @param int $age_max
-	 *     Age maxium des fichiers en seconde
+	 *     Age maxium des fichiers en seconde. Par défaut 24*3600
 	 * @param int $max_files
 	 *     Nombre maximum de fichiers dans le dossier
 	 * @return bool
 	 *     - false : erreur de lecture du répertoire.
 	 *     - true : action réalisée.
 	 **/
-	public static function nettoyer_repertoire_recursif($repertoire, $age_max = 24*3600) {
+	public static function nettoyer_repertoire_recursif($repertoire, $age_max = 86400) {
 
 		$repertoire = rtrim($repertoire, '/');
 		if (!is_dir($repertoire)) {
