@@ -252,19 +252,27 @@ class CacheFichiers {
 
 		include_spip('action/ajouter_documents');
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$type = finfo_file($finfo, $chemin);
+		finfo_close($finfo);
+		$extension = corriger_extension(strtolower($extension));
 		$desc = [
 			// présent dans $_FILES
 			'name' => $infos['name'],
 			'tmp_name' => $chemin,
 			'size' => $size,
-			'type' => finfo_file($finfo, $chemin),
+			'type' => $type,
 			'error' => $error,
 			// informations supplémentaires (pas dans $_FILES habituellement)
 			'bigup' => $bigup + [
-				'extension' => corriger_extension(strtolower($extension)),
+				'extension' => $extension,
 				'pathname' => $chemin,
 			]
 		];
+
+		// calcul d'une miniature
+		if ($vignette = self::creer_vignette($desc, 200, 200)) {
+			$desc['bigup']['vignette'] = $vignette;
+		}
 
 		return $desc;
 	}
@@ -305,5 +313,67 @@ class CacheFichiers {
 		return $description;
 	}
 
+	/**
+	 * Crée une vignette à partir d'un chemin et retourne un base64 de l'image générée.
+	 *
+	 * @param array|string $desc
+	 *     Description d'un fichier
+	 * @param int $width
+	 * @param int $height
+	 * @return array|false
+	 *     False si vignette non calculée, tableau avec clés : 'width', 'height', 'data'
+	 */
+	public static function creer_vignette($desc, $width, $height) {
+		// description de fichier bigup / files
+		if (
+			!is_array($desc)
+			or empty($desc['tmp_name'])
+			or empty($desc['type'])
+			or empty($desc['size'])
+		) {
+			return false;
+		}
 
+		$source = $desc['tmp_name'];
+		$type = $desc['type'];
+		$size = $desc['size'];
+
+		if (
+			strpos($type, 'image/') === 0
+			and $size <= 10 * 1024 * 1024 // 10Mo max.
+		) {
+			// enlever le charset éventuel et obtenir l'extension.
+			$_type = explode(';', substr($type, 6));
+			$extension = reset($_type);
+			if (in_array($extension, ['jpeg', 'png', 'gif'])) {
+				include_spip('inc/filtres');
+				include_spip('inc/filtres_images_mini');
+				// il faut l'extension dans le chemin pour les filtres d'images… pff
+				self::debug('Calcul d\'une vignette pour' . $source);
+				rename($source, $image = $source . '.' . $extension);
+				$img = image_reduire($image, $width, $height);
+				rename($image, $source);
+
+				if (!$img or $img == $image) {
+					return false;
+				}
+
+				$src = extraire_attribut($img, 'src');
+				$src = supprimer_timestamp($src);
+				$width = extraire_attribut($img, 'width');
+				$height = extraire_attribut($img, 'height');
+				lire_fichier($src, $vignette);
+				$vignette = 'data:image/' . $extension . ';base64,' . base64_encode($vignette);
+				supprimer_fichier($src);
+
+				return [
+					'width' => $width,
+					'height' => $height,
+					'data' => $vignette
+				];
+			}
+		}
+
+		return false;
+	}
 }
