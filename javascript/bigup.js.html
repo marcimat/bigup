@@ -643,10 +643,15 @@ Bigup.prototype = {
 		this.readURL(file.file, function() {
 			// source base64 de l'image dans this.result
 			if (this.result) {
+				var title =
+					file.emplacement.find('.infos .name').text()
+					+ ' (' + file.emplacement.find('.infos .size').text() + ')';
+
 				file.emplacement
 					.find('.vignette_extension')
 					.removeClass('vignette_extension')
 					.addClass('previsualisation')
+					.attr('title', title)
 					.find('> span')
 					.css('background-image', 'url(' + this.result + ')');
 			}

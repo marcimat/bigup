@@ -158,6 +158,7 @@
 #page #navigation .bigup_fichiers .previsualisation + .infos {
 	text-align:center;
 	flex-basis: 100%;
+	display:none;
 }
 
 

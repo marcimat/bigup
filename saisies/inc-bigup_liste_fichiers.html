@@ -12,7 +12,7 @@
 		<div class='fichier'>
 			<div class='description'>
 				[(#VALEUR{bigup/vignette/data}|oui)
-				<div class="previsualisation #VALEUR{bigup/extension}" title="[(#TYPE|attribut_html)]">
+				<div class="previsualisation #VALEUR{bigup/extension}" title="[(#NAME|attribut_html)] ([(#SIZE|taille_en_octets)])">
 					<span style="background-image:url([(#VALEUR{bigup/vignette/data})]);"></span>
 				</div>]
 				[(#VALEUR{bigup/vignette/data}|non)

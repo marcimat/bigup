@@ -41,7 +41,7 @@ function formulaires_tester_bigup_verifier_dist($id = 0) {
 	spip_log('> verifier tester_bigup', "bigup");
 
 	// ceux là sont obligatoires
-	foreach (['titre', 'texte'] as $obli) {
+	foreach (['titre'] as $obli) {
 		if (!_request($obli)) {
 			$erreurs[$obli] = _T('info_obligatoire');
 		}
