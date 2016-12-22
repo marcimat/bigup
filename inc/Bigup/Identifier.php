@@ -190,11 +190,27 @@ class Identifier {
 	/**
 	 * Calcule un identifiant de formulaire en fonction de ses arguments et du secret du site
 	 *
+	 * Lorsque le formulaire dispose d'une fonction 'identifier', on l'utilise,
+	 * sinon tout changement dans les arguments, tel que passer tout l'ENV en option,
+	 * ou la date du calcul créerait un nouvel identifiant à chaque affichage du formulaire.
+	 * Le cas par exemple se présente sur le formulaire editer_logos.
+	 *
+	 * Dans notre cas ce n'est pas ce que l'on veut.
+	 *
+	 * @see \formulaire__identifier()
+	 *
 	 * @return string l'identifiant
 	 **/
 	public function identifier_formulaire() {
 		include_spip('inc/securiser_action');
-		return $this->formulaire_identifiant = substr(md5(secret_du_site() . $this->formulaire_args), 0, 6);
+		if ($identifier_args = charger_fonction("identifier", "formulaires/" . $this->formulaire, true)) {
+			include_spip('inc/filtres');
+			$args = decoder_contexte_ajax($this->formulaire_args, $this->formulaire);
+			$identite = call_user_func_array($identifier_args, $args);
+		} else {
+			$identite = $this->formulaire_args;
+		}
+		return $this->formulaire_identifiant = substr(md5(secret_du_site() . $identite), 0, 6);
 	}
 
 	/**
