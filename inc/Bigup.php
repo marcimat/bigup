@@ -73,6 +73,7 @@ class Bigup {
 	 *      Identifant ou liste d'identifiant de fichiers que l'on souhaite
 	 *      uniquement réinsérer, le cas échéant.
 	 * @return array
+	 *      Liste des fichiers réinsérés
 	**/
 	public function reinserer_fichiers($uniquement = []) {
 
@@ -84,10 +85,12 @@ class Bigup {
 
 		$liste = $this->cache->final->trouver_fichiers();
 		foreach ($liste as $champ => $fichiers) {
-			foreach ($fichiers as $description) {
+			foreach ($fichiers as $i => $description) {
 				if (!$uniquement or in_array($description['bigup']['identifiant'], $uniquement)) {
 					unset($description['bigup']);
 					Files::integrer_fichier($champ, $description);
+				} else {
+					unset($liste[$champ][$i]);
 				}
 			}
 		}
