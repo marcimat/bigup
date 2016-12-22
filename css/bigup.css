@@ -157,6 +157,7 @@
 }
 #page #navigation .bigup_fichiers .previsualisation + .infos {
 	text-align:center;
+	flex-basis: 100%;
 }
 
 
@@ -167,9 +168,7 @@
 #page #navigation .dropfileor {
 	display:block;
 }
-#page #navigation .bigup_fichiers .fichier .infos {
-	clear:both;
-}
+
 
 
 /* Spécificités sur des formulaires */

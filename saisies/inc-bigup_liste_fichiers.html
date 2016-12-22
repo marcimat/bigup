@@ -11,7 +11,12 @@
 		<BOUCLE_fichiers(DATA){source tableau, #FICHIERS|bigup_array_filter}>
 		<div class='fichier'>
 			<div class='description'>
-				<div class="vignette_extension #VALEUR{bigup/extension}" title="[(#TYPE|attribut_html)]"><span></span></div>
+				[(#VALEUR{bigup/vignette/data}|oui)
+				<div class="previsualisation #VALEUR{bigup/extension}" title="[(#TYPE|attribut_html)]">
+					<span style="background-image:url([(#VALEUR{bigup/vignette/data})]);"></span>
+				</div>]
+				[(#VALEUR{bigup/vignette/data}|non)
+				<div class="vignette_extension #VALEUR{bigup/extension}" title="[(#TYPE|attribut_html)]"><span></span></div>]
 				<div class='infos'>
 					<span class='name'><strong>#NAME</strong></span>
 					<span class='size'>[(#SIZE|taille_en_octets)]</span>
