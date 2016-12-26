@@ -182,7 +182,8 @@ class CacheRepertoire {
 		}
 		$identifiants = array_filter($identifiants);
 		// appliquer la fonction de hash si ce qu'on reçoit n'en est pas un.
-		$identifiants = array_map(CacheFichiers::class . '::hash_identifiant', $identifiants);
+		$identifiants = array_map('Spip\\Bigup\\CacheFichiers::hash_identifiant', $identifiants); // PHP 5.4
+		#$identifiants = array_map(CacheFichiers::class . '::hash_identifiant', $identifiants);   // PHP >= 5.5
 
 		$this->debug("Demande de suppression de fichiers : " . implode(', ', $identifiants));
 		foreach ($liste as $champ => $fichiers) {
