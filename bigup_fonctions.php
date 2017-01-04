@@ -148,18 +148,25 @@ function calculer_balise_BIGUP_TOKEN($champ, $multiple, $form, $form_args) {
 	return $token;
 }
 
-
 /**
- * Passe un `array_filter` sur un tableau.
+ * Retrouve les fichiers correspondant à un name d'input donné, s'il y en a.
  *
- * Retourne un tableau vide si l'entrée reçue n'est pas un tableau
- *
- * @param array $tableau
+ * @param array $fichiers
+ * @param string $nom
+ *      Name utilisé, tel que 'oiseaux/bleus' ou 'oiseaux[bleus]'
+ * @param string $multiple
+ *      Si contenu, le champ est considéré multiple
  * @return array
  */
-function bigup_array_filter($tableau) {
-	if (!is_array($tableau)) {
+function bigup_lister_fichiers($fichiers, $nom, $multiple) {
+	if (!$fichiers or !$nom) {
 		return [];
 	}
-	return array_filter($tableau);
+	$nom = saisie_name2nom($nom);
+	if ($multiple) {
+		$liste = table_valeur($fichiers, $nom);
+	} else {
+		$liste = [ table_valeur($fichiers, $nom) ];
+	}
+	return is_array($liste) ? array_filter($liste) : [];
 }

@@ -39,8 +39,10 @@ function balise_SAISIE_FICHIER_dist($p) {
 	$titre       = Pile::recuperer_et_supprimer_argument_balise(1, $p); // $titre
 
 	// creer #ENV*{$titre} (* pour les cas de tableau serialises par exemple, que l'on veut reutiliser)
-	$env_titre   = Pile::creer_balise('ENV', array('param' => array($titre), 'etoile' => '*')); // #ENV*{titre}
+	$env_titre   = Pile::creer_balise('ENV', ['param' => [$titre], 'etoile' => '*']); // #ENV*{titre}
 
+	// créer #ENV{_bigup_fichiers}
+	$_bigup_fichiers = Pile::creer_et_ajouter_argument_balise(Pile::creer_balise('ENV'), '_bigup_fichiers');
 
 	// on modifie $p pour ajouter des arguments
 	// {nom=$titre, valeur=#ENV{$titre}, erreurs, type_saisie=$type, fond=saisies/_base}
@@ -48,6 +50,7 @@ function balise_SAISIE_FICHIER_dist($p) {
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'valeur', $env_titre);
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'form'); // ajouté par rapport à `#SAISIE`
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'formulaire_args'); // ajouté par rapport à `#SAISIE`
+	$p = Pile::creer_et_ajouter_argument_balise($p, 'fichiers', $_bigup_fichiers); // ajouté par rapport à `#SAISIE`
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'type_saisie', $type_saisie);
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'erreurs');
 	$p = Pile::creer_et_ajouter_argument_balise($p, 'fond', 'saisies/_base');

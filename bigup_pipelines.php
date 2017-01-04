@@ -82,7 +82,7 @@ function bigup_get_bigup($flux) {
  * et ajoute la description des fichiers présents pour chaque champ,
  * dans l'environnement.
  *
- * Ajoute également un hidden, qui s'il est posté, demandera à recréer $_FILES
+ * Ajoute également un hidden, qui s'il est posté, demandera à recréer `$_FILES`
  * juste avant la fonction verifier(). Voir `bigup_formulaire_receptionner()`
  *
  * @see bigup_formulaire_receptionner():
@@ -95,13 +95,12 @@ function bigup_formulaire_charger($flux) {
 		return $flux;
 	}
 
+	// s'il y a des fichiers pour ce formulaire / visiteur, on ajoute la liste à l'environnement.
 	$bigup = bigup_get_bigup($flux);
 	if ($fichiers = $bigup->retrouver_fichiers()) {
+		$flux['data']['_bigup_fichiers'] = [];
 		foreach ($fichiers as $racine => $listes) {
-			// fonctionne au premier chargement, mais pas après avoir validé le formulaire
-			$flux['data'][$racine] = $fichiers[$racine];
-			// car SPIP prend la valeur dans le request. Du coup, on les met aussi dans le request.
-			set_request($racine, $fichiers[$racine]);
+			$flux['data']['_bigup_fichiers'][$racine] = $fichiers[$racine];
 		}
 	}
 
