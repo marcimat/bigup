@@ -30,7 +30,8 @@
 	<pipeline nom="formulaire_verifier" inclure="bigup_pipelines.php" />
 	<pipeline nom="formulaire_traiter" inclure="bigup_pipelines.php" />
 
-	<necessite nom="saisies"  compatibilite="[2.14.4;]" />
+	<necessite nom="saisies" compatibilite="[2.14.4;]" />
+	<necessite nom="php" compatibilite="[5.4.0;[" />
 
 	<genie nom="nettoyer_repertoire_upload" periode="86400" />
 
