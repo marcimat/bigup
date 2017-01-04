@@ -17,7 +17,7 @@ leur suppression).
 
 ### Amélioration javascript
 
-Par dessus tout cela s'ajoute une couche javascript qui permet de téléverser
+Par dessus cela s'ajoute une couche javascript qui permet de téléverser
 des fichiers de manière asynchrone d'une part, et volumineux d'autre part.
 
 Dès qu'un fichier est déposé sur la zone prévue, le téléversement commence,
@@ -60,7 +60,7 @@ dès qu'ils sont ajoutés. Le token de l'input, qui est envoyé
 
 La balise `#SAISIE_FICHIER` est une extension à la balise `#SAISIE`
 qui ajoute automatiquement les valeurs *form* et *formulaire_args*
-nécessaires au calcul de la balise `#BIGUP_TOKEN`
+nécessaires au calcul de la balise `#BIGUP_TOKEN`, ainsi que la liste des *fichiers* présents.
 
 Le plugin dispose d'une saisie `bigup` à laquelle on peut passer
 un certain nombre d'options, notamment `accept` et `multiple`
