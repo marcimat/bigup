@@ -22,8 +22,10 @@ include_spip('balise/saisie');
  * Identique à peu de choses près à la balise `#SAISIE`
  * - ajoute `form = #ENV{form}`
  * - ajoute `formulaire_args = #ENV{formulaire_args}`
+ * - ajoute `fichiers = #ENV{_bigup_fichiers}`
  *
- * Ces 2 infos sont utiles à la balise `#BIGUP_TOKEN`
+ * Ces 2 premières infos sont utiles à la balise `#BIGUP_TOKEN`
+ * La liste des fichiers, elle, permet… à la saisie de lister les fichiers déjà présents.
  *
  * @syntaxe `#SAISIE_FICHIER{type,nom[,option=xx,...]}`
  *

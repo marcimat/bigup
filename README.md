@@ -40,7 +40,7 @@ Pour les détails, lire : [le fonctionnement technique](https://gitlab.com/magra
 
 ### Résumé
 
-Au chargement d'un formulaire CVT, si la clé `_rechercher_uploads` 
+Au chargement d'un formulaire CVT, si la clé `_bigup_rechercher_fichiers` 
 est présente, le plugin Bigup se chargera de retrouver les fichiers
 déjà chargés pour ce formulaire et d'ajouter leur liste, pour chaque
 champ concerné du formulaire, dans l'environnement.

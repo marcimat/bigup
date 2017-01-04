@@ -26,7 +26,7 @@ function formulaires_tester_bigup_charger_dist($id = 0) {
 	];
 
 	// demander la gestion de fichiers d'upload
-	$valeurs['_rechercher_uploads'] = true;
+	$valeurs['_bigup_rechercher_fichiers'] = true;
 
 	spip_log("> charger tester_bigup", "bigup");
 

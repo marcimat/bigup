@@ -74,7 +74,7 @@ function bigup_get_bigup($flux) {
  * Recherche de fichiers uploadés pour ce formulaire
  *
  * La recherche est conditionné par la présence dans le contexte
- * de la clé `_rechercher_uploads`. Ceci permet d'éviter de chercher
+ * de la clé `_bigup_rechercher_fichiers`. Ceci permet d'éviter de chercher
  * des fichiers pour les formulaires qui n'en ont pas besoin.
  *
  * Réinsère les fichiers déjà présents pour ce formulaire
@@ -91,7 +91,7 @@ function bigup_get_bigup($flux) {
 **/
 function bigup_formulaire_charger($flux) {
 
-	if (empty($flux['data']['_rechercher_uploads'])) {
+	if (empty($flux['data']['_bigup_rechercher_fichiers'])) {
 		return $flux;
 	}
 
@@ -204,7 +204,7 @@ function bigup_formulaire_traiter($flux) {
  **/
 function bigup_medias_formulaire_charger($flux) {
 	if (in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])) {
-		$flux['data']['_rechercher_uploads'] = true;
+		$flux['data']['_bigup_rechercher_fichiers'] = true;
 	}
 	return $flux;
 }
@@ -220,7 +220,7 @@ function bigup_medias_formulaire_charger($flux) {
  **/
 function bigup_medias_formulaire_fond($flux) {
 	if (
-		!empty($flux['args']['contexte']['_rechercher_uploads'])
+		!empty($flux['args']['contexte']['_bigup_rechercher_fichiers'])
 		and in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])
 	) {
 		$bigup = bigup_get_bigup(['args' => $flux['args']['contexte']]);
