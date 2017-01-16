@@ -128,7 +128,7 @@ d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 
 ### JS
 
-- Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
+- Chaînes de langue pour les erreurs
   
 
 ### PHP
