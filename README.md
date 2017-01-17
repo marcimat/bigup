@@ -128,8 +128,6 @@ d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 
 ### JS
 
-- Chaînes de langue pour les erreurs
-  
 
 ### PHP
 

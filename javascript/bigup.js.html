@@ -121,6 +121,13 @@ function Bigup(params, opts, callbacks) {
 	this.class_name = this.nom2classe(this.name);
 	this.multiple  = this.input.prop('multiple');
 
+	this.textes = {
+		erreur_de_transfert: "<:bigup:erreur_de_transfert|attribut_html:>",
+		erreur_taille_max: "<:bigup:erreur_taille_max|attribut_html:>",
+		erreur_type_fichier: "<:bigup:erreur_type_fichier|attribut_html:>",
+		erreur_probleme_survenu: "<:bigup:probleme_survenu|attribut_html:>"
+	};
+
 	this.zones = {
 		depot: null,
 		fichiers: null
@@ -224,6 +231,28 @@ function Bigup(params, opts, callbacks) {
 }
 
 Bigup.prototype = {
+
+	/**
+	 * Traduction d'un code de langue
+	 */
+	_T: function(code, couples) {
+		var texte = this.textes[code];
+		console.log(code, texte, this.textes);
+		if (!texte) { return ''; }
+		$.each(couples, function(cle, val) {
+			texte = texte.replace('@' + cle + '@', val);
+		});
+		return texte;
+	},
+
+	/**
+	 * retourne le texte singulier si nb vaut 1, sinon le texte pluriel.
+	 */
+	singulier_ou_pluriel: function(nb, texte_singulier, texte_pluriel) {
+		nb == 1
+			? this._T(texte_singulier)
+			: this._T(texte_pluriel, {nb: nb});
+	},
 
 	/**
 	 * Enlève une ancre d'une URL
@@ -368,7 +397,7 @@ Bigup.prototype = {
 		this.flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
 			me.progress.retirer(file.emplacement.find("progress"));
-			me.presenter_erreur(file.emplacement, "Erreur de transfert !"); // Todo: traduction
+			me.presenter_erreur(file.emplacement, me._T('erreur_de_transfert'));
 		});
 	},
 
@@ -455,14 +484,14 @@ Bigup.prototype = {
 		if (this.opts.contraintes.maxFileSize) {
 			var taille = this.opts.contraintes.maxFileSize * 1024 * 1024;
 			if (file.size > taille) {
-				file.erreur = "Le fichier ne doit pas dépasser " + $.taille_en_octets(taille); // Todo: traductions
+				file.erreur = this._T('erreur_taille_max', {taille: $.taille_en_octets(taille)});
 				return false;
 			}
 		}
 		if (this.opts.contraintes.accept) {
 			var accept = this.opts.contraintes.accept;
 			if (accept && !this.valider_fichier(file.file, accept)) {
-				file.erreur = "Type de fichier incorrect !"; // TODO: traductions
+				file.erreur = this._T('erreur_type_fichier');
 				return false;
 			}
 		}
@@ -571,7 +600,7 @@ Bigup.prototype = {
 			});
 		})
 		.fail(function() {
-			me.presenter_erreur(emplacement, "Un problème est survenu…"); // [TODO] Traduction
+			me.presenter_erreur(emplacement, me._T('erreur_probleme_survenu'));
 		});
 	},
 

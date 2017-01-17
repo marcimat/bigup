@@ -20,6 +20,12 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'deposer_vos_fichiers_ici' => 'Déposer vos fichiers ici',
 	'deposer_votre_fichier_ici' => 'Déposer votre fichier ici',
 
+	// E
+	'erreur_de_transfert' => 'Erreur de transfert.',
+	'erreur_taille_max' => 'Le fichier ne doit pas dépasser @taille@',
+	'erreur_type_fichier' => 'Type de fichier incorrect !',
+	'erreur_probleme_survenu' => 'Un problème est survenu…',
+
 	// O
 	'ou' => 'ou', 
 
