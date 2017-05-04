@@ -135,7 +135,7 @@ d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 - Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
 - Pouvoir restreindre par mime type 
 - Pouvoir restreindre par extension
-- Après le traitement, supprimer les fichiers non utilisés du formulaire.
+
 
 ### Autre
 
