@@ -366,7 +366,7 @@ Bigup.prototype = {
 		// Retirer la barre de progression
 		this.flow.on('fileSuccess', function(file, message, chunk){
 			// console.info("success", file, message, chunk);
-			var desc = $.parseJSON(message);
+			var desc = JSON.parse(message);
 			// enlever le bouton annuler
 			file.emplacement.find(".cancel").fadeOut("normal", function(){
 				$(this).remove();
