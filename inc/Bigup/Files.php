@@ -155,10 +155,12 @@ class Files {
 						$me = &$me[$i];
 					}
 				}
+
 				if (strlen($dernier)) {
 					$me[$dernier] = $valeur;
 				} else {
 					$me[] = $valeur;
+					$me = array_values($me);
 				}
 			}
 		}
@@ -277,6 +279,7 @@ class Files {
 				}
 			}
 		}
+
 		return $liste;
 	}
 
