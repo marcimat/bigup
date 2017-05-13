@@ -19,7 +19,6 @@
 
 	<licence>GNU/GPL</licence>
 
-	<pipeline nom="autoriser"  inclure="bigup_autorisations.php" />
 	<pipeline nom="header_prive" inclure="bigup_pipelines.php" />
 	<pipeline nom="insert_head_css" inclure="bigup_pipelines.php" />
 	<pipeline nom="jquery_plugins" inclure="bigup_pipelines.php" />
