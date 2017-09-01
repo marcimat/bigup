@@ -274,7 +274,7 @@ class Flow {
 		);
 		$chunkFiles = array_filter($chunkFiles);
 
-		sort($chunkFiles);
+		natsort($chunkFiles);
 
 		return $chunkFiles;
 	}
