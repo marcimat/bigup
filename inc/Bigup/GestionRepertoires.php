@@ -35,6 +35,7 @@ class GestionRepertoires {
 	 */
 	public static function nommer_repertoire($nom) {
 		// éviter les accents
+		include_spip('inc/charsets');
 		$nom = translitteration($nom);
 		// éviter les balises
 		$nom = preg_replace("/<[^>]*>/", '', $nom);
