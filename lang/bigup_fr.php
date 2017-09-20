@@ -11,7 +11,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 
 	// C
 	'cfg_charger_public' => 'Script dans l’espace public',
-	'cfg_charger_public_case' => 'Charger les scripts sur dans l’espace public',
+	'cfg_charger_public_case' => 'Charger les scripts dans l’espace public',
 	'cfg_max_file_size' => 'Taille maximum des fichiers',
 	'cfg_max_file_size_explication' => 'Taille maximum des fichiers (en Mb).',
 	'cfg_titre_parametrages' => 'Paramétrages de Big Upload',
