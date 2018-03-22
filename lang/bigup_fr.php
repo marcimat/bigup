@@ -7,6 +7,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 
 	// B
 	'bigup_titre' => 'Big Upload',
+	'bouton_annuler' => 'Annuler',
 	'bouton_enlever' => 'Enlever',
 
 	// C
@@ -27,7 +28,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'erreur_probleme_survenu' => 'Un problème est survenu…',
 
 	// O
-	'ou' => 'ou', 
+	'ou' => 'ou',
 
 	// T
 	'televerser' => 'Téléverser',

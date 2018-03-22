@@ -1,16 +1,3 @@
-#HTTP_HEADER{Content-Type: text/javascript}
-[(#REM)<script>]
-
-jQuery(function($){
-	var formulaires_avec_bigup = function() {
-		// trouver les input qui envoient des fichiers
-		$(".formulaire_spip form input[type=file].bigup").bigup();
-	}
-	formulaires_avec_bigup();
-	onAjaxLoad(formulaires_avec_bigup);
-});
-
-
 /**
  * Pour un input de type file sélectionné,
  * gère l'upload du ou des fichiers, via html5 et flow.js
@@ -54,9 +41,9 @@ $.fn.bigup = function(options, callbacks) {
 		}
 
 		// config globale de bigup.
-		var conf = {
-			maxFileSize: [(#CONFIG{bigup/max_file_size, 0})]
-		}
+		var conf = $.extend(true, {
+			maxFileSize: 0
+		}, $.bigup_config || {});
 
 		var bigup = new Bigup(
 			{
@@ -64,7 +51,7 @@ $.fn.bigup = function(options, callbacks) {
 				input: $input,
 				formulaire_action: $form.find('input[name=formulaire_action]').val(),
 				formulaire_action_args: $form.find('input[name=formulaire_action_args]').val(),
-				token: $input.data('token'),
+				token: $input.data('token')
 			},
 			{
 				contraintes: {
@@ -93,6 +80,8 @@ $.fn.bigup = function(options, callbacks) {
  * Bigup gère les fichiers des input concernés (avec Flow.js)
  * et leur communication avec SPIP
  *
+ * Nécessite un accès à Trads.
+ *
  * @param [params]
  * @param {jquery} [params.form]
  * @param {jquery} [params.input]
@@ -116,17 +105,13 @@ function Bigup(params, opts, callbacks) {
 	this.formulaire_action_args = params.formulaire_action_args;
 	this.token = params.token;
 
-	this.target = this.enlever_ancre(this.form.attr('action'));
+	this.target = $.enlever_ancre(this.form.attr('action'));
 	this.name = this.input.attr('name');
-	this.class_name = this.nom2classe(this.name);
+	this.class_name = $.nom2classe(this.name);
 	this.multiple  = this.input.prop('multiple');
 
-	this.textes = {
-		erreur_de_transfert: "<:bigup:erreur_de_transfert|attribut_html:>",
-		erreur_taille_max: "<:bigup:erreur_taille_max|attribut_html:>",
-		erreur_type_fichier: "<:bigup:erreur_type_fichier|attribut_html:>",
-		erreur_probleme_survenu: "<:bigup:probleme_survenu|attribut_html:>"
-	};
+	// a améliorer...
+	this.textes = params.trads;
 
 	this.zones = {
 		depot: null,
@@ -142,8 +127,8 @@ function Bigup(params, opts, callbacks) {
 		options: {
 			// previsualisation des images
 			previsualisation: {
-				activer: this.input.data("previsualiser") ? true : false,
-				fileSizeMax: 10, // 10 Mb
+				activer: !!this.input.data("previsualiser"),
+				fileSizeMax: 10 // 10 Mb
 			}
 		},
 		templates: {
@@ -152,12 +137,13 @@ function Bigup(params, opts, callbacks) {
 				depot: function (name, multiple) {
 					var template =
 						'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
-						+ '\n\t<span class="dropfilebutton bigup-btn btn btn-default"><:bigup:televerser|texte_script:></span>'
-						+ '\n\t<span class="dropfileor"><:bigup:ou|texte_script:></span>'
+						+ '\n\t<span class="dropfilebutton bigup-btn btn btn-default">'
+						+ _T('bigup:televerser')
+						+ '</span>'
+						+ '\n\t<span class="dropfileor">' + _T('bigup:ou') + '</span>'
 						+ '\n\t<span class="dropfiletext">'
-						+ '\n\t\t' + (multiple
-							? '<:bigup:deposer_vos_fichiers_ici|texte_script:>'
-							: '<:bigup:deposer_votre_fichier_ici|texte_script:>' )
+						+ '\n\t\t'
+						+ Trads.singulier_ou_pluriel(!multiple, 'bigup:deposer_votre_fichier_ici', 'bigup:deposer_vos_fichiers_ici')
 						+ '\n\t</:span:>'
 						+ '\n</div>\n';
 					return template;
@@ -172,7 +158,6 @@ function Bigup(params, opts, callbacks) {
 			fichier: function(file) {
 				// retouver l'extension
 				var extension = $.trouver_extension(file.name);
-				var t_annuler = "<:bouton_annuler|texte_script:>";
 
 				var template =
 					'\n<div class="fichier">'
@@ -183,7 +168,7 @@ function Bigup(params, opts, callbacks) {
 					+ '\n\t\t\t<span class="size">' + $.taille_en_octets(file.size) + '</span>'
 					+ '\n\t\t</div>'
 					+ '\n\t\t<div class="actions">'
-					+ '\n\t\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_enlever_fichier(this); return false;">' + t_annuler + '</span>'
+					+ '\n\t\t\t<span class="bigup-btn btn btn-default cancel" onClick="$.bigup_enlever_fichier(this); return false;">' + _T("bigup:bouton_annuler") + '</span>'
 					+ '\n\t\t</div>'
 					+ '\n\t</div>'
 					+ '\n</div>\n';
@@ -233,51 +218,6 @@ function Bigup(params, opts, callbacks) {
 Bigup.prototype = {
 
 	/**
-	 * Traduction d'un code de langue
-	 */
-	_T: function(code, couples) {
-		var texte = this.textes[code];
-		console.log(code, texte, this.textes);
-		if (!texte) { return ''; }
-		$.each(couples, function(cle, val) {
-			texte = texte.replace('@' + cle + '@', val);
-		});
-		return texte;
-	},
-
-	/**
-	 * retourne le texte singulier si nb vaut 1, sinon le texte pluriel.
-	 */
-	singulier_ou_pluriel: function(nb, texte_singulier, texte_pluriel) {
-		nb == 1
-			? this._T(texte_singulier)
-			: this._T(texte_pluriel, {nb: nb});
-	},
-
-	/**
-	 * Enlève une ancre d'une URL
-	 * @param string $url
-	 */
-	enlever_ancre: function(url) {
-		p = url.indexOf('#');
-		if (p!=-1) {
-			ancre = url.substring(p);
-			url = url.substring(0,p);
-		}
-		return url;
-	},
-
-	/**
-	 * Transforme un name en classe
-	 * @see saisie_nom2classe() en PHP.
-	 * @param string name
-	 * @return string
-	 */
-	nom2classe: function(nom) {
-		return nom.replace(/\/|\\[|&#91/g, '_').replace(/\]|&#93/g, '');
-	},
-
-	/**
 	 * Redéfinir des options
 	 * @param object options Options à modifier
 	 */
@@ -318,9 +258,10 @@ Bigup.prototype = {
 	 * @param string fichien DOM de l'emplacement de présentation du fichier
 	 */
 	ajouter_bouton_enlever: function(fichier) {
-		var t_enlever = "<:bigup:bouton_enlever|texte_script:>";
 		var js = "$.bigup_enlever_fichier(this); return true;";
-		var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">' + t_enlever + '</span>';
+		var inserer = '<span class="bigup-btn btn btn-default" onClick="' + js + '">'
+			+ _T('bigup:bouton_enlever')
+			+ '</span>';
 		$(fichier).find('.actions').append(inserer);
 		return this;
 	},
@@ -397,7 +338,7 @@ Bigup.prototype = {
 		this.flow.on('fileError', function(file, message, chunk){
 			console.warn("error", file, message, chunk);
 			me.progress.retirer(file.emplacement.find("progress"));
-			me.presenter_erreur(file.emplacement, me._T('erreur_de_transfert'));
+			me.presenter_erreur(file.emplacement, _T('bigup:erreur_de_transfert'));
 		});
 	},
 
@@ -484,14 +425,14 @@ Bigup.prototype = {
 		if (this.opts.contraintes.maxFileSize) {
 			var taille = this.opts.contraintes.maxFileSize * 1024 * 1024;
 			if (file.size > taille) {
-				file.erreur = this._T('erreur_taille_max', {taille: $.taille_en_octets(taille)});
+				file.erreur = _T('bigup:erreur_taille_max', {taille: $.taille_en_octets(taille)});
 				return false;
 			}
 		}
 		if (this.opts.contraintes.accept) {
 			var accept = this.opts.contraintes.accept;
 			if (accept && !this.valider_fichier(file.file, accept)) {
-				file.erreur = this._T('erreur_type_fichier');
+				file.erreur = _T('bigup:erreur_type_fichier');
 				return false;
 			}
 		}
@@ -600,7 +541,7 @@ Bigup.prototype = {
 			});
 		})
 		.fail(function() {
-			me.presenter_erreur(emplacement, me._T('erreur_probleme_survenu'));
+			me.presenter_erreur(emplacement, _T('bigup:erreur_probleme_survenu'));
 		});
 	},
 
@@ -818,57 +759,3 @@ $.bigup_enlever_fichier = function(me) {
 };
 
 
-/**
- * Retrouve (et corrige) une extension dans un nom de fichier
- * @param string name Nom d'un fichier
- * @return string Extension du fichier
- */
-$.trouver_extension = function(name) {
-	// retouver l'extension
-	var re = /(?:\.([^.]+))?$/;
-	var extension = re.exec(name)[1];
-	extension = extension.toLowerCase();
-
-	// cf corriger_extension() dans plugin medias.
-	switch (extension) {
-		case 'htm':
-			extension='html';
-			break;
-		case 'jpeg':
-			extension='jpg';
-			break;
-		case 'tiff':
-			extension='tif';
-			break;
-		case 'aif':
-			extension='aiff';
-			break;
-		case 'mpeg':
-			extension='mpg';
-			break;
-	}
-	return extension;
-};
-
-
-/**
- * Calcule une taille en octets humainement lisible
- * @param int taille Taille en octets
- * @return string
- */
-$.taille_en_octets = function(taille) {
-	var ko = 1024;
-	var t_octets = "<:taille_octets|texte_script:>";
-	var t_ko     = "<:taille_ko|texte_script:>";
-	var t_mo     = "<:taille_mo|texte_script:>";
-	var t_go     = "<:taille_go|texte_script:>";
-	if (taille < ko) {
-		return t_octets.replace('@taille@', taille);
-	} else if (taille < ko * ko) {
-		return t_ko.replace('@taille@', Math.round(taille/ko * 10) / 10);
-	} else if (taille < ko * ko * ko) {
-		return t_mo.replace('@taille@', Math.round(taille/ko/ko * 10) / 10);
-	} else {
-		return t_go.replace('@taille@', Math.round(taille/ko/ko/ko * 10) / 10);
-	}
-};

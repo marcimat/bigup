@@ -20,23 +20,60 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
 **/
 function bigup_jquery_plugins($scripts) {
 	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
+		$scripts[] = 'javascript/bigup.utils.js';
+		$scripts[] = produire_fond_statique('javascript/bigup.trads.js', array(
+			'lang' => $GLOBALS['spip_lang'],
+		));
 		$scripts[] = 'lib/flow/flow.js';
-		$scripts[] = produire_fond_statique('javascript/bigup.js');
+		$scripts[] = 'javascript/bigup.js';
+		$scripts[] = 'javascript/bigup.loader.js';
 	}
 	return $scripts;
 }
 
 /**
- * Charger des styles CSS
+ * Charger des JS dans l’espace public
+ *
+ * @pipeline insert_head_css
+ * @param string $flux Code html des styles CSS à charger
+ * @return string Code html complété
+ **/
+function bigup_insert_head($flux) {
+	if (lire_config('bigup/charger_public', false)) {
+		$flux = bigup_header_prive($flux);
+	}
+	return $flux;
+}
+
+/**
+ * Charger des JS dans l’espace prive
+ *
+ * @pipeline insert_head_css
+ * @param string $flux Code html des styles CSS à charger
+ * @return string Code html complété
+ **/
+function bigup_header_prive($flux) {
+	$maxFileSize = intval(lire_config('bigup/max_file_size', 0));
+	$flux .= <<<EOS
+<script type='text/javascript'>
+jQuery.bigup_config = {
+	maxFileSize: $maxFileSize
+}
+</script>
+EOS;
+	return $flux;
+}
+
+/**
+ * Charger des styles CSS dans l’espace public
  *
  * @pipeline insert_head_css
  * @param string $flux Code html des styles CSS à charger
  * @return string Code html complété
 **/
 function bigup_insert_head_css($flux) {
-	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
-		$flux .= '<link rel="stylesheet" href="' . produire_fond_statique('css/vignettes.css') . '" type="text/css" />' . "\n";
-		$flux .= '<link rel="stylesheet" href="' . timestamp(find_in_path('css/bigup.css')) . '" type="text/css" />' . "\n";
+	if (lire_config('bigup/charger_public', false)) {
+		$flux = bigup_header_prive_css($flux);
 	}
 	return $flux;
 }
@@ -48,7 +85,7 @@ function bigup_insert_head_css($flux) {
  * @param string $flux Code html des styles CSS à charger
  * @return string Code html complété
 **/
-function bigup_header_prive($flux) {
+function bigup_header_prive_css($flux) {
 	$flux .= '<link rel="stylesheet" href="' . produire_fond_statique('css/vignettes.css') . '" type="text/css" />' . "\n";
 	$flux .= '<link rel="stylesheet" href="' . timestamp(find_in_path('css/bigup.css')) . '" type="text/css" />' . "\n";
 	return $flux;
