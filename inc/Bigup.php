@@ -130,8 +130,7 @@ class Bigup {
 	 * qui le demandait. En tout cas c'est comme cela que fait Formidable
 	 * avec les fichiers qu'il reçoit qui ne lui conviennent pas.
 	 *
-	 * @param array $liste
-	 *     Liste de descriptions de fichiers
+	 * @return bool
 	 */
 	public function verifier_fichiers_surveilles() {
 		$surveiller = _request('bigup_surveiller_fichiers');

@@ -73,7 +73,7 @@ class Repondre {
 
 	/**
 	 * Constructeur depuis les paramètres dans l'environnement posté.
-	 * @return Receptionner
+	 * @return Repondre
 	 */
 	public static function depuisRequest() {
 		$repondre = new self(Identifier::depuisRequest());
