@@ -110,9 +110,6 @@ function Bigup(params, opts, callbacks) {
 	this.class_name = $.nom2classe(this.name);
 	this.multiple  = this.input.prop('multiple');
 
-	// a améliorer...
-	this.textes = params.trads;
-
 	this.zones = {
 		depot: null,
 		fichiers: null
