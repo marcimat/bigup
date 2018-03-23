@@ -128,14 +128,15 @@ d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 
 ### JS
 
+- Miniature des petites images au chargement
+- Compatibilité plugin roles_documents 
+- Compatibilité plugin roles_logos
+- Méthode pour simplifier l’auto-submit des formulaires simples ?
 
 ### PHP
 
-- Gérer un affichage d'erreur
-- Ne pas pouvoir envoyer des fichiers plus gros que la taille maxi
 - Pouvoir restreindre par mime type 
 - Pouvoir restreindre par extension
-
 
 ### Autre
 
