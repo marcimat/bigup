@@ -55,10 +55,10 @@ function formulaires_tester_bigup_verifier_dist($id = 0) {
 function formulaires_tester_bigup_traiter_dist($id = 0) {
 	spip_log('> traiter tester_bigup', "bigup");
 
-	$retours = array(
+	$retours = [
 		'message_ok' => "Formulaire pris en compte",
 		'editable' => true,
-	);
+	];
 
 	return $retours;
 }

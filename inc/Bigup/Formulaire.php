@@ -169,10 +169,10 @@ class Formulaire
 				if ($liste_fichiers) {
 					$fichiers = recuperer_fond(
 						'saisies/inc-bigup_liste_fichiers',
-						array(
+						[
 							'nom' => $champ,
-							'fichiers' => ($multiple ? $liste_fichiers : array($liste_fichiers))
-						)
+							'fichiers' => ($multiple ? $liste_fichiers : [$liste_fichiers])
+						]
 					);
 				}
 

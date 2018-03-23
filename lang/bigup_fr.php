@@ -27,6 +27,9 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'erreur_type_fichier' => 'Type de fichier incorrect !',
 	'erreur_probleme_survenu' => 'Un problème est survenu…',
 
+	// F
+	'fichier_efface' => 'Fichier effacé',
+
 	// O
 	'ou' => 'ou',
 

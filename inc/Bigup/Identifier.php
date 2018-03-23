@@ -56,10 +56,15 @@ class Identifier {
 	 * Expiration du token (en secondes)
 	 *
 	 * @todo À définir en configuration
-	 * @var int
+	 * @var int En secondes
 	 **/
 	private $token_expiration = 86400;
 
+	/**
+	 * Taille du fichier maximum
+	 * @var int En Mo
+	 */
+	private $max_size_file = 0;
 
 	/**
 	 * Constructeur
@@ -80,6 +85,7 @@ class Identifier {
 		if ($token) {
 			$this->obtenir_champ_token();
 		}
+		$this->recuperer_configuration();
 	}
 
 	/**
@@ -122,6 +128,7 @@ class Identifier {
 	/**
 	 * Pouvoir obtenir les propriétés privées sans les modifier.
 	 * @param string $property
+	 * @return mixed|null
 	 */
 	public function __get($property) {
 		if (property_exists($this, $property)) {
@@ -134,12 +141,21 @@ class Identifier {
 	/**
 	 * Pouvoir obtenir les propriétés privées sans les modifier.
 	 * @param string $property
+	 * @return bool
 	 */
 	public function __isset($property) {
 		if (property_exists($this, $property)) {
 			return isset($this->$property);
 		}
 		return false;
+	}
+
+	/**
+	 * Définit certaines configurations
+	 */
+	public function recuperer_configuration() {
+		#$this->token_expiration = 86800; // TODO
+		$this->max_size_file = lire_config('bigup/max_size_file', 0);
 	}
 
 	/**

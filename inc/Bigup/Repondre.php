@@ -135,6 +135,7 @@ class Repondre {
 	public function repondre_flow() {
 
 		$flow = new Flow($this->cache);
+		$flow->setMaxSizeFile($this->identifier->max_size_file);
 		$res = $flow->run();
 
 		// le fichier est complet
@@ -149,11 +150,7 @@ class Repondre {
 			$this->send(200, $desc);
 		}
 
-		if (is_int($res)) {
-			$this->send($res);
-		}
-
-		$this->send(415);
+		$this->send($res->code, $res->data);
 	}
 
 	/**

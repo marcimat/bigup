@@ -78,7 +78,7 @@ class GestionRepertoires {
 		$dest = rtrim($dest, "/");
 		$final = basename($dest);
 		$base = dirname($dest);
-		$create = array();
+		$create = [];
 
 		// on cree tout le chemin jusqu'a dest non inclus
 		while (!is_dir($base)) {

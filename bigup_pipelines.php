@@ -21,9 +21,9 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
 function bigup_jquery_plugins($scripts) {
 	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
 		$scripts[] = 'javascript/bigup.utils.js';
-		$scripts[] = produire_fond_statique('javascript/bigup.trads.js', array(
+		$scripts[] = produire_fond_statique('javascript/bigup.trads.js', [
 			'lang' => $GLOBALS['spip_lang'],
-		));
+		]);
 		$scripts[] = 'lib/flow/flow.js';
 		$scripts[] = 'javascript/bigup.js';
 		$scripts[] = 'javascript/bigup.loader.js';
@@ -190,7 +190,7 @@ function bigup_formulaire_verifier($flux) {
 				// on n'affiche pas les autres erreurs
 				$flux['data'] = [];
 				$flux['data']['message_erreur'] = '';
-				$flux['data']['message_ok'] = 'Fichier effacé';
+				$flux['data']['message_ok'] = _T('bigup:fichier_efface');
 				$flux['data']['_erreur'] = true;
 			}
 		} else {

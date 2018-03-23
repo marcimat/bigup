@@ -195,7 +195,7 @@ class Bigup {
 				$dernier = array_pop($arborescence);
 				foreach ($arborescence as $a) {
 					if (!array_key_exists($a, $me)) {
-						$me[$a] = array();
+						$me[$a] = [];
 					}
 					$me = &$me[$a];
 				}

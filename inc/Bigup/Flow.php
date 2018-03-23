@@ -22,6 +22,19 @@ namespace Spip\Bigup;
 include_spip('inc/Bigup/LogTrait');
 
 /**
+ * Retours de la classe Flow
+ * Indique le code de réponse http, et d’éventuelles données.
+ */
+class FlowResponse {
+	public $code = 415;
+	public $data = null;
+	public function __construct($code, $data = null) {
+		$this->code = $code;
+		$this->data = $data;
+	}
+}
+
+/**
  * Réceptionne des morceaux de fichiers envoyés par flow.js
 **/
 class Flow {
@@ -39,12 +52,25 @@ class Flow {
 	 * @var string */
 	private $prefixe = 'flow';
 
+	/**
+	 * Taille de fichier maximum
+	 */
+	private $maxSizeFile = 0;
 
 	/**
 	 * Constructeur
+	 * @param Cache $cache
 	**/
 	public function __construct(Cache $cache) {
 		$this->cache = $cache;
+	}
+
+	/**
+	 * Définir la taille maximale des fichiers
+	 * @param int $size En Mo
+	 */
+	public function setMaxSizeFile($size) {
+		$this->maxSizeFile = intval($size);
 	}
 
 	/**
@@ -79,22 +105,23 @@ class Flow {
 	 * - Le JS demande si un morceau de fichier est déjà présent (par la méthode GET)
 	 * - Le JS poste une partie d'un fichier (par la méthode POST)
 	 *
-	 * Le script quittera tout seul si l'un ou l'autre des cas se présente,
-	 * sauf si on vient de poster le dernier morceau d'un fichier.
+	 * Le script retourne
+	 * - le chemin du fichier complet si c’est le dernier morceau envoyé,
+	 * - sinon un [code http, data] à envoyer
 	 * 
-	 * @return false|null|string
+	 * @return FlowResponse|string
+	 *     - string : chemin du fichier terminé d’uploadé
 	**/
 	public function run() {
 		if (!$this->trouverPrefixe()) {
-			return false;
+			return $this->response(415);
 		}
 		if (!empty($_POST) and !empty($_FILES) ) {
 			return $this->handleChunk();
-		}
-		elseif (!empty($_GET)) {
+		} elseif (!empty($_GET)) {
 			return $this->handleTestChunk();
 		}
-		return false;
+		return $this->response(415);
 	}
 
 
@@ -109,21 +136,33 @@ class Flow {
 	}
 
 	/**
-	 * Envoie le code header indiqué… et arrête tout.
+	 * Retours à faire partir au navigateur
 	 *
 	 * @param int $code
 	 * @param array|null $data
-	 * @return void
+	 * @return FlowResponse
 	**/
-	public function send($code, $data = null) {
-		Repondre::send($code, $data);
-		exit;
+	public function response($code, $data = null) {
+		return new FlowResponse($code, $data);
+	}
+
+	/**
+	 * Retours avec texte d’erreur à faire au navigateur
+	 *
+	 * @param string $message
+	 * @param int $code
+	 * @return FlowResponse
+	 **/
+	public function responseError($message, $code = 415) {
+		return $this->response($code, [
+			'error' => $message
+		]);
 	}
 
 	/**
 	 * Teste si le morceau de fichier indiqué est déjà sur le serveur
 	 *
-	 * @return void
+	 * @return FlowResponse
 	**/
 	public function handleTestChunk() {
 		$identifier  = $this->_request('identifier');
@@ -133,19 +172,17 @@ class Flow {
 		$this->info("Test chunk $identifier n°$chunkNumber");
 
 		if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-			return $this->send(204);
+			return $this->response(204);
 		} else {
-			return $this->send(200);
+			return $this->response(200);
 		}
 	}
 
 	/**
 	 * Enregistre un morceau de fichier
 	 *
-	 * @return void|false|string
-	 *     - exit : Si morceau de fichier reçu (et que ce n'est pas le dernier), la fonction retourne un statut http et quitte.
+	 * @return FlowResponse|string
 	 *     - string : Si fichier terminé d'uploader (réception du dernier morceau), retourne le chemin du fichier
-	 *     - false  : si aucun morceau de fichier reçu.
 	**/
 	public function handleChunk() {
 		$identifier  = $this->_request('identifier');
@@ -153,8 +190,14 @@ class Flow {
 		$chunkNumber = $this->_request('chunkNumber');
 		$chunkSize   = $this->_request('chunkSize');
 		$totalSize   = $this->_request('totalSize');
+		$maxSize = $this->maxSizeFile * 1024 * 1024;
 
 		$this->info("Réception chunk $identifier n°$chunkNumber");
+
+		if ($maxSize and $totalSize > $maxSize) {
+			$this->info("Fichier reçu supérieur à taille autorisée");
+			return $this->responseError(_T("bigup:erreur_taille_max", ['taille' => taille_en_octets($maxSize)]));
+		}
 
 		$file = reset($_FILES);
 
@@ -163,7 +206,7 @@ class Flow {
 				$file['tmp_name'],
 				$this->tmpChunkPathFile($identifier, $filename, $chunkNumber))
 			) {
-				return $this->send(415);
+				return $this->response(415);
 			}
 		}
 
@@ -179,7 +222,7 @@ class Flow {
 			if (!$fullFile) {
 				// on ne devrait jamais arriver là ! 
 				$this->error("! Création du fichier complet en échec (" . $chemin_final . ").");
-				return $this->send(415);
+				return $this->response(415);
 			}
 
 			// créer les infos du fichiers
@@ -195,13 +238,10 @@ class Flow {
 			GestionRepertoires::supprimer_repertoire($chemin_parts);
 
 			return $fullFile;
-		} else {
-			// morceau bien reçu, mais pas encore le dernier… 
-			return $this->send(200);
 		}
 
-		// pas de morceaux recu, pas de fichier complété
-		return false;
+		// morceau bien reçu, mais pas encore le dernier…
+		return $this->response(200);
 	}
 
 	/**
@@ -233,7 +273,7 @@ class Flow {
 	 *
 	 * @param string $filename
 	 * @param string $identifier
-	 * @param int $chunksize
+	 * @param int $chunkSize
 	 * @param int $totalSize
 	 * @return bool
 	**/

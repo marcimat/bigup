@@ -22,7 +22,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  * @return void
 **/
 function bigup_upgrade($nom_meta_base_version, $version_cible) {
-	$maj = array();
+	$maj = [];
 
 	// Configuration par défaut
 	$config_defaut = [
