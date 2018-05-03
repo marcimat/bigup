@@ -37,7 +37,7 @@ $.fn.bigup = function(options, callbacks) {
 
 		// Équivalent au filtre sinon
 		var sinon = function(valeur, defaut) {
-			return valeur ? valeur : defaut;
+			return valeur ? valeur : defaut;
 		}
 
 		// config globale de bigup.
@@ -56,7 +56,7 @@ $.fn.bigup = function(options, callbacks) {
 			{
 				contraintes: {
 					accept: $input.prop('accept'),
-					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
+					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
 					maxFileSize: sinon($input.data('maxFileSize'), conf.maxFileSize),
 				}
 			},
