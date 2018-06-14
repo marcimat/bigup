@@ -56,8 +56,8 @@ $.fn.bigup = function(options, callbacks) {
 			{
 				contraintes: {
 					accept: $input.prop('accept'),
-					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxFiles'), 0) : 1),
-					maxFileSize: sinon($input.data('maxFileSize'), conf.maxFileSize),
+					maxFiles: ($input.prop('multiple') ? sinon($input.data('maxfiles'), 0) : 1),
+					maxFileSize: sinon($input.data('maxfilesize'), conf.maxFileSize),
 				}
 			},
 			callbacks
