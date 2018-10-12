@@ -8,5 +8,5 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	// B
 	'bigup_description' => '',
 	'bigup_nom' => 'Big Upload',
-	'bigup_slogan' => 'Téléverser des fichiers, quelque soit leur taille',
+	'bigup_slogan' => 'Upload files, whatever their size',
 );
