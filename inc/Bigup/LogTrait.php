@@ -20,7 +20,7 @@ trait LogTrait {
 	 * Des logs
 	 *
 	 * @param mixed $quoi
-	 * @param gravite $quoi
+	 * @param int $gravite
 	**/
 	public static function log($quoi, $gravite = _LOG_INFO_IMPORTANTE) {
 		spip_log($quoi, "bigup." . $gravite);

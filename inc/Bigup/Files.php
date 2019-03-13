@@ -24,7 +24,7 @@ class Files {
 	 * Indique si ce chemin de fichier est présent pour ce champ dans $_FILES
 	 * @param string $champ
 	 *     Valeur de l'attribut name du champ.
-	 * @param stsring $chemin
+	 * @param string $chemin
 	 *     Chemin du fichier dans le cache
 	 * @return bool
 	 *     true si le fichier est présent, false sinon.
@@ -62,6 +62,7 @@ class Files {
 	 *     Le tableau de recherche
 	 * @param string $valeur
 	 *     La valeur cherchée
+	 * @return bool
 	 */
 	public static function contient_arborescence($arborescence, $tableau, $valeur) {
 		$a = array_shift($arborescence);

@@ -38,7 +38,7 @@ class CacheRepertoire {
 
 	/**
 	 * Constructeur
-	 * @param Identifier $identifier
+	 * @param Cache $cache
 	 * @param string $nom
 	 *     Nom du répertoire de cache
 	 */
@@ -60,6 +60,7 @@ class CacheRepertoire {
 	/**
 	 * Pouvoir obtenir les propriétés privées sans les modifier.
 	 * @param string $property
+	 * @return mixed
 	 */
 	public function __get($property) {
 		if (property_exists($this, $property)) {
@@ -72,6 +73,7 @@ class CacheRepertoire {
 	/**
 	 * Pouvoir obtenir les propriétés privées sans les modifier.
 	 * @param string $property
+	 * @return bool
 	 */
 	public function __isset($property) {
 		if (property_exists($this, $property)) {
@@ -131,6 +133,8 @@ class CacheRepertoire {
 	 *
 	 * @param string $champ
 	 * @param array $description
+	 * @return array|false
+	 *     Description du fichier stocké, sinon false.
 	 */
 	public function stocker_fichier($champ, $description) {
 		$nom = $description['name'];
@@ -153,18 +157,15 @@ class CacheRepertoire {
 	/**
 	 * Enlève un fichier
 	 *
-	 * @param string $identifiant_ou_repertoire
+	 * @param string $identifiant
 	 *     Identifiant du fichier, tel que créé avec CacheFichiers::hash_identifiant()
 	 *     Ou identifiant avant création du hash
-	 * @return bool
-	 *     True si le fichier est trouvé (et donc enlevé)
 	 **/
 	public function supprimer_fichier($identifiant)
 	{
-		if (!$identifiant) {
-			return false;
+		if ($identifiant) {
+			$this->supprimer_fichiers([$identifiant]);
 		}
-		return $this->supprimer_fichiers([$identifiant]);
 	}
 
 
@@ -202,9 +203,7 @@ class CacheRepertoire {
 	 * Si l'on indique une arborescence dans tmp/bigup/final/xxx, le répertoire
 	 * correspondant dans tmp/bigup/parts/xxx sera également supprimé, et inversement.
 	 *
-	 * @param string $chemin
-	 *     Chemin du répertoire stockant un fichier bigup
-	 * @return bool
+	 * @return true
 	 */
 	function supprimer_repertoire() {
 		GestionRepertoires::supprimer_repertoire($this->dir);

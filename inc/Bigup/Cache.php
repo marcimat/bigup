@@ -54,6 +54,7 @@ class Cache {
 	/**
 	 * Pouvoir obtenir les propriétés privées sans les modifier.
 	 * @param string $property
+	 * @return mixed
 	 */
 	public function __get($property) {
 		if (property_exists($this, $property)) {
@@ -66,6 +67,7 @@ class Cache {
 	/**
 	 * Pouvoir obtenir les propriétés privées sans les modifier.
 	 * @param string $property
+	 * @return bool
 	 */
 	public function __isset($property) {
 		if (property_exists($this, $property)) {

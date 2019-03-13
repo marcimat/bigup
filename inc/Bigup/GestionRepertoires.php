@@ -23,8 +23,6 @@ include_spip('inc/flock');
  **/
 class GestionRepertoires {
 
-	use LogTrait;
-
 	/**
 	 * Pour un nom donné, propose un nom de répertoire valide sur la plupart des systèmes de fichiers
 	 *
@@ -132,8 +130,6 @@ class GestionRepertoires {
 	 *     Répertoire à nettoyer
 	 * @param int $age_max
 	 *     Age maxium des fichiers en seconde. Par défaut 24*3600
-	 * @param int $max_files
-	 *     Nombre maximum de fichiers dans le dossier
 	 * @return bool
 	 *     - false : erreur de lecture du répertoire.
 	 *     - true : action réalisée.

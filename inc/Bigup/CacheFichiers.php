@@ -40,9 +40,9 @@ class CacheFichiers {
 	/**
 	 * Constructeur
 	 *
-	 * @param string $dir_racine
-	 *     Chemin de stockage de ces fichiers pour ce formulaire
-	 * @param string $nom_du_champ
+	 * @param CacheRepertoire $cache
+	 *     Cache des fichiers pour ce formulaire
+	 * @param string $champ
 	 *     Nom du champ (valeur de l'attribut name) pour ces fichiers
 	 */
 	public function __construct(CacheRepertoire $cache, $champ) {
