@@ -239,7 +239,10 @@ function bigup_formulaire_traiter($flux) {
  * @return array
  **/
 function bigup_medias_formulaire_charger($flux) {
-	if (in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])) {
+	if (
+		in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])
+		and is_array($flux['data'])
+	) {
 		$flux['data']['_bigup_rechercher_fichiers'] = true;
 	}
 	return $flux;
