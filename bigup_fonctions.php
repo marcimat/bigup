@@ -162,7 +162,7 @@ function bigup_lister_fichiers($fichiers, $nom, $multiple) {
 	if (!$fichiers or !$nom) {
 		return [];
 	}
-	$nom = bigup_nom2name($nom);
+	$nom = bigup_name2nom($nom);
 	if ($multiple) {
 		$liste = table_valeur($fichiers, $nom);
 	} else {
