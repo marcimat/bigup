@@ -350,6 +350,10 @@ class CacheFichiers {
 				include_spip('inc/filtres_images_mini');
 				// il faut l'extension dans le chemin pour les filtres d'images… pff
 				self::debug('Calcul d\'une vignette pour' . $source);
+				if (!file_exists($source)) {
+					self::debug('Image absente pour vignette : ' . $source);
+					return false;
+				}
 				rename($source, $image = $source . '.' . $extension);
 				$img = image_reduire($image, $width, $height);
 				rename($image, $source);

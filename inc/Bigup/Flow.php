@@ -217,6 +217,13 @@ class Flow {
 			$chemin_parts = $this->cache->parts->fichiers->dir_fichier($identifier, $filename);
 			$chemin_final = $this->cache->final->fichiers->path_fichier($identifier, $filename);
 
+			$eviter_concurrence = $chemin_parts . DIRECTORY_SEPARATOR . '.done';
+			if (file_exists($eviter_concurrence)) {
+				$this->debug("Chunks de $identifier déjà en traitement");
+				return $this->response(200);
+			}
+			touch($eviter_concurrence);
+
 			// recomposer le fichier
 			$fullFile = $this->createFileFromChunks($this->getChunkFiles($chemin_parts), $chemin_final);
 			if (!$fullFile) {
