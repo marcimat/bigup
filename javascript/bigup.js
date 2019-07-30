@@ -140,7 +140,7 @@ function Bigup(params, opts, callbacks) {
 						+ '\n\t<span class="dropfileor">' + _T('bigup:ou') + '</span>'
 						+ '\n\t<span class="dropfiletext">'
 						+ '\n\t\t'
-						+ Trads.singulier_ou_pluriel(!multiple, 'bigup:deposer_votre_fichier_ici', 'bigup:deposer_vos_fichiers_ici')
+						+ Trads.singulier_ou_pluriel(multiple ? 2 : 1, 'bigup:deposer_votre_fichier_ici', 'bigup:deposer_vos_fichiers_ici')
 						+ '\n\t</:span:>'
 						+ '\n</div>\n';
 					return template;
