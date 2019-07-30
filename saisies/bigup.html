@@ -3,7 +3,7 @@
 [(#INCLURE{fond=saisies/inc-bigup_liste_fichiers, nom, multiple, fichiers})]
 
 <input type="file"
-	name="[(#ENV{nom}|saisie_nom2name)][(#GET{multiple}|?{\[\]})]"
+	name="[(#ENV{nom}|bigup_nom2name)][(#GET{multiple}|?{\[\]})]"
 	class="file bigup[ (#ENV{class})]"
 	[(#GET{multiple}|oui)multiple ]
 	[accept="(#ENV{accept}|attribut_html)"]
