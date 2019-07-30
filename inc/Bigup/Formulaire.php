@@ -55,7 +55,6 @@ class Formulaire
 		$this->formulaire = $formulaire;
 		$this->contexte   = $contexte;
 		include_spip('bigup_fonctions');
-		include_spip('saisies_fonctions');
 		include_spip('inc/filtres');
 	}
 
@@ -165,7 +164,7 @@ class Formulaire
 
 				// Ajouter les fichiers déjà présents
 				$fichiers = '';
-				$liste_fichiers = table_valeur($this->contexte, saisie_name2nom($champ_env));
+				$liste_fichiers = table_valeur($this->contexte, bigup_name2nom($champ_env));
 				if ($liste_fichiers) {
 					$fichiers = recuperer_fond(
 						'saisies/inc-bigup_liste_fichiers',
@@ -180,7 +179,7 @@ class Formulaire
 
 				// Ajouter une classe sur le conteneur
 				if ($options['editer_class']) {
-					$regexp = self::regexp_balise_attribut_contenant_valeur('div', 'class', 'editer editer_' . saisie_nom2classe($champ_env));
+					$regexp = self::regexp_balise_attribut_contenant_valeur('div', 'class', 'editer editer_' . bigup_nom2classe($champ_env));
 					if (preg_match($regexp, $this->formulaire, $regs)) {
 						$new = self::completer_attribut($regs[0], 'class', $options['editer_class']);
 						$this->formulaire = str_replace($regs[0], $new, $this->formulaire);

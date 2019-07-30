@@ -135,7 +135,7 @@ function calculer_balise_BIGUP_TOKEN($champ, $multiple, $form, $form_args) {
 	$time = time();
 
 	// le vrai nom du champ pour le token (truc/muche => truc[muche])
-	$champ = saisie_nom2name($champ);
+	$champ = bigup_nom2name($champ);
 
 	// Ajouter [] s'il est multiple et s'il ne l'a pas déjà.
 	if (in_array($multiple, [true, 'oui', 'multiple'])) {
@@ -162,7 +162,7 @@ function bigup_lister_fichiers($fichiers, $nom, $multiple) {
 	if (!$fichiers or !$nom) {
 		return [];
 	}
-	$nom = saisie_name2nom($nom);
+	$nom = bigup_nom2name($nom);
 	if ($multiple) {
 		$liste = table_valeur($fichiers, $nom);
 	} else {
@@ -170,3 +170,64 @@ function bigup_lister_fichiers($fichiers, $nom, $multiple) {
 	}
 	return is_array($liste) ? array_filter($liste) : [];
 }
+
+
+// Duplicat fonctions de saisies, pour eviter une dependance.
+// A regler mieux que ca (dans le core ?)
+
+/**
+ * Passer un nom en une valeur compatible avec un `name` de formulaire
+ *
+ * - toto => toto,
+ * - toto/truc => toto[truc],
+ * - toto[truc] => toto[truc]
+ *
+ * @param string $nom
+ * return string
+**/
+function bigup_nom2name($nom) {
+	if (false === strpos($nom, '/')) {
+		return $nom;
+	}
+	$nom = explode('/', $nom);
+	$premier = array_shift($nom);
+	$nom = implode('][', $nom);
+	return $premier . '[' . $nom . ']';
+}
+
+
+/**
+ * Passer un nom en une valeur compatible avec une classe css
+ *
+ * - toto => toto,
+ * - toto/truc => toto_truc,
+ * - toto[truc] => toto_truc
+ *
+ * @param string $nom
+ * return string
+**/
+function bigup_nom2classe($nom) {
+	return str_replace(array('/', '[', ']', '&#91;', '&#93;'), array('_', '_', '', '_', ''), $nom);
+}
+
+
+/**
+ * Passer un `name` en un format de nom compris de saisies
+ *
+ * - toto => toto,
+ * - toto[truc] => toto/truc,
+ * - toto[truc][] => toto/truc/
+ * - toto/truc => toto/truc
+ *
+ * @see saisie_nom2name() pour l'inverse.
+ * @param string $name
+ * @return string
+ **/
+function bigup_name2nom($name) {
+	if (false === strpos($name, '[')) {
+		return $name;
+	}
+	$name = explode('[', str_replace(']', '', $name));
+	return implode('/', $name);
+}
+

@@ -8,14 +8,30 @@
 	<form method="post" action="#ENV{action}">
 	<div>
 		#ACTION_FORMULAIRE{#ENV{action}}
+		<div class="editer-groupe">
+			#SET{name,charger_public}#SET{obli,''}#SET{defaut,0}#SET{erreurs,#ENV**{erreurs}|table_valeur{#GET{name}}}
+			<div class="editer editer_[(#GET{name})][ (#GET{obli})][ (#GET{erreurs}|oui)erreur]">
+				<label><:bigup:cfg_charger_public:></label>[
+				<span class='erreur_message'>(#GET{erreurs})</span>
+				]
+				<div class="choix">
+					#SET{val,0}
+					<input type="hidden" name="#GET{name}" value="#GET{val}" />
+					#SET{val,1}
+					<input type="checkbox" name="#GET{name}" class="checkbox" id="#GET{name}_#GET{val}" value="#GET{val}" aria-describedby="#GET{name}_explication" [(#ENV{#GET{name},#GET{defaut}}|=={#GET{val}}|oui)checked="checked"] />
+					<label for="#GET{name}_#GET{val}"><:bigup:cfg_charger_public_case:></label>
+				</div>
+			</div>
 
-		[(#SAISIE{case, charger_public,
-			label=<:bigup:cfg_charger_public:>,
-			label_case=<:bigup:cfg_charger_public_case:>})]
+			#SET{name,max_file_size}#SET{obli,''}#SET{defaut,''}#SET{erreurs,#ENV**{erreurs}|table_valeur{#GET{name}}}
+			<div class="editer editer_[(#GET{name})][ (#GET{obli})][ (#GET{erreurs}|oui)erreur]">
+				<label for="#GET{name}"><:bigup:cfg_max_file_size:></label>[
+				<span class='erreur_message'>(#GET{erreurs})</span>
+				]<input type="text" name="#GET{name}" class="text" value="#ENV*{#GET{name},#GET{defaut}}" id="#GET{name}" [(#HTML5|et{#GET{obli}})required='required']/>
+				<p class="explication"><:bigup:cfg_max_file_size_explication:></p>
+			</div>
 
-		[(#SAISIE{input, max_file_size,
-			label=<:bigup:cfg_max_file_size:>,
-			explication=<:bigup:cfg_max_file_size_explication:>})]
+		</div>
 
 		<input type="hidden" name="_meta_casier" value="bigup" />
 		<p class="boutons"><span class="image_loading">&nbsp;</span><input type="submit" class="submit" value="<:bouton_enregistrer:>" /></p>
