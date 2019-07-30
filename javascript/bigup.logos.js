@@ -49,7 +49,10 @@ function formulaires_logos_avec_bigup() {
 				.fail(function(data) {
 					bigup.presenter_erreur(input, "Un problème est survenu…"); // [TODO] Traduction
 				});
-		});
+		})
+		.closest('.editer').find('.dropfiletext').html(_T('bigup:deposer_le_logo_ici'));
+
+	;
 }
 
 jQuery(function($) {

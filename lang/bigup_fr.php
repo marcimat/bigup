@@ -20,6 +20,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	// D
 	'deposer_vos_fichiers_ici' => 'Déposer vos fichiers ici',
 	'deposer_votre_fichier_ici' => 'Déposer votre fichier ici',
+	'deposer_le_logo_ici' => 'Déposer le LOGO ici',
 
 	// E
 	'erreur_de_transfert' => 'Erreur de transfert.',
