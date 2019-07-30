@@ -128,7 +128,6 @@ d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 
 ### JS
 
-- Miniature des petites images au chargement
 - Compatibilité plugin roles_documents 
 - Compatibilité plugin roles_logos
 - Méthode pour simplifier l’auto-submit des formulaires simples ?
