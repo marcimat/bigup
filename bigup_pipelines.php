@@ -267,7 +267,7 @@ function bigup_medias_formulaire_fond($flux) {
 			case 'joindre_document':
 				$formulaire->preparer_input(
 					'fichier_upload[]',
-					['previsualiser' => true]
+					['previsualiser' => true, 'drop-zone-extended' => '#contenu']
 				);
 				$formulaire->inserer_js('bigup.documents.js');
 				break;

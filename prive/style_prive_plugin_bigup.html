@@ -27,3 +27,53 @@
 .formulaire_joindre_document .editer_fichier_upload label{
 	margin-top: 15px;
 }
+
+#page {
+	overflow: hidden;
+	position: relative;
+}
+.bigup-extended-drop-zone {
+}
+#chemin,#pied,#navigation {
+	position: relative;
+	z-index: 2;
+}
+#contenu.bigup-extended-drop-zone::before {
+	content:'';
+	display: block;
+	position: absolute;
+	top:10px;
+	bottom:10px;
+	left: 10px;
+	right: 10px;
+	background: #fff;
+	opacity: 0.01;
+	border-radius: 40px;
+}
+
+#contenu.bigup-extended-drop-zone.drag-over::before {
+	background: #ddd;
+	border:5px #333 dashed;
+	opacity: 0.5;
+}
+.drag-target {
+	position: relative;
+	z-index: 2000;
+	border-color: transparent;
+}
+.drag-target::after {
+	content:'';
+	display: block;
+	position: absolute;
+	left: -2px;
+	right: -2px;
+	top:-2px;
+	bottom: -2px;
+	border:5px dashed ##ENV{couleur_foncee,3874b0};
+}
+
+.bigup-extended-drop-zone #navigation,
+.bigup-extended-drop-zone #contenu {
+	position: relative;
+	z-index: 2;
+}
