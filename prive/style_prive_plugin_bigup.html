@@ -1,0 +1,20 @@
+[(#REM)
+
+	Ce squelette definit les styles de l'espace prive
+
+	Note: l'entete "Vary:" sert a repousser l'entete par
+	defaut "Vary: Cookie,Accept-Encoding", qui est (un peu)
+	genant en cas de "rotation du cookie de session" apres
+	un changement d'IP (effet de clignotement).
+	<style>
+]
+/* Spécificités sur des formulaires pour utilisation dans l'espace prive */
+.formulaire_joindre_document .editer_fichier_upload.editer_with_bigup {
+	margin-top: -15px;
+}
+.formulaire_editer_logo .editer_logo_on.editer_with_bigup {
+	margin-top: -15px;
+}
+.formulaire_editer_logo .dropfile {
+	background: url(#CHEMIN_IMAGE{fond-imgs.png}) repeat center;
+}

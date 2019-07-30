@@ -30,7 +30,7 @@ $.fn.bigup = function(options, callbacks) {
 
 	var inputs_a_gerer = $(this).not(".bigup_done").each(function() {
 		// indiquer que l'input est traité. Évite de charger plusieurs fois Flow
-		$(this).addClass('bigup_done');
+		$(this).addClass('bigup_done').closest('.editer').addClass('editer_with_bigup');
 
 		var $input = $(this);
 		var $form = $input.parents('form');
