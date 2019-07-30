@@ -114,6 +114,7 @@ class Formulaire
 			'input_class' => 'bigup',
 			'editer_class' => 'pleine_largeur',
 			'previsualiser' => false,
+			'drop-zone-extended' => '',
 		];
 
 		$remplacements = 0;
@@ -152,6 +153,9 @@ class Formulaire
 				// Ajouter l'option de previsualisation
 				if ($options['previsualiser']) {
 					$new = self::inserer_attribut($new, 'data-previsualiser', 'oui');
+				}
+				if ($options['drop-zone-extended']) {
+					$new = self::inserer_attribut($new, 'data-drop-zone-extended', $options['drop-zone-extended']);
 				}
 
 				// Dans l'environnement, la liste des fichiers est la clé sans [], si [] est présent à la fin du champ

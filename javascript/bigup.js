@@ -128,6 +128,7 @@ function Bigup(params, opts, callbacks) {
 
 	this.zones = {
 		depot: null,
+		depot_etendu: null,
 		fichiers: null
 	};
 
@@ -380,7 +381,7 @@ Bigup.prototype = {
 			!this.multiple,
 			{accept: this.opts.contraintes.accept}
 		);
-		this.flow.assignDrop(this.zones.depot);
+		this.flow.assignDrop(this.zones.depot_etendu);
 	},
 
 	/**
@@ -396,15 +397,26 @@ Bigup.prototype = {
 			this.input.after(template);
 			$zone_depot = this.form.find(".dropfile_" + this.class_name);
 		}
+		var $depot_etendu = $zone_depot;
+		var depot_etendu = this.input.attr('data-drop-zone-extended');
+		if (typeof depot_etendu !== "undefined") {
+			$depot_etendu = jQuery(depot_etendu)
+				.not('.bigup-extended-drop-zone')
+				.addClass('bigup-extended-drop-zone')
+				.add($zone_depot);
+		}
 
-		$zone_depot.on('dragenter', function(){
+		$depot_etendu.on('dragenter dragover', function(){
 			$(this).addClass('drag-over');
+			$zone_depot.addClass('drag-target');
 		});
-		$zone_depot.on('dragleave drop', function(){
+		$depot_etendu.on('dragleave drop', function(){
 			$(this).removeClass('drag-over');
+			$zone_depot.removeClass('drag-target');
 		});
 
 		this.zones.depot = $zone_depot;
+		this.zones.depot_etendu = $depot_etendu;
 	},
 
 	/**
