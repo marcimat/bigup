@@ -160,8 +160,8 @@ $.mime_type_image = function(extension) {
 		case 'bmp':
 			mime = "image/x-ms-bmp";
 			break;
-		case 'jpeg':
-			mime = "image/jpg";
+		case 'jpg':
+			mime = "image/jpeg";
 			break;
 		case 'svg':
 			mime = "image/svg+xml";
