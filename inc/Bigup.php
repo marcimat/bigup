@@ -12,6 +12,8 @@ namespace Spip\Bigup;
  * @package    SPIP\Bigup\Fonctions
  */
 
+if (!defined('_ECRIRE_INC_VERSION')) return;
+
 include_spip('inc/Bigup/LogTrait');
 
 include_spip('inc/Bigup/Cache');
