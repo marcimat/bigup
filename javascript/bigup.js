@@ -29,8 +29,20 @@ $.fn.bigup = function(options, callbacks) {
 	var callbacks = callbacks || {};
 
 	var inputs_a_gerer = $(this).not(".bigup_done").each(function() {
+		var $editer = $(this).closest('.editer');
+		if ($editer.length) {
+			$editer.addClass('biguping');
+			var h = $editer.get(0).offsetHeight;
+			var s = $editer.attr('style');
+			if (typeof s === "undefined") {
+				s = '';
+			}
+			$editer.attr('data-prev-style',s);
+			s += 'height:'+h+'px;overflow:hidden';
+			$editer.attr('style',s);
+		}
 		// indiquer que l'input est traité. Évite de charger plusieurs fois Flow
-		$(this).addClass('bigup_done').closest('.editer').addClass('editer_with_bigup');
+		$(this).addClass('bigup_done');
 
 		var $input = $(this);
 		var $form = $input.parents('form');
@@ -71,7 +83,11 @@ $.fn.bigup = function(options, callbacks) {
 		bigup.integrer_fichiers_presents();
 		// Gérer le dépot de fichiers
 		bigup.gerer_depot_fichiers();
-
+		if ($editer.length) {
+			$editer.attr('style',$editer.attr('data-prev-style'));
+			$editer.attr('data-prev-style',null);
+			$editer.addClass('editer_with_bigup').removeClass('biguping');
+		}
 	});
 	return inputs_a_gerer;
 }
