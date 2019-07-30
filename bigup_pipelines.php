@@ -273,9 +273,13 @@ function bigup_medias_formulaire_fond($flux) {
 				break;
 
 			case 'editer_logo':
+				$options = ['input_class' => 'bigup_logo', 'previsualiser' => true];
+				if (intval($flux['args']['args'][1]) or $flux['args']['args'][0] !== 'site') {
+					$options['drop-zone-extended'] = '#navigation';
+				}
 				$formulaire->preparer_input(
 					['logo_on', 'logo_off'],
-					['input_class' => 'bigup_logo', 'previsualiser' => true]
+					$options
 				);
 				$formulaire->inserer_js('bigup.logos.js');
 				break;

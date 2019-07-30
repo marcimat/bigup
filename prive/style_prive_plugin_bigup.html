@@ -56,6 +56,30 @@
 	border:5px #333 dashed;
 	opacity: 0.5;
 }
+
+#navigation.bigup-extended-drop-zone {
+	position: relative;
+	z-index: 5;
+}
+#navigation.bigup-extended-drop-zone::before {
+	content:'';
+	display: block;
+	position: absolute;
+	top:-10px;
+	bottom:-10px;
+	left: -50vw;
+	right: -10px;
+	background: #fff;
+	opacity: 0.01;
+	border-radius: 40px;
+}
+
+.bigup-extended-drop-zone.drag-over::before {
+	background: #ddd !important;
+	border:5px #333 dashed !important;
+	opacity: 0.5 !important;
+}
+
 .drag-target {
 	position: relative;
 	z-index: 2000;
@@ -70,10 +94,4 @@
 	top:-2px;
 	bottom: -2px;
 	border:5px dashed ##ENV{couleur_foncee,3874b0};
-}
-
-.bigup-extended-drop-zone #navigation,
-.bigup-extended-drop-zone #contenu {
-	position: relative;
-	z-index: 2;
 }
