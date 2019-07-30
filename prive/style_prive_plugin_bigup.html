@@ -8,9 +8,44 @@
 	un changement d'IP (effet de clignotement).
 	<style>
 ]
+
+/* Spécificités lorsqu'utilisé dans la colonne #navigation du privé */
+#navigation .bigup_fichiers .description {
+	flex-wrap:wrap;
+	align-items: center;
+}
+#navigation .bigup_fichiers .actions {
+	text-align:center;
+	margin:.5em 0 0;
+	width:100%;
+}
+#navigation .bigup_fichiers .previsualisation {
+	width:100%;
+	margin:0 0 .5em;
+}
+#navigation .bigup_fichiers .previsualisation + .infos {
+	text-align:center;
+	flex-basis: 100%;
+	display:none;
+}
+#navigation .editer_fichier_upload {
+	min-height: 90px;
+}
+
+#navigation .dropfile {
+	margin: -5px;
+	padding: 10px 10px;
+	text-align:center;
+}
+#navigation .dropfileor {
+	display:block;
+	margin: 5px 0;
+}
+
+
 /* Spécificités sur des formulaires pour utilisation dans l'espace prive */
 .formulaire_editer_logo .editer_logo_on {
-	min-height: 130px;
+	min-height: 90px;
 	margin-top: -15px;
 }
 .formulaire_editer_logo .editer_logo_on label{
@@ -23,12 +58,17 @@
 }
 
 .formulaire_joindre_document .editer_fichier_upload {
-	min-height: 130px;
 	margin-top: -15px;
 }
 .formulaire_joindre_document .editer_fichier_upload label{
 	margin-top: 15px;
 }
+.formulaire_joindre_document .editer_fichier_upload .dropfile {
+	padding: 20px 15px;
+}
+
+
+
 
 #page {
 	overflow: hidden;

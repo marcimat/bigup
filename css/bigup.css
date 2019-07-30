@@ -145,35 +145,6 @@
 	color: #333;
 }
 
-/* Spécificités lorsqu'utilisé dans la colonne #navigation du privé */
-#page #navigation .bigup_fichiers .description {
-	flex-wrap:wrap;
-	align-items: center;
-}
-#page #navigation .bigup_fichiers .actions {
-	text-align:center;
-	margin:.5em 0 0;
-	width:100%;
-}
-#page #navigation .bigup_fichiers .previsualisation {
-	width:100%;
-	margin:0 0 .5em;
-}
-#page #navigation .bigup_fichiers .previsualisation + .infos {
-	text-align:center;
-	flex-basis: 100%;
-	display:none;
-}
-
-
-#page #navigation .dropfile {
-	padding: 25px 15px 15px;
-	text-align:center;
-}
-#page #navigation .dropfileor {
-	display:block;
-}
-
 /* transitions */
 .biguping {
 	visibility: hidden;
