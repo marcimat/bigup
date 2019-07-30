@@ -1,5 +1,11 @@
 /** Gérer le formulaire de logo avec Bigup */
 function formulaires_logos_avec_bigup() {
+	var conf = $.extend(true, {formatsLogos: ['jpg', 'gif', 'png']}, $.bigup_config || {});
+	var mimeLogos = [];
+	for (var i in conf.formatsLogos) {
+		mimeLogos.push($.mime_type_image(conf.formatsLogos[i]));
+	}
+	mimeLogos = mimeLogos.join(',');
 	// trouver les input qui envoient des fichiers
 	$(".formulaire_editer_logo form")
 		.find(".editer_logo_on, .editer_logo_off")
@@ -7,7 +13,7 @@ function formulaires_logos_avec_bigup() {
 		.find("input[type=file].bigup_logo")
 		.not('.bigup_done')
 		// indiquer l'accept avant de charger bigup.
-		.attr('accept', 'image/jpeg,image/gif,image/png')
+		.attr('accept', mimeLogos)
 		.bigup()
 		.on('bigup.fileSuccess', function(event, file, description) {
 			var bigup = file.bigup;

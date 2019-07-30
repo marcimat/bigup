@@ -152,3 +152,23 @@ $.trouver_extension = function(name) {
 	return extension;
 };
 
+$.mime_type_image = function(extension) {
+	extension = extension.toLowerCase();
+	var mime = "image/" + extension;
+	// cas particuliers
+	switch (extension) {
+		case 'bmp':
+			mime = "image/x-ms-bmp";
+			break;
+		case 'jpeg':
+			mime = "image/jpg";
+			break;
+		case 'svg':
+			mime = "image/svg+xml";
+			break;
+		case 'tif':
+			mime = "image/tiff";
+			break;
+	}
+	return mime;
+};
