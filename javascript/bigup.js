@@ -213,6 +213,7 @@ function Bigup(params, opts, callbacks) {
 		singleFile: !this.multiple,
 		simultaneousUploads: 2, // 3 par défaut
 		permanentErrors : [403, 404, 413, 415, 500, 501], // ajout de 403 à la liste par défaut.
+		onDropStopPropagation: true, // ne pas bubler quand la drop zone est multiple
 		query: {
 			action: "bigup",
 			bigup_token: this.token,
@@ -417,9 +418,13 @@ Bigup.prototype = {
 			$(this).addClass('drag-over');
 			$zone_depot.addClass('drag-target');
 		});
-		$depot_etendu.on('dragleave drop', function(){
+		$depot_etendu.on('dragleave', function(){
 			$(this).removeClass('drag-over');
 			$zone_depot.removeClass('drag-target');
+		});
+		$depot_etendu.on('drop', function(){
+			// drop ne buble pas, on enleve donc tout d'un coup
+			$depot_etendu.removeClass('drag-target').removeClass('drag-over');
 		});
 
 		this.zones.depot = $zone_depot;
