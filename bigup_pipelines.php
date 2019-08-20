@@ -225,6 +225,15 @@ function bigup_formulaire_traiter($flux) {
 	return $flux;
 }
 
+/**
+ * Liste les formulaires où BigUP se charge automatiquement
+ * (necessite un traitement spécifique)
+ *
+ * @return array
+ */
+function bigup_medias_formulaires_traitements_automatiques() {
+	return ['joindre_document', 'editer_logo', 'editer_document', 'illustrer_document', 'formidable'];
+}
 
 /**
  * Ajouter bigup sur certains formulaires
@@ -237,7 +246,7 @@ function bigup_formulaire_traiter($flux) {
  **/
 function bigup_medias_formulaire_charger($flux) {
 	if (
-		in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])
+		in_array($flux['args']['form'], bigup_medias_formulaires_traitements_automatiques())
 		and is_array($flux['data'])
 	) {
 		$flux['data']['_bigup_rechercher_fichiers'] = true;
@@ -257,7 +266,7 @@ function bigup_medias_formulaire_charger($flux) {
 function bigup_medias_formulaire_fond($flux) {
 	if (
 		!empty($flux['args']['contexte']['_bigup_rechercher_fichiers'])
-		and in_array($flux['args']['form'], ['joindre_document', 'editer_logo', 'formidable'])
+		and in_array($flux['args']['form'], bigup_medias_formulaires_traitements_automatiques())
 	) {
 		$bigup = bigup_get_bigup(['args' => $flux['args']['contexte']]);
 		$formulaire = $bigup->formulaire($flux['data'], $flux['args']['contexte']);
@@ -270,6 +279,22 @@ function bigup_medias_formulaire_fond($flux) {
 					['previsualiser' => true, 'drop-zone-extended' => '#contenu']
 				);
 				$formulaire->inserer_js('bigup.documents.js');
+				break;
+
+			case 'editer_document':
+				$formulaire->preparer_input(
+					'fichier_upload[]',
+					['previsualiser' => true]
+				);
+				$formulaire->inserer_js('bigup.documents_edit.js');
+				break;
+
+			case 'illustrer_document':
+				$formulaire->preparer_input(
+					'fichier_upload[]',
+					['input_class' => 'bigup_logo', 'previsualiser' => true]
+				);
+				$formulaire->inserer_js('bigup.documents_illustrer.js');
 				break;
 
 			case 'editer_logo':

@@ -21,6 +21,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'deposer_vos_fichiers_ici' => 'Drop your files here',
 	'deposer_votre_fichier_ici' => 'Drop your file here',
 	'deposer_le_logo_ici' => 'Drop the LOGO here',
+	'deposer_la_vignette_ici' => 'Drop the thumbnail here',
 
 	// E
 	'erreur_de_transfert' => 'Upload error',
@@ -35,7 +36,9 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'ou' => 'or',
 
 	// S
+	'succes_fichier_envoye' => 'File has been sent',
 	'succes_logo_envoye' => 'Logo has been sent',
+	'succes_vignette_envoyee' => 'Thumbnail has been sent',
 
 	// T
 	'televerser' => 'Upload',
