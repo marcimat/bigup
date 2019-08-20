@@ -37,17 +37,17 @@ function formulaires_logos_avec_bigup() {
 						// Faire le traitement prévu, supposant qu'il n'y aura pas d'erreur...
 						$.post(bigup.target, data)
 							.done(function(html) {
-								bigup.presenter_succes(input, "Le logo a été envoyé"); // [TODO] Traduction
+								bigup.presenter_succes(input, _T('bigup:succes_logo_envoye'));
 								bigup.form.parents('.formulaire_spip').parent().html(html);
 							})
 							.fail(function(data) {
 								conteneur.endLoading();
-								bigup.presenter_erreur(input, "Un problème est survenu…"); // [TODO] Traduction
+								bigup.presenter_erreur(input, _T('bigup:erreur_probleme_survenu'));
 							});
 					}
 				})
 				.fail(function(data) {
-					bigup.presenter_erreur(input, "Un problème est survenu…"); // [TODO] Traduction
+					bigup.presenter_erreur(input, _T('bigup:erreur_probleme_survenu'));
 				});
 		})
 		.closest('.editer').find('.dropfiletext').html(_T('bigup:deposer_le_logo_ici'));

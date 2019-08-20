@@ -34,6 +34,9 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	// O
 	'ou' => 'ou',
 
+	// S
+	'succes_logo_envoye' => 'Le logo a été envoyé',
+
 	// T
 	'televerser' => 'Téléverser',
 	'titre_page_configurer_bigup' => 'Configurer Big Upload',

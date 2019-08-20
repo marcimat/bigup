@@ -32,7 +32,7 @@ function formulaires_documents_avec_bigup () {
 								if (message) {
 									bigup.presenter_succes(input, message);
 								} else {
-									bigup.presenter_erreur(input, "Un problème semble survenu…"); // [TODO] Traduction
+									bigup.presenter_erreur(input, _T('bigup:erreur_probleme_survenu'));
 								}
 								input.addClass('remove').animate({opacity: "0.0"}, 'fast', function(){
 									// autoriser de mettre une seconde fois le fichier
@@ -42,12 +42,12 @@ function formulaires_documents_avec_bigup () {
 								});
 							})
 							.fail(function(data) {
-								bigup.presenter_erreur(input, "Un problème est survenu…"); // [TODO] Traduction
+								bigup.presenter_erreur(input, _T('bigup:erreur_probleme_survenu'));
 							});
 					}
 				})
 				.fail(function(data) {
-					bigup.presenter_erreur(input, "Un problème est survenu…"); // [TODO] Traduction
+					bigup.presenter_erreur(input, _T('bigup:erreur_probleme_survenu'));
 				});
 		});
 }
