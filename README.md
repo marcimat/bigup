@@ -36,7 +36,7 @@ temps et de bande passante.
 Le fonctionnement général s'appuie sur les formulaires CVT de SPIP
 et sur un token généré par la balise `#BIGUP_TOKEN`
 
-Pour les détails, lire : [le fonctionnement technique](https://gitlab.com/magraine/bigup/wikis/fonctionnement-technique)
+Pour les détails, lire : [le fonctionnement technique](https://github.com/marcimat/bigup/wiki/Fonctionnement-technique)
 
 ### Résumé
 
@@ -46,7 +46,7 @@ déjà chargés pour ce formulaire et d'ajouter leur liste, pour chaque
 champ concerné du formulaire, dans l'environnement.
 
 Ces fichiers sont stokés sur le serveur dans `_DIR_TMP/bigupload`.
-[Lire plus d'informations sur ce stokage dans le wiki](https://gitlab.com/magraine/bigup/wikis/stockage-temporaire-des-fichiers)
+[Lire plus d'informations sur ce stokage dans le wiki](https://github.com/marcimat/bigup/wiki/Stockage-temporaire-des-fichiers)
 
 La saisie `bigup` dans le formulaire peut ensuite gérer l'ajout
 de nouveaux fichiers et présenter la liste des fichiers déjà présents.
@@ -66,8 +66,8 @@ Le plugin dispose d'une saisie `bigup` à laquelle on peut passer
 un certain nombre d'options, notamment `accept` et `multiple`
 
 Pour les détails lire : 
-[la balise `#SAISIE_FICHIER`](https://gitlab.com/magraine/bigup/wikis/balises/saisie-fichier) 
-ou [la saisie `bigup`](https://gitlab.com/magraine/bigup/wikis/saisies/bigup).
+[la balise `#SAISIE_FICHIER`](https://github.com/marcimat/bigup/wiki/balise-SAISIE-fichier) 
+ou [la saisie `bigup`](hhttps://github.com/marcimat/bigup/wiki/balise-SAISIE-bigup).
 
 Exemple :
 
@@ -122,7 +122,7 @@ Cette valeur est transmise avec le token calculé, et est inscrite
 dans le chemin de cache des fichiers reçu. Cela permet, à partir 
 d'un fichier cache donné, de recréer le `$_FILES` qui lui correspondait.
 
-[Voir les notes sur `$_FILES` dans le wiki](https://gitlab.com/magraine/bigup/wikis/note-input-file-html5)
+[Voir les notes sur `$_FILES` dans le wiki](https://github.com/marcimat/bigup/wiki/Note-input-file-html5)
 
 ## Todo
 
