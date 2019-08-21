@@ -115,6 +115,7 @@ class Formulaire
 			'editer_class' => 'pleine_largeur',
 			'previsualiser' => false,
 			'drop-zone-extended' => '',
+			'multiple' => null,
 			'maxFiles' => '',
 			'accept' => '',
 		];
@@ -131,7 +132,11 @@ class Formulaire
 
 				// dès que [] est présent dans un champ, il peut être multiple.
 				// on le considère comme tel dans ce cas.
-				$multiple = (strpos($champ, '[]') !== false);
+				if ($options['multiple'] === null) {
+					$multiple = (strpos($champ, '[]') !== false);
+				} else {
+					$multiple = (bool)$options['multiple'];
+				}
 
 				// Ajouter la classe CSS demandée
 				if ($options['input_class']) {
@@ -168,10 +173,9 @@ class Formulaire
 
 				// Dans l'environnement, la liste des fichiers est la clé sans [], si [] est présent à la fin du champ
 				// De même le champ sans [] final est à saisie pour calculer les classes CSS
-				if ($multiple and substr($champ, -2) == '[]') {
+				$champ_env = $champ;
+				if (substr($champ, -2) == '[]') {
 					$champ_env = substr($champ, 0, -2);
-				} else {
-					$champ_env = $champ;
 				}
 
 				// Ajouter les fichiers déjà présents
@@ -188,7 +192,6 @@ class Formulaire
 				}
 
 				$this->formulaire = str_replace($input, $fichiers . $new, $this->formulaire);
-
 				// Ajouter une classe sur le conteneur
 				if ($options['editer_class']) {
 					$regexp = self::regexp_balise_attribut_contenant_valeur('div', 'class', 'editer editer_' . bigup_nom2classe($champ_env));

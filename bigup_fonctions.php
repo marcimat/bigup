@@ -162,6 +162,10 @@ function bigup_lister_fichiers($fichiers, $nom, $multiple) {
 	if (!$fichiers or !$nom) {
 		return [];
 	}
+	// Cas particulier de nom tableau (truc[]) sans déclaration d’attribut multiple
+	if (substr($nom, -2) == '[]') {
+		$nom = substr($nom, 0, -2);
+	}
 	$nom = bigup_name2nom($nom);
 	if ($multiple) {
 		$liste = table_valeur($fichiers, $nom);

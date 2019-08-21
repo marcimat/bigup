@@ -285,7 +285,7 @@ function bigup_medias_formulaire_fond($flux) {
 				$formulaire->preparer_input(
 					'fichier_upload[]',
 					[
-						'maxFiles' => 1,
+						'multiple' => false,
 						'previsualiser' => true
 					]
 				);
@@ -296,7 +296,7 @@ function bigup_medias_formulaire_fond($flux) {
 				$formulaire->preparer_input(
 					'fichier_upload[]',
 					[
-						'maxFiles' => 1,
+						'multiple' => false,
 						'accept' => bigup_get_accept_logos(),
 						'previsualiser' => true,
 						'input_class' => 'bigup_illustration',
