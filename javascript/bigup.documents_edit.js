@@ -6,8 +6,8 @@ function formulaires_documents_edit_avec_bigup () {
 		.find("form .editer_fichier_upload")
 		.find("label").hide().end()
 		.find("input[type=file].bigup")
-		.not('.bigup_document')
-		.addClass('bigup_document')
+		.not('.bigup_document_edit')
+		.addClass('bigup_document_edit')
 		.on('bigup.fileSuccess', function(event, file, description) {
 			var bigup = file.bigup;
 			var input = file.emplacement;

@@ -284,7 +284,10 @@ function bigup_medias_formulaire_fond($flux) {
 			case 'editer_document':
 				$formulaire->preparer_input(
 					'fichier_upload[]',
-					['previsualiser' => true]
+					[
+						'maxFiles' => 1,
+						'previsualiser' => true
+					]
 				);
 				$formulaire->inserer_js('bigup.documents_edit.js');
 				break;
@@ -292,13 +295,22 @@ function bigup_medias_formulaire_fond($flux) {
 			case 'illustrer_document':
 				$formulaire->preparer_input(
 					'fichier_upload[]',
-					['input_class' => 'bigup_logo', 'previsualiser' => true]
+					[
+						'maxFiles' => 1,
+						'accept' => bigup_get_accept_logos(),
+						'previsualiser' => true,
+						'input_class' => 'bigup_illustration',
+					]
 				);
 				$formulaire->inserer_js('bigup.documents_illustrer.js');
 				break;
 
 			case 'editer_logo':
-				$options = ['input_class' => 'bigup_logo', 'previsualiser' => true];
+				$options = [
+					'accept' => bigup_get_accept_logos(),
+					'previsualiser' => true,
+					'input_class' => 'bigup_logo',
+				];
 				if (intval($flux['args']['args'][1]) or $flux['args']['args'][0] !== 'site') {
 					$options['drop-zone-extended'] = '#navigation';
 				}

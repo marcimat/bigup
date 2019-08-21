@@ -197,6 +197,8 @@ function Bigup(params, opts, callbacks) {
 	 * @type {Object}
 	 */
 	this.opts = $.extend(true, this.defaults, opts || {});
+	// Un seul fichier aussi si multiple avec max 1 file.
+	this.singleFile = !this.multiple || (this.opts.contraintes.maxFiles === 1);
 
 	// Ajoute chaque callback transmise
 	var me = this;
@@ -210,7 +212,7 @@ function Bigup(params, opts, callbacks) {
 		target: this.target,
 		testChunks: true,
 		maxFiles: this.opts.contraintes.maxFiles,
-		singleFile: !this.multiple,
+		singleFile: this.singleFile,
 		simultaneousUploads: 2, // 3 par défaut
 		permanentErrors : [403, 404, 413, 415, 500, 501], // ajout de 403 à la liste par défaut.
 		onDropStopPropagation: true, // ne pas bubler quand la drop zone est multiple
@@ -396,7 +398,7 @@ Bigup.prototype = {
 
 		// S'il n'y en a pas, créer le template par défaut et l'ajouter
 		if (!$zone_depot.length) {
-			var template = this.opts.templates.zones.depot(this.class_name, this.multiple);
+			var template = this.opts.templates.zones.depot(this.class_name, !this.singleFile);
 			this.input.after(template);
 			$zone_depot = this.form.find(".dropfile_" + this.class_name);
 		}

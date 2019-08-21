@@ -231,3 +231,39 @@ function bigup_name2nom($name) {
 	return implode('/', $name);
 }
 
+/**
+ * Retourne la liste des mimes types acceptés pour des logos / illustrations,
+ * tels qu’attendus par le champ accept.
+ * @return string
+ */
+function bigup_get_accept_logos() {
+	$extensions = $GLOBALS['formats_logos'];
+	$mimes = array_map('bigup_get_mime_type_extension', $extensions);
+	return implode(",", $mimes);
+}
+
+/**
+ * Transforme une extension en mime-type (de façon simpliste)
+ * @param string $extension
+ * @return string mime type
+ */
+function bigup_get_mime_type_extension($extension) {
+	$extension = strtolower($extension);
+	$mime = "image/$extension";
+	// cas particuliers
+	switch ($extension) {
+		case 'bmp':
+			$mime = "image/x-ms-bmp";
+			break;
+		case 'jpg':
+			$mime = "image/jpeg";
+			break;
+		case 'svg':
+			$mime = "image/svg+xml";
+			break;
+		case 'tif':
+			$mime = "image/tiff";
+			break;
+	}
+	return $mime;
+}

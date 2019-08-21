@@ -115,6 +115,8 @@ class Formulaire
 			'editer_class' => 'pleine_largeur',
 			'previsualiser' => false,
 			'drop-zone-extended' => '',
+			'maxFiles' => '',
+			'accept' => '',
 		];
 
 		$remplacements = 0;
@@ -156,6 +158,12 @@ class Formulaire
 				}
 				if ($options['drop-zone-extended']) {
 					$new = self::inserer_attribut($new, 'data-drop-zone-extended', $options['drop-zone-extended']);
+				}
+				if ($options['maxFiles']) {
+					$new = self::inserer_attribut($new, 'data-maxFiles', $options['maxFiles']);
+				}
+				if ($options['accept']) {
+					$new = self::inserer_attribut($new, 'accept', $options['accept']);
 				}
 
 				// Dans l'environnement, la liste des fichiers est la clé sans [], si [] est présent à la fin du champ

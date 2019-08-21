@@ -1,21 +1,11 @@
 /** Gérer le formulaire d’illustration de documents avec Bigup */
 function formulaires_documents_illustrer_avec_bigup () {
-
-	var conf = $.extend(true, {formatsLogos: ['jpg', 'gif', 'png']}, $.bigup_config || {});
-	var mimeLogos = [];
-	for (var i in conf.formatsLogos) {
-		mimeLogos.push($.mime_type_image(conf.formatsLogos[i]));
-	}
-	mimeLogos = mimeLogos.join(',');
-
 	// trouver les input qui envoient des fichiers
 	$(".formulaire_illustrer_document")
 		.find("form .editer_fichier_upload")
 		.find("label").hide().end()
-		.find("input[type=file].bigup_logo")
+		.find("input[type=file].bigup_illustration")
 		.not('.bigup_done')
-		// indiquer l'accept avant de charger bigup.
-		.attr('accept', mimeLogos)
 		.bigup()
 		.on('bigup.fileSuccess', function(event, file, description) {
 			var bigup = file.bigup;
