@@ -3,6 +3,7 @@
 	border: 1px solid #ddd;
 	padding: 10px;
 	overflow: auto;
+	transition: border .1s, background-color .1s;
 }
 .bigup_fichiers .fichier:first-child {
 	border-top-left-radius:5px;
@@ -15,6 +16,11 @@
 }
 .bigup_fichiers .fichier + .fichier {
 	border-top:none;
+}
+
+.bigup_fichiers .fichier.annuler {
+	border-left: 2px solid #fa9928;
+	background-color: #fbf4e0 !important;
 }
 .bigup_fichiers .fichier.erreur {
 	border-left: 2px solid #fa4b19;
@@ -143,6 +149,9 @@
 	background-color: #ebebeb;
 	border-color: #adadad;
 	color: #333;
+}
+.bigup-btn.btn-disabled {
+	opacity:.5;
 }
 
 /* transitions */

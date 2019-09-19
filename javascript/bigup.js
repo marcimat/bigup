@@ -561,6 +561,7 @@ Bigup.prototype = {
 	 */
 	enlever_fichier: function(emplacement) {
 		var me = this;
+		emplacement.addClass('annuler');
 
 		// Identifiant du fichier
 		// Soit celui de flow.js, soit celui du serveur
@@ -587,6 +588,7 @@ Bigup.prototype = {
 			});
 		})
 		.fail(function() {
+			emplacement.removeClass('annuler');
 			me.presenter_erreur(emplacement, _T('bigup:erreur_probleme_survenu'));
 		});
 	},
@@ -801,6 +803,7 @@ Bigup.prototype = {
 $.bigup_enlever_fichier = function(me) {
 	var emplacement = $(me).parents('.fichier');
 	var bigup       = emplacement.data('bigup');
+	$(me).addClass('btn-disabled');
 	bigup.enlever_fichier(emplacement);
 };
 
