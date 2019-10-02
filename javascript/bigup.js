@@ -152,7 +152,7 @@ function Bigup(params, opts, callbacks) {
 					var template =
 						'\n<div class="dropfile dropfile_' + name + '" style="display:none;">'
 						+ '\n\t<span class="dropfilebutton bigup-btn btn btn-default">'
-						+ _T('bigup:televerser')
+						+ _T('bigup:choisir')
 						+ '</span>'
 						+ '\n\t<span class="dropfileor">' + _T('bigup:ou') + '</span>'
 						+ '\n\t<span class="dropfiletext">'

@@ -11,6 +11,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'bouton_enlever' => 'Remove',
 
 	// C
+	'choisir' => 'Choose',
 	'cfg_charger_public' => 'Script in the public website',
 	'cfg_charger_public_case' => 'Load scripts on the public website',
 	'cfg_max_file_size' => 'Maximum size of files',
@@ -36,6 +37,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'ou' => 'or',
 
 	// S
+	'selectionner' => 'Select',
 	'succes_fichier_envoye' => 'File has been sent',
 	'succes_logo_envoye' => 'Logo has been sent',
 	'succes_vignette_envoyee' => 'Thumbnail has been sent',
