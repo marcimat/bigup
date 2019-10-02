@@ -230,6 +230,19 @@ function Bigup(params, opts, callbacks) {
 
 	// Bigup accessible depuis l'input
 	this.input.data('bigup', this);
+
+	/**
+	 * On drop extended event
+	 *
+	 * On ne bloque pas la cascade des événements si on ne dépose pas de fichiers
+	 * @function
+	 * @param {MouseEvent} event
+	 */
+	this.onDropExtended = function (event) {
+		if (me.eventHasFiles(event)) {
+			me.flow.onDrop(event);
+		}
+	}
 }
 
 Bigup.prototype = {
@@ -384,7 +397,7 @@ Bigup.prototype = {
 			!this.multiple,
 			{accept: this.opts.contraintes.accept}
 		);
-		this.flow.assignDrop(this.zones.depot_etendu);
+		this.assignDropExtended(this.zones.depot_etendu);
 	},
 
 	/**
@@ -415,10 +428,12 @@ Bigup.prototype = {
 				.add($zone_depot);
 		}
 
-		var $c=this.class_name;
-		$depot_etendu.on('dragenter dragover', function(){
-			$(this).addClass('drag-over');
-			$zone_depot.addClass('drag-target');
+		var me = this;
+		$depot_etendu.on('dragenter dragover', function(event) {
+			if (me.eventHasFiles(event.originalEvent)) {
+				$(this).addClass('drag-over');
+				$zone_depot.addClass('drag-target');
+			}
 		});
 		$depot_etendu.on('dragleave', function(){
 			$(this).removeClass('drag-over');
@@ -787,6 +802,55 @@ Bigup.prototype = {
 			}
 		});
 		return data;
+	},
+
+
+	/**
+	 * Assign one or more DOM nodes as a drop extended target.
+	 * @function
+	 * @param {Element|Array.<Element>} domNodes
+	 */
+	assignDropExtended: function (domNodes) {
+		if (typeof domNodes.length === 'undefined') {
+			domNodes = [domNodes];
+		}
+		Flow.each(domNodes, function (domNode) {
+			domNode.addEventListener('dragover', this.flow.preventEvent, false);
+			domNode.addEventListener('dragenter', this.flow.preventEvent, false);
+			domNode.addEventListener('drop', this.onDropExtended, false);
+		}, this);
+	},
+
+	/**
+	 * Un-assign drop extended event from DOM nodes
+	 * @function
+	 * @param domNodes
+	 */
+	unAssignDrop: function (domNodes) {
+		if (typeof domNodes.length === 'undefined') {
+			domNodes = [domNodes];
+		}
+		Flow.each(domNodes, function (domNode) {
+			domNode.removeEventListener('dragover', this.flow.preventEvent);
+			domNode.removeEventListener('dragenter', this.flow.preventEvent);
+			domNode.removeEventListener('drop', this.onDropExtended);
+		}, this);
+	},
+
+	/**
+	 * A drag event contain files ?
+	 * @param MouseEvent event
+	 * @return bool
+	 */
+	eventHasFiles: function (event) {
+		if (event.dataTransfer.types) {
+			for (var i = 0; i < event.dataTransfer.types.length; i++) {
+				if (event.dataTransfer.types[i] === "Files") {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 };
 
