@@ -327,6 +327,7 @@ function inc_bigup_medias_formulaire_illustrer_document_dist($args, $formulaire)
 			'accept' => bigup_get_accept_logos(),
 			'previsualiser' => true,
 			'input_class' => 'bigup_illustration',
+			'drop-zone-extended' => '.formulaire_illustrer_document .editer_fichier',
 		]
 	);
 	$formulaire->inserer_js('bigup.documents_illustrer.js');
