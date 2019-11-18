@@ -266,71 +266,105 @@ function bigup_medias_formulaire_charger($flux) {
 function bigup_medias_formulaire_fond($flux) {
 	if (
 		!empty($flux['args']['contexte']['_bigup_rechercher_fichiers'])
-		and in_array($flux['args']['form'], bigup_medias_formulaires_traitements_automatiques())
+		and $form = $flux['args']['form']
+	  and $bigup_medias_formulaire = charger_fonction('bigup_medias_formulaire_'.$form, 'inc', true)
 	) {
 		$bigup = bigup_get_bigup(['args' => $flux['args']['contexte']]);
 		$formulaire = $bigup->formulaire($flux['data'], $flux['args']['contexte']);
 
-		switch ($flux['args']['form']) {
-
-			case 'joindre_document':
-				$formulaire->preparer_input(
-					'fichier_upload[]',
-					['previsualiser' => true, 'drop-zone-extended' => '#contenu']
-				);
-				$formulaire->inserer_js('bigup.documents.js');
-				break;
-
-			case 'editer_document':
-				$formulaire->preparer_input(
-					'fichier_upload[]',
-					[
-						'multiple' => false,
-						'previsualiser' => true
-					]
-				);
-				$formulaire->inserer_js('bigup.documents_edit.js');
-				break;
-
-			case 'illustrer_document':
-				$formulaire->preparer_input(
-					'fichier_upload[]',
-					[
-						'multiple' => false,
-						'accept' => bigup_get_accept_logos(),
-						'previsualiser' => true,
-						'input_class' => 'bigup_illustration',
-					]
-				);
-				$formulaire->inserer_js('bigup.documents_illustrer.js');
-				break;
-
-			case 'editer_logo':
-				$options = [
-					'accept' => bigup_get_accept_logos(),
-					'previsualiser' => true,
-					'input_class' => 'bigup_logo',
-				];
-				if (intval($flux['args']['args'][1]) or $flux['args']['args'][0] !== 'site') {
-					$options['drop-zone-extended'] = '#navigation';
-				}
-				$formulaire->preparer_input(
-					['logo_on', 'logo_off'],
-					$options
-				);
-				$formulaire->inserer_js('bigup.logos.js');
-				break;
-
-			case 'formidable':
-				$formulaire->preparer_input_class(
-					'bigup', // 'file' pour rendre automatique.
-					['previsualiser' => true]
-				);
-				break;
-		}
+		$formulaire = $bigup_medias_formulaire($flux['args'], $formulaire);
 
 		$flux['data'] = $formulaire->get();
 	}
 
 	return $flux;
 }
+
+/**
+ * @param array $args
+ * @param \Spip\Bigup\Formulaire $formulaire
+ * @return \Spip\Bigup\Formulaire
+ */
+function inc_bigup_medias_formulaire_joindre_document_dist($args, $formulaire) {
+	$formulaire->preparer_input(
+		'fichier_upload[]',
+		[
+			'previsualiser' => true,
+			'drop-zone-extended' => '#contenu'
+		]
+	);
+	$formulaire->inserer_js('bigup.documents.js');
+	return $formulaire;
+}
+
+/**
+ * @param array $args
+ * @param \Spip\Bigup\Formulaire $formulaire
+ * @return \Spip\Bigup\Formulaire
+ */
+function inc_bigup_medias_formulaire_editer_document_dist($args, $formulaire) {
+	$formulaire->preparer_input(
+		'fichier_upload[]',
+		[
+			'multiple' => false,
+			'previsualiser' => true
+		]
+	);
+	$formulaire->inserer_js('bigup.documents_edit.js');
+	return $formulaire;
+}
+
+/**
+ * @param array $args
+ * @param \Spip\Bigup\Formulaire $formulaire
+ * @return \Spip\Bigup\Formulaire
+ */
+function inc_bigup_medias_formulaire_illustrer_document_dist($args, $formulaire) {
+	$formulaire->preparer_input(
+		'fichier_upload[]',
+		[
+			'multiple' => false,
+			'accept' => bigup_get_accept_logos(),
+			'previsualiser' => true,
+			'input_class' => 'bigup_illustration',
+		]
+	);
+	$formulaire->inserer_js('bigup.documents_illustrer.js');
+	return $formulaire;
+}
+
+/**
+ * @param array $args
+ * @param \Spip\Bigup\Formulaire $formulaire
+ * @return \Spip\Bigup\Formulaire
+ */
+function inc_bigup_medias_formulaire_editer_logo_dist($args, $formulaire) {
+	$options = [
+		'accept' => bigup_get_accept_logos(),
+		'previsualiser' => true,
+		'input_class' => 'bigup_logo',
+	];
+	if (intval($args['args'][1]) or $args['args'][0] !== 'site') {
+		$options['drop-zone-extended'] = '#navigation';
+	}
+	$formulaire->preparer_input(
+		['logo_on', 'logo_off'],
+		$options
+	);
+	$formulaire->inserer_js('bigup.logos.js');
+	return $formulaire;
+}
+
+/**
+ * @param array $args
+ * @param \Spip\Bigup\Formulaire $formulaire
+ * @return \Spip\Bigup\Formulaire
+ */
+function inc_bigup_medias_formulaire_formidable_dist($args, $formulaire) {
+	$formulaire->preparer_input_class(
+		'bigup', // 'file' pour rendre automatique.
+		['previsualiser' => true]
+	);
+	return $formulaire;
+}
+
