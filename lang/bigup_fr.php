@@ -46,4 +46,6 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'televerser' => 'Téléverser',
 	'titre_page_configurer_bigup' => 'Configurer Big Upload',
 
+	// Z
+	'zbug_necessite_plugin' => 'La balise <code>@balise@</code> nécessite le plugin <code>@plugin@</code>',
 );

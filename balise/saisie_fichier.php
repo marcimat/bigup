@@ -34,6 +34,18 @@ include_spip('balise/saisie');
  */
 function balise_SAISIE_FICHIER_dist($p) {
 
+	if (!class_exists('Pile')) {
+		$msg = array(
+			'bigup:zbug_necessite_plugin',
+			array(
+				'balise' => '#SAISIE_FICHIER',
+				'plugin' => 'saisies',
+			)
+		);
+		erreur_squelette($msg, $p);
+		return $p;
+	}
+
 	// on recupere les parametres sans les traduire en code d'execution php
 	$type_saisie = Pile::recuperer_et_supprimer_argument_balise(1, $p); // $type
 	$titre       = Pile::recuperer_et_supprimer_argument_balise(1, $p); // $titre
