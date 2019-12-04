@@ -141,7 +141,7 @@ function Bigup(params, opts, callbacks) {
 		options: {
 			// previsualisation des images
 			previsualisation: {
-				activer: !!this.input.data("previsualiser"),
+				activer: !this.input.data("previsualiser"),
 				fileSizeMax: 10 // 10 Mb
 			}
 		},
