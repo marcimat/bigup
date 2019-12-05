@@ -18,6 +18,12 @@
  *          fileSuccess: function(...){...},
  *     });
  *
+ * Où pour quand les uploads sont terminés
+ *
+ *     $('input.bigup').bigup({}, {
+ *          complete: function(){...},
+ *     });
+ *
  * @param object options
  * @param object callbacks
  * @return jQuery
@@ -361,6 +367,14 @@ Bigup.prototype = {
 			}
 
 		});
+
+		// Rajoute l'Events complete()
+		// qui se déclenche quand tous les upload sont terminés
+		this.flow.on('complete', function () {
+			//console.log("uploads Completed");
+			me.input.trigger('bigup.complete');
+		});
+
 
 		// Erreur, pas de bol !
 		// Afficher l'erreur
