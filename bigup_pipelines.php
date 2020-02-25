@@ -19,6 +19,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
  * @return array Liste complétée
 **/
 function bigup_jquery_plugins($scripts) {
+	include_spip('inc/config');
 	if (test_espace_prive() or lire_config('bigup/charger_public', false)) {
 		$scripts[] = 'javascript/bigup.utils.js';
 		$scripts[] = produire_fond_statique('javascript/bigup.trads.js', [
@@ -39,6 +40,7 @@ function bigup_jquery_plugins($scripts) {
  * @return string Code html complété
  **/
 function bigup_insert_head($flux) {
+	include_spip('inc/config');
 	if (lire_config('bigup/charger_public', false)) {
 		$flux = bigup_header_prive($flux);
 	}
@@ -53,6 +55,7 @@ function bigup_insert_head($flux) {
  * @return string Code html complété
  **/
 function bigup_header_prive($flux) {
+	include_spip('inc/config');
 	$maxFileSize = intval(lire_config('bigup/max_file_size', 0));
 	$formatLogos = json_encode($GLOBALS['formats_logos']);
 	$flux .= <<<EOS
@@ -69,6 +72,7 @@ EOS;
  * @return string Code html complété
 **/
 function bigup_insert_head_css($flux) {
+	include_spip('inc/config');
 	if (lire_config('bigup/charger_public', false)) {
 		$flux = bigup_header_prive_css($flux);
 	}

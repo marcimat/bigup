@@ -14,8 +14,8 @@ namespace Spip\Bigup;
 
 if (!defined('_ECRIRE_INC_VERSION')) return;
 
+include_spip('inc/config');
 include_spip('inc/Bigup/LogTrait');
-
 include_spip('inc/Bigup/Cache');
 include_spip('inc/Bigup/CacheFichiers');
 include_spip('inc/Bigup/CacheRepertoire');
