@@ -93,7 +93,7 @@ $.fn.bigup = function(options, callbacks) {
 			$editer.attr('style',$editer.attr('data-prev-style'));
 			$editer.attr('data-prev-style',null);
 			$editer.addClass('editer_with_bigup').removeClass('biguping');
-			$editer.parents('form').find('.boutons').first().remove();
+			$editer.parents('form').find('.boutons').first().hide();
 		}
 	});
 	return inputs_a_gerer;
