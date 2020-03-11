@@ -50,6 +50,7 @@ function formulaires_documents_avec_bigup () {
 					bigup.presenter_erreur(input, _T('bigup:erreur_probleme_survenu'));
 				});
 		});
+	$("input[name='joindre_upload']").hide();
 }
 jQuery(function($) {
 	formulaires_documents_avec_bigup();
