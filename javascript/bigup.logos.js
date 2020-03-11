@@ -1,7 +1,8 @@
 /** Gérer le formulaire de logo avec Bigup */
 function formulaires_logos_avec_bigup() {
 	// trouver les input qui envoient des fichiers
-	$(".formulaire_editer_logo form")
+	var formulaire_editer_logo = $(".formulaire_editer_logo form");
+	formulaire_editer_logo
 		.find(".editer_logo_on, .editer_logo_off")
 		.find("label").hide().end()
 		.find("input[type=file].bigup_logo")
@@ -43,8 +44,7 @@ function formulaires_logos_avec_bigup() {
 				});
 		})
 		.closest('.editer').find('.dropfiletext').html(_T('bigup:deposer_le_logo_ici'));
-
-	;
+	formulaire_editer_logo.find('.boutons').first().hide();
 }
 
 jQuery(function($) {
